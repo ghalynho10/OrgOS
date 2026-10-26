@@ -16,6 +16,7 @@ Tracer Bullet: one question working end to end through both stores and the agent
 
 ```bash
 uv sync                                              # install
+uv run pre-commit install                            # pre-commit and commit-msg hooks, once per clone
 docker compose --profile all up -d --wait            # all three stores, healthy
 uv run orgos bootstrap                               # Postgres roles, schemas, grants (rerunnable)
 uv run --env-file .env dbt <cmd> --project-dir dbt --profiles-dir dbt
@@ -37,6 +38,7 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 - Config is read only through `orgos.config.Settings` and validated at startup; errors surface as one `ConfigError` message. No `os.environ` reads elsewhere.
 - Every module has a docstring saying why it exists; every public function has one.
 - Errors: each subpackage raises its own named exception; the CLI turns them into a clear message and a non zero exit. No bare `except`.
+- CLI: each command loads `Settings` itself, so help needs no `.env`. `run()` in `src/orgos/cli/__init__.py` is the only place that prints errors and picks exit codes; a new named error gets one row in `EXIT_CODES` (spec 0002).
 - Conventional commits: `feat(scope): …`, `fix: …`, `chore: …`.
 
 ## Tooling and tests
