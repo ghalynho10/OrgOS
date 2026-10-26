@@ -5,18 +5,18 @@ and the grants that keep model written queries read only on `model`. Init
 scripts only run on an empty volume, so this runs from orgOS and is safe to
 rerun: it creates what is missing and resets passwords, grants, and limits.
 
-Run it with `uv run --env-file .env python -m orgos.sqlstore.bootstrap`.
+Run it with `uv run orgos bootstrap`.
 """
 
 from __future__ import annotations
 
 import logging
-import sys
 
 import psycopg
 from psycopg import sql
 
-from orgos.config import ConfigError, Settings, load_settings
+from orgos.config import Settings
+from orgos.sqlstore import SqlStoreError
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +41,16 @@ def _ensure_role(cur: psycopg.Cursor, name: str, password: str) -> None:
 
 def bootstrap(settings: Settings) -> None:
     """Create or reset the database, roles, schemas, and grants; safe to rerun."""
+    try:
+        _bootstrap(settings)
+    except psycopg.OperationalError as exc:
+        raise SqlStoreError(
+            f"Could not reach Postgres at {settings.pg_host}:{settings.pg_port}: {exc}"
+        ) from exc
+    log.info("bootstrap complete for database %s", settings.pg_database)
+
+
+def _bootstrap(settings: Settings) -> None:
     owner = sql.Identifier(settings.pg_owner_user)
     reader = sql.Identifier(settings.pg_reader_user)
     database = sql.Identifier(settings.pg_database)
@@ -95,28 +105,3 @@ def bootstrap(settings: Settings) -> None:
                 "ALTER DEFAULT PRIVILEGES FOR ROLE {} IN SCHEMA {} GRANT SELECT ON TABLES TO {}"
             ).format(owner, served, reader)
         )
-
-    log.info("bootstrap complete for database %s", settings.pg_database)
-
-
-def main() -> int:
-    """Run the bootstrap from the environment and return a process exit code."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    try:
-        settings = load_settings()
-    except ConfigError as exc:
-        print(exc, file=sys.stderr)
-        return 2
-    try:
-        bootstrap(settings)
-    except psycopg.OperationalError as exc:
-        print(
-            f"Could not reach Postgres at {settings.pg_host}:{settings.pg_port}: {exc}",
-            file=sys.stderr,
-        )
-        return 1
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

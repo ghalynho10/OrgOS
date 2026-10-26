@@ -3,7 +3,7 @@ name = "orgos"
 version = "0.1.0"
 description = "A shared operational memory over company work data, compared across a SQL store and a graph store."
 authors = [
-    { name = "Ghaly Nicolas Jules", email = "mghalynho@gmail.com" }
+    { name = "Ghaly Nicolas Jules", email = "32783189+ghalynho10@users.noreply.github.com" }
 ]
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-orgos = "orgos.cli:app"
+orgos = "orgos.cli:run"
 
 [build-system]
 requires = ["uv_build>=0.11.32,<0.12.0"]

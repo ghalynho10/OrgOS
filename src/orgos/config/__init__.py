@@ -125,6 +125,15 @@ class Settings(BaseSettings):
         }
 
 
+def _absent_env_folder(env_file: object) -> Path | None:
+    # A single env file that does not exist: the folder it was looked for in.
+    # `None` or a list of files gives no hint.
+    if not isinstance(env_file, str | Path):
+        return None
+    path = Path(env_file).resolve()
+    return None if path.exists() else path.parent
+
+
 def load_settings(**overrides: object) -> Settings:
     """Load settings, turning validation errors into one clear message."""
     try:
@@ -135,6 +144,11 @@ def load_settings(**overrides: object) -> Settings:
             name = str(error["loc"][0]) if error["loc"] else "settings"
             reason = "is not set" if error["type"] == "missing" else error["msg"]
             problems.append(f"  {name} {reason}")
+        # Run from the wrong folder, every secret looks forgotten; say where we looked.
+        if any(error["type"] == "missing" for error in exc.errors()):
+            folder = _absent_env_folder(overrides.get("_env_file", ENV_FILE))
+            if folder is not None:
+                problems.append(f"  no .env found in {folder}")
         raise ConfigError(
             "Invalid orgOS configuration (check your .env, see .env.example):\n"
             + "\n".join(problems)
