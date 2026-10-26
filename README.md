@@ -36,7 +36,7 @@ You need Docker Desktop, [uv](https://docs.astral.sh/uv/), and git. uv installs 
    Profiles let you run less: `staging` (Mongo), `sql` (Postgres), `graph` (Neo4j). Use `staging` alone during the Mongo restore, so it has the memory to itself.
 4. **Bootstrap Postgres** (creates the `orgos` database, roles, schemas, and grants; safe to rerun):
    ```sh
-   uv run --env-file .env python -m orgos.sqlstore.bootstrap
+   uv run orgos bootstrap
    ```
 5. **Initialize Neo4j once** on a fresh volume. Neo4j cannot create a database while it is read only, so the very first start must be writable. The graph load does this every time it runs; until the first load, you can do it yourself:
    ```sh

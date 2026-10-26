@@ -2,11 +2,13 @@
 
 import re
 import socket
+import tomllib
 from pathlib import Path
 
 import pytest
 from psycopg.conninfo import conninfo_to_dict
 
+import orgos.sqlstore.bootstrap
 from orgos import __version__
 from orgos.cli import app, run
 from orgos.config import ConfigError, Settings, load_settings
@@ -311,7 +313,8 @@ def test_tracebacks_never_show_locals() -> None:
     assert app.pretty_exceptions_show_locals is False
 
 
-SRC = Path(__file__).resolve().parents[1] / "src" / "orgos"
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src" / "orgos"
 # Reading the environment or writing a connection string belongs in `orgos.config` only.
 CONFIG_LEAK = re.compile(
     r"\benviron\b|\bgetenv\b|postgres(ql)?://|mongodb(\+srv)?://|bolt://|neo4j(\+s)?://"
@@ -353,3 +356,15 @@ def test_config_scan_finds_a_planted_leak(tmp_path: Path, line: str) -> None:
     (tmp_path / "config").mkdir()
     (tmp_path / "config" / "__init__.py").write_text(line + "\n")
     assert config_leaks(tmp_path) == (planted,)
+
+
+def test_the_old_bootstrap_entry_point_is_gone() -> None:
+    module = orgos.sqlstore.bootstrap
+    assert not hasattr(module, "main")
+    assert "__main__" not in Path(module.__file__ or "").read_text(encoding="utf-8")
+    scripts = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["scripts"]
+    assert scripts == {"orgos": "orgos.cli:run"}
+    for doc in ("README.md", "AGENTS.md"):
+        text = (ROOT / doc).read_text(encoding="utf-8")
+        assert "python -m orgos.sqlstore.bootstrap" not in text
+        assert "uv run orgos bootstrap" in text

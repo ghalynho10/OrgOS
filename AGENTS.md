@@ -17,7 +17,7 @@ Tracer Bullet: one question working end to end through both stores and the agent
 ```bash
 uv sync                                              # install
 docker compose --profile all up -d --wait            # all three stores, healthy
-uv run --env-file .env python -m orgos.sqlstore.bootstrap   # Postgres roles, schemas, grants (rerunnable)
+uv run orgos bootstrap                               # Postgres roles, schemas, grants (rerunnable)
 uv run --env-file .env dbt <cmd> --project-dir dbt --profiles-dir dbt
 uv run pytest -m "not integration"                   # fast tests, no Docker
 uv run pytest                                        # all; stop the compose stack first
@@ -25,7 +25,7 @@ uv run pytest                                        # all; stop the compose sta
 
 ## Specs
 
-Stored in `docs/specs/`. Format: `docs/specs/NNNN-title/index.md`.
+Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-title/` with `index.md` and `rationale.md` (plus `verify.md` when there are verify steps). Never a single file spec, even for a small decision.
 
 ## Rules
 
