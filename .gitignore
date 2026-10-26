@@ -4,6 +4,9 @@ data/
 # Secrets
 .env
 
+# Held out eval answers. Never committed.
+eval/held-out.json
+
 # Local only: agent skills and project docs (brief, scope, specs)
 .agents/
 .claude/
