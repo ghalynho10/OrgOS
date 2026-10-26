@@ -8,9 +8,8 @@ from psycopg.conninfo import conninfo_to_dict
 from typer.testing import CliRunner
 
 from orgos import __version__
-from orgos.cli import app
+from orgos.cli import app, run
 from orgos.config import ConfigError, Settings, load_settings
-from orgos.sqlstore.bootstrap import main as bootstrap_main
 
 
 @pytest.fixture(autouse=True)
@@ -209,7 +208,9 @@ def _no_env_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
 
 @pytest.mark.usefixtures("_no_env_file")
 def test_bootstrap_exits_2_on_missing_config(capsys: pytest.CaptureFixture[str]) -> None:
-    assert bootstrap_main() == 2
+    with pytest.raises(SystemExit) as excinfo:
+        run(["bootstrap"])
+    assert excinfo.value.code == 2
     assert "POSTGRES_PASSWORD is not set" in capsys.readouterr().err
 
 
@@ -221,7 +222,9 @@ def test_bootstrap_exits_1_when_postgres_is_unreachable(
         monkeypatch.setenv(name, value)
     port = _free_port()
     monkeypatch.setenv("ORGOS_PG_PORT", str(port))
-    assert bootstrap_main() == 1
+    with pytest.raises(SystemExit) as excinfo:
+        run(["bootstrap"])
+    assert excinfo.value.code == 1
     err = capsys.readouterr().err
     assert f"Could not reach Postgres at 127.0.0.1:{port}" in err
     assert "super-secret" not in err
