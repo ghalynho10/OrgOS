@@ -1,0 +1,45 @@
+# Checks before every commit (AGENTS.md, Tooling and tests).
+# Install once with: uv run pre-commit install
+# Local hooks run through `uv run`, so tool versions come from uv.lock only.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi]
+      - id: mypy
+        name: mypy (strict, src/orgos)
+        entry: uv run mypy
+        language: system
+        pass_filenames: false
+        types_or: [python, pyi, toml]
+      # Parses the project without a database; data tests run on `dbt build`.
+      - id: dbt-parse
+        name: dbt parse
+        entry: uv run dbt parse --project-dir dbt --profiles-dir dbt --quiet
+        language: system
+        pass_filenames: false
+        files: ^dbt/
+      - id: pytest-unit
+        name: pytest (not integration)
+        entry: uv run pytest -m "not integration" -q
+        language: system
+        pass_filenames: false
+        always_run: true
