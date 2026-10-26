@@ -1,0 +1,83 @@
+# The three orgOS stores. Every service sits in a profile, so you can run
+# only what you need (the Mongo restore wants the memory to itself).
+#
+#   docker compose --profile all up -d --wait     # all three, returns when healthy
+#   docker compose --profile staging up -d --wait # Mongo only
+#
+# Values come from `.env` (copy `.env.example`). Ports bind to 127.0.0.1 only.
+
+name: orgos
+
+services:
+  mongo:
+    image: mongo:7.0.45
+    profiles: [staging, all]
+    command: ["mongod", "--wiredTigerCacheSizeGB", "1"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-orgos}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?set MONGO_INITDB_ROOT_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${ORGOS_MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo-data:/data/db
+    mem_limit: 2560m
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand('ping').ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+
+  postgres:
+    image: postgres:18.6
+    profiles: [sql, all]
+    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=50"]
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${ORGOS_PG_PORT:-5432}:5432"
+    volumes:
+      # Postgres 18 images keep data under /var/lib/postgresql/18/docker.
+      - pg-data:/var/lib/postgresql
+    shm_size: 256m
+    mem_limit: 1536m
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  neo4j:
+    image: neo4j:2026.10.1-community
+    profiles: [graph, all]
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH:?set NEO4J_AUTH in .env as neo4j/<password>}
+      NEO4J_server_memory_heap_initial__size: 1G
+      NEO4J_server_memory_heap_max__size: 1G
+      NEO4J_server_memory_pagecache_size: 512M
+      # The whole database is read only unless a graph load clears this
+      # (ORGOS_NEO4J_READ_ONLY_DATABASES= ) and recreates the container.
+      # Neo4j cannot create a database while read only, so on a fresh volume
+      # `neo4j` stays offline until the first graph load starts it writable.
+      NEO4J_server_databases_read__only: ${ORGOS_NEO4J_READ_ONLY_DATABASES-neo4j}
+      NEO4J_db_transaction_timeout: ${ORGOS_QUERY_TIMEOUT_S:-30}s
+      NEO4J_db_memory_transaction_max: 256M
+    ports:
+      - "127.0.0.1:${ORGOS_NEO4J_HTTP_PORT:-7474}:7474"
+      - "127.0.0.1:${ORGOS_NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j-data:/data
+    mem_limit: 2g
+    healthcheck:
+      # Checks the server through `system`, which is up even before `neo4j` exists.
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"$${NEO4J_AUTH#neo4j/}\" -d system 'SHOW DATABASE system' > /dev/null"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  mongo-data:
+  pg-data:
+  neo4j-data:

@@ -1,0 +1,14 @@
+# Read from the environment only, never a home directory profile.
+# Run dbt with: uv run --env-file .env dbt <command> --project-dir dbt --profiles-dir dbt
+orgos:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('ORGOS_PG_HOST', '127.0.0.1') }}"
+      port: "{{ env_var('ORGOS_PG_PORT', '5432') | as_number }}"
+      user: "{{ env_var('ORGOS_PG_OWNER_USER', 'orgos_owner') }}"
+      password: "{{ env_var('ORGOS_PG_OWNER_PASSWORD') }}"
+      dbname: "{{ env_var('ORGOS_PG_DATABASE', 'orgos') }}"
+      schema: stg
+      threads: 4

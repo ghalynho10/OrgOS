@@ -1,0 +1,38 @@
+[project]
+name = "orgos"
+version = "0.1.0"
+description = "A shared operational memory over company work data, compared across a SQL store and a graph store."
+authors = [
+    { name = "Ghaly Nicolas Jules", email = "mghalynho@gmail.com" }
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dbt-core~=1.12.6",
+    "dbt-postgres>=1.11,<2",
+    "dlt[postgres]>=1.31,<2",
+    "neo4j>=6.4,<7",
+    "psycopg[binary]>=3.3,<4",
+    "pydantic-ai-slim[anthropic]>=2.61,<3",
+    "pydantic-settings>=2.16,<3",
+    "pymongo>=4.19,<5",
+    "typer>=0.27,<0.28",
+]
+
+[project.scripts]
+orgos = "orgos.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1,<10",
+    "testcontainers[mongodb,neo4j,postgres]>=4.15,<5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: starts real database containers (stop the compose stack first)",
+]

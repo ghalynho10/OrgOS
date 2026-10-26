@@ -1,0 +1,30 @@
+name: orgos
+version: "0.1.0"
+config-version: 2
+profile: orgos
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: target
+clean-targets: [target, dbt_packages]
+
+flags:
+  send_anonymous_usage_stats: false
+
+# Schemas are exactly stg, model_int, and model (see macros/generate_schema_name.sql).
+models:
+  orgos:
+    stg:
+      +schema: stg
+      +materialized: view
+    # The store neutral entity layer. Always tables: the graph loader reads them.
+    model_int:
+      +schema: model_int
+      +materialized: table
+    # The served SQL tables, the only schema the agent's reader role can see.
+    model:
+      +schema: model
+      +materialized: table
+      +grants:
+        select: ["{{ env_var('ORGOS_PG_READER_USER', 'orgos_reader') }}"]
