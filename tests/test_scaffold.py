@@ -1,5 +1,6 @@
 """Fast checks that need no database."""
 
+import re
 import socket
 from pathlib import Path
 
@@ -308,3 +309,47 @@ def test_unnamed_errors_keep_their_traceback(monkeypatch: pytest.MonkeyPatch) ->
 
 def test_tracebacks_never_show_locals() -> None:
     assert app.pretty_exceptions_show_locals is False
+
+
+SRC = Path(__file__).resolve().parents[1] / "src" / "orgos"
+# Reading the environment or writing a connection string belongs in `orgos.config` only.
+CONFIG_LEAK = re.compile(
+    r"\benviron\b|\bgetenv\b|postgres(ql)?://|mongodb(\+srv)?://|bolt://|neo4j(\+s)?://"
+)
+
+
+def config_leaks(root: Path) -> tuple[Path, ...]:
+    """Files under `root`, outside its `config` folder, that match `CONFIG_LEAK`."""
+    return tuple(
+        path
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+        and "__pycache__" not in path.parts
+        and not path.is_relative_to(root / "config")
+        and CONFIG_LEAK.search(path.read_text(encoding="utf-8", errors="ignore"))
+    )
+
+
+def test_only_config_reads_the_environment_or_builds_connection_strings() -> None:
+    assert config_leaks(SRC) == ()
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        'password = os.environ["POSTGRES_PASSWORD"]',
+        'host = os.getenv("ORGOS_PG_HOST")',
+        'url = "postgresql://user:pass@127.0.0.1/orgos"',
+        'url = "postgres://user:pass@127.0.0.1/orgos"',
+        'url = "mongodb+srv://cluster.example"',
+        'url = "bolt://127.0.0.1:7687"',
+        'url = "neo4j+s://graph.example"',
+    ],
+)
+def test_config_scan_finds_a_planted_leak(tmp_path: Path, line: str) -> None:
+    planted = tmp_path / "sqlstore" / "leak.py"
+    planted.parent.mkdir()
+    planted.write_text(line + "\n")
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / "__init__.py").write_text(line + "\n")
+    assert config_leaks(tmp_path) == (planted,)
