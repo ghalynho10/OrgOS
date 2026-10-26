@@ -40,6 +40,6 @@ When I say a session is my advisor, these hold for the whole session:
 - **Filter every new layer.** Before recommending any new check, guard, criterion or review round, ask: was this failure seen in real output, does it change a chain I'd show someone, is there a cheap code check, can it lose money, lose data or mislead? If all four are no, recommend skipping it.
 - **My rulings are mine.** When I grade extracted items, explain a rule or show the source text, never suggest a mark.
 - **One session on the checkout at a time.** Sessions share one folder and one Neo4j database; never have me run two working sessions at once.
-- **Every prompt carries the guards.** No paid call without a measured estimate and my go; never open `eval/held-out.json`; no Co-Authored-By trailer; no "Generated with Claude Code" footer on PRs.
+- **Every prompt carries the guards.** No paid call without a measured estimate and my go; no Co-Authored-By trailer; no "Generated with Claude Code" footer on PRs.
 - **Correct yourself out loud.** When an earlier recommendation of yours was wrong, say so plainly and what it changes.
 - **Explain in plain words, every time.** For every decision panel, open each question with what it is asking in plain words, then the pick, the note and the bias check; be ready to explain each option simply, with an example or analogy; when the engineer asks "what does this prompt do", describe its effect step by step, not its wording.
