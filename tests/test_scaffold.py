@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 from psycopg.conninfo import conninfo_to_dict
-from typer.testing import CliRunner
 
 from orgos import __version__
 from orgos.cli import app, run
@@ -26,18 +25,6 @@ REQUIRED = {
     "MONGO_INITDB_ROOT_PASSWORD": "mongo-secret",
     "NEO4J_AUTH": "neo4j/graph-secret",
 }
-
-
-def test_help_runs() -> None:
-    result = CliRunner().invoke(app, ["--help"])
-    assert result.exit_code == 0
-    assert "orgos" in result.output.lower()
-
-
-def test_version() -> None:
-    result = CliRunner().invoke(app, ["--version"])
-    assert result.exit_code == 0
-    assert __version__ in result.output
 
 
 def test_missing_config_names_every_missing_variable() -> None:
@@ -63,12 +50,6 @@ def test_connection_strings_are_built_from_parts() -> None:
     assert settings.neo4j_user == "neo4j"
     assert settings.neo4j_password.get_secret_value() == "graph-secret"
     assert settings.dbt_env()["ORGOS_PG_PORT"] == "55432"
-
-
-def test_unknown_option_fails_with_usage_error() -> None:
-    result = CliRunner().invoke(app, ["--no-such-option"])
-    assert result.exit_code == 2
-    assert "No such option" in result.output
 
 
 # covers: DW-3 (one config for every store connection)
@@ -188,12 +169,6 @@ def test_secrets_never_show_in_settings_repr() -> None:
         assert secret not in shown
 
 
-def test_config_error_does_not_echo_the_bad_value() -> None:
-    with pytest.raises(ConfigError) as excinfo:
-        load_settings(_env_file=None, **{**REQUIRED, "NEO4J_AUTH": "leaked-secret-no-slash"})
-    assert "leaked-secret-no-slash" not in str(excinfo.value)
-
-
 def _free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
@@ -206,25 +181,130 @@ def _no_env_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
 
 
+def _set_required(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name, value in REQUIRED.items():
+        monkeypatch.setenv(name, value)
+
+
+def _run(args: list[str]) -> int | str | None:
+    with pytest.raises(SystemExit) as excinfo:
+        run(args)
+    return excinfo.value.code
+
+
+@pytest.mark.usefixtures("_no_env_file")
+@pytest.mark.parametrize("args", [["--help"], ["bootstrap", "--help"]])
+def test_help_needs_no_config(args: list[str], capsys: pytest.CaptureFixture[str]) -> None:
+    assert _run(args) == 0
+    assert "bootstrap" in capsys.readouterr().out
+
+
+def test_version(capsys: pytest.CaptureFixture[str]) -> None:
+    assert _run(["--version"]) == 0
+    assert capsys.readouterr().out == f"orgos {__version__}\n"
+
+
+@pytest.mark.parametrize("args", [["no-such-command"], ["--no-such-option"]])
+def test_usage_errors_exit_2(args: list[str], capsys: pytest.CaptureFixture[str]) -> None:
+    assert _run(args) == 2
+    err = capsys.readouterr().err
+    assert "Usage: " in err
+    assert "No such " in err
+
+
 @pytest.mark.usefixtures("_no_env_file")
 def test_bootstrap_exits_2_on_missing_config(capsys: pytest.CaptureFixture[str]) -> None:
-    with pytest.raises(SystemExit) as excinfo:
-        run(["bootstrap"])
-    assert excinfo.value.code == 2
-    assert "POSTGRES_PASSWORD is not set" in capsys.readouterr().err
+    assert _run(["bootstrap"]) == 2
+    err = capsys.readouterr().err
+    assert "POSTGRES_PASSWORD is not set" in err
+    assert "Traceback" not in err
 
 
+@pytest.mark.usefixtures("_no_env_file")
+def test_config_error_does_not_echo_the_bad_value(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _set_required(monkeypatch)
+    monkeypatch.setenv("NEO4J_AUTH", "leaked-secret-no-slash")
+    assert _run(["bootstrap"]) == 2
+    err = capsys.readouterr().err
+    assert "NEO4J_AUTH" in err
+    assert "leaked-secret-no-slash" not in err
+
+
+@pytest.mark.usefixtures("_no_env_file")
+def test_missing_config_names_the_folder_without_a_env_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert _run(["bootstrap"]) == 2
+    err = capsys.readouterr().err
+    assert err.endswith(f"\n  no .env found in {tmp_path.resolve()}\n")
+
+
+def test_folder_hint_names_an_explicit_env_files_folder(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError) as excinfo:
+        load_settings(_env_file=tmp_path / "elsewhere" / ".env")
+    assert str(excinfo.value).endswith(f"  no .env found in {tmp_path.resolve() / 'elsewhere'}")
+
+
+@pytest.mark.parametrize("env_file", [None, ["a.env", "b.env"]])
+def test_no_folder_hint_when_no_single_env_file_is_read(env_file: object) -> None:
+    with pytest.raises(ConfigError) as excinfo:
+        load_settings(_env_file=env_file)
+    assert "no .env found" not in str(excinfo.value)
+
+
+@pytest.mark.usefixtures("_no_env_file")
+def test_no_folder_hint_for_invalid_values_alone(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _set_required(monkeypatch)
+    monkeypatch.setenv("ORGOS_PG_PORT", "not-a-port")
+    assert _run(["bootstrap"]) == 2
+    err = capsys.readouterr().err
+    assert "ORGOS_PG_PORT" in err
+    assert "no .env found" not in err
+
+
+def test_no_folder_hint_when_the_env_file_exists(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    (tmp_path / ".env").write_text("POSTGRES_PASSWORD=super-secret\n")
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(ConfigError) as excinfo:
+        load_settings()
+    message = str(excinfo.value)
+    assert "ORGOS_PG_OWNER_PASSWORD is not set" in message
+    assert "POSTGRES_PASSWORD" not in message
+    assert "no .env found" not in message
+
+
+# Environment only, no `.env`: config loads, so the exit is Postgres's 1, not 2.
 @pytest.mark.usefixtures("_no_env_file")
 def test_bootstrap_exits_1_when_postgres_is_unreachable(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    for name, value in REQUIRED.items():
-        monkeypatch.setenv(name, value)
+    _set_required(monkeypatch)
     port = _free_port()
     monkeypatch.setenv("ORGOS_PG_PORT", str(port))
-    with pytest.raises(SystemExit) as excinfo:
-        run(["bootstrap"])
-    assert excinfo.value.code == 1
+    assert _run(["bootstrap"]) == 1
     err = capsys.readouterr().err
     assert f"Could not reach Postgres at 127.0.0.1:{port}" in err
-    assert "super-secret" not in err
+    assert "Traceback" not in err
+    for secret in REQUIRED.values():
+        assert secret not in err
+
+
+@pytest.mark.usefixtures("_no_env_file")
+def test_unnamed_errors_keep_their_traceback(monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken(settings: Settings) -> None:
+        raise RuntimeError("not in the exit code table")
+
+    _set_required(monkeypatch)
+    monkeypatch.setattr("orgos.cli.bootstrap", broken)
+    with pytest.raises(RuntimeError, match="not in the exit code table"):
+        run(["bootstrap"])
+
+
+def test_tracebacks_never_show_locals() -> None:
+    assert app.pretty_exceptions_show_locals is False

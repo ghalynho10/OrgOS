@@ -9,6 +9,7 @@ from dbt.cli.main import dbtRunner
 from pydantic import SecretStr
 
 from orgos.config import Settings
+from orgos.sqlstore import SqlStoreError
 from orgos.sqlstore.bootstrap import SCHEMAS, bootstrap
 
 pytestmark = pytest.mark.integration
@@ -146,3 +147,17 @@ def test_rerun_resets_the_reader_password_and_timeout(pg_settings: Settings) -> 
         assert conn.execute("SHOW statement_timeout").fetchone() == ("7s",)
     with pytest.raises(psycopg.OperationalError, match="password authentication failed"):
         psycopg.connect(first.pg_conninfo("reader"))
+
+
+def test_refused_login_raises_sql_store_error_without_the_password(
+    pg_settings: Settings,
+) -> None:
+    wrong = pg_settings.model_copy(
+        update={"pg_superuser_password": SecretStr("wrong-superuser-password")}
+    )
+    with pytest.raises(SqlStoreError) as excinfo:
+        bootstrap(wrong)
+    message = str(excinfo.value)
+    assert message.startswith(f"Could not reach Postgres at {wrong.pg_host}:{wrong.pg_port}: ")
+    assert "password authentication failed" in message
+    assert "wrong-superuser-password" not in message
