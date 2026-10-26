@@ -1,0 +1,37 @@
+# Raw data (the Jira dump, dlt pipeline state). Never committed.
+data/
+
+# Secrets
+.env
+
+# Local only: agent skills and project docs (brief, scope, specs)
+.agents/
+.claude/
+skills-lock.json
+docs/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# dbt
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
