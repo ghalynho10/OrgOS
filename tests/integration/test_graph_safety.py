@@ -10,8 +10,7 @@ pytestmark = pytest.mark.integration
 def test_read_only_setting_is_active(neo4j_read_only: Neo4jContainer) -> None:
     with neo4j_read_only.get_driver() as driver:
         records, _, _ = driver.execute_query(
-            "SHOW SETTINGS YIELD name, value WHERE name = 'server.databases.read_only' "
-            "RETURN value"
+            "SHOW SETTINGS YIELD name, value WHERE name = 'server.databases.read_only' RETURN value"
         )
     assert "neo4j" in records[0]["value"]
 

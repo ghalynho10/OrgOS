@@ -6,9 +6,10 @@ from pathlib import Path
 import psycopg
 import pytest
 from dbt.cli.main import dbtRunner
+from pydantic import SecretStr
 
 from orgos.config import Settings
-from orgos.sqlstore.bootstrap import bootstrap
+from orgos.sqlstore.bootstrap import SCHEMAS, bootstrap
 
 pytestmark = pytest.mark.integration
 
@@ -67,7 +68,8 @@ def test_schemas_have_exact_names(built: Settings) -> None:
     ]
     with psycopg.connect(built.pg_conninfo("owner")) as conn:
         views = conn.execute(
-            "SELECT table_schema FROM information_schema.views WHERE table_name = 'scaffold_probe_stg'"
+            "SELECT table_schema FROM information_schema.views "
+            "WHERE table_name = 'scaffold_probe_stg'"
         ).fetchall()
     assert views == [("stg",)]
 
@@ -107,3 +109,40 @@ def test_reader_limits_are_set_by_role(reader: psycopg.Connection) -> None:
     assert reader.execute("SHOW temp_file_limit").fetchone() == ("1GB",)
     with pytest.raises(psycopg.errors.InsufficientPrivilege):
         reader.execute("SET temp_file_limit = -1")
+
+
+# covers: SC-6 (schemas exist, owned by the owner role)
+def test_schemas_are_owned_by_the_owner_role(built: Settings) -> None:
+    with psycopg.connect(built.pg_conninfo("owner")) as conn:
+        rows = conn.execute(
+            "SELECT nspname, pg_get_userbyid(nspowner) FROM pg_namespace "
+            "WHERE nspname = ANY(%s) ORDER BY 1",
+            (list(SCHEMAS),),
+        ).fetchall()
+    assert rows == sorted((schema, built.pg_owner_user) for schema in SCHEMAS)
+
+
+def test_reader_work_mem_is_capped_by_role(reader: psycopg.Connection) -> None:
+    assert reader.execute("SHOW work_mem").fetchone() == ("16MB",)
+
+
+def test_rerun_resets_the_reader_password_and_timeout(pg_settings: Settings) -> None:
+    # Its own database and roles, so the module's `built` state is untouched.
+    first = pg_settings.model_copy(
+        update={
+            "pg_database": "orgos_rerun",
+            "pg_owner_user": "rerun_owner",
+            "pg_reader_user": "rerun_reader",
+            "pg_reader_password": SecretStr("first-password"),
+        }
+    )
+    second = first.model_copy(
+        update={"pg_reader_password": SecretStr("second-password"), "query_timeout_s": 7}
+    )
+    bootstrap(first)
+    bootstrap(second)
+
+    with psycopg.connect(second.pg_conninfo("reader"), autocommit=True) as conn:
+        assert conn.execute("SHOW statement_timeout").fetchone() == ("7s",)
+    with pytest.raises(psycopg.OperationalError, match="password authentication failed"):
+        psycopg.connect(first.pg_conninfo("reader"))
