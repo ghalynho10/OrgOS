@@ -58,7 +58,12 @@ def test_integration_images_match_compose() -> None:
 
 # The spec fixes these names (database `orgos`, roles `orgos_owner` and
 # `orgos_reader`), so `.env.example` leaves their overrides out.
-FIXED_NAMES = {"ORGOS_PG_DATABASE", "ORGOS_PG_SUPERUSER", "ORGOS_PG_OWNER_USER", "ORGOS_PG_READER_USER"}
+FIXED_NAMES = {
+    "ORGOS_PG_DATABASE",
+    "ORGOS_PG_SUPERUSER",
+    "ORGOS_PG_OWNER_USER",
+    "ORGOS_PG_READER_USER",
+}
 
 
 def test_env_example_lists_every_setting_but_the_fixed_names() -> None:

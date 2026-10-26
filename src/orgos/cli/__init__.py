@@ -25,7 +25,11 @@ def _print_version(value: bool) -> None:
 @app.callback()
 def main(
     version: bool = typer.Option(
-        False, "--version", help="Show the version and exit.", callback=_print_version, is_eager=True
+        False,
+        "--version",
+        help="Show the version and exit.",
+        callback=_print_version,
+        is_eager=True,
     ),
 ) -> None:
     """orgOS: query one company's work data through a SQL store and a graph store."""

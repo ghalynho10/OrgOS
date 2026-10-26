@@ -139,7 +139,11 @@ def test_neo4j_password_may_contain_a_slash() -> None:
 def test_mongo_uri_escapes_special_characters() -> None:
     settings = load_settings(
         _env_file=None,
-        **{**REQUIRED, "MONGO_INITDB_ROOT_USERNAME": "us@er", "MONGO_INITDB_ROOT_PASSWORD": "p@ss:w/rd?"},
+        **{
+            **REQUIRED,
+            "MONGO_INITDB_ROOT_USERNAME": "us@er",
+            "MONGO_INITDB_ROOT_PASSWORD": "p@ss:w/rd?",
+        },
     )
     assert settings.mongo_uri == (
         "mongodb://us%40er:p%40ss%3Aw%2Frd%3F@127.0.0.1:27017/?authSource=admin"

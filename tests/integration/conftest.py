@@ -13,14 +13,14 @@ from collections.abc import Iterator
 # testcontainers is imported, since it reads its config at import time.
 os.environ.setdefault("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", "/var/run/docker.sock")
 
-import uuid  # noqa: E402
+import uuid
 
-import docker  # noqa: E402
-import pytest  # noqa: E402
-from testcontainers.community.neo4j import Neo4jContainer  # noqa: E402
-from testcontainers.community.postgres import PostgresContainer  # noqa: E402
+import docker
+import pytest
+from testcontainers.community.neo4j import Neo4jContainer
+from testcontainers.community.postgres import PostgresContainer
 
-from orgos.config import Settings, load_settings  # noqa: E402
+from orgos.config import Settings, load_settings
 
 POSTGRES_IMAGE = "postgres:18.6"
 NEO4J_IMAGE = "neo4j:2026.10.1-community"

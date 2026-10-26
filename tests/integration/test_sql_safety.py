@@ -68,7 +68,8 @@ def test_schemas_have_exact_names(built: Settings) -> None:
     ]
     with psycopg.connect(built.pg_conninfo("owner")) as conn:
         views = conn.execute(
-            "SELECT table_schema FROM information_schema.views WHERE table_name = 'scaffold_probe_stg'"
+            "SELECT table_schema FROM information_schema.views "
+            "WHERE table_name = 'scaffold_probe_stg'"
         ).fetchall()
     assert views == [("stg",)]
 

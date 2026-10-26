@@ -40,6 +40,7 @@ def _ensure_role(cur: psycopg.Cursor, name: str, password: str) -> None:
 
 
 def bootstrap(settings: Settings) -> None:
+    """Create or reset the database, roles, schemas, and grants; safe to rerun."""
     owner = sql.Identifier(settings.pg_owner_user)
     reader = sql.Identifier(settings.pg_reader_user)
     database = sql.Identifier(settings.pg_database)
@@ -78,8 +79,12 @@ def bootstrap(settings: Settings) -> None:
                     sql.Identifier(schema), owner
                 )
             )
-            cur.execute(sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(sql.Identifier(schema), owner))
-            cur.execute(sql.SQL("REVOKE ALL ON SCHEMA {} FROM PUBLIC").format(sql.Identifier(schema)))
+            cur.execute(
+                sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(sql.Identifier(schema), owner)
+            )
+            cur.execute(
+                sql.SQL("REVOKE ALL ON SCHEMA {} FROM PUBLIC").format(sql.Identifier(schema))
+            )
 
         served = sql.Identifier(SERVED_SCHEMA)
         cur.execute(sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(served, reader))
@@ -95,6 +100,7 @@ def bootstrap(settings: Settings) -> None:
 
 
 def main() -> int:
+    """Run the bootstrap from the environment and return a process exit code."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     try:
         settings = load_settings()
@@ -104,7 +110,10 @@ def main() -> int:
     try:
         bootstrap(settings)
     except psycopg.OperationalError as exc:
-        print(f"Could not reach Postgres at {settings.pg_host}:{settings.pg_port}: {exc}", file=sys.stderr)
+        print(
+            f"Could not reach Postgres at {settings.pg_host}:{settings.pg_port}: {exc}",
+            file=sys.stderr,
+        )
         return 1
     return 0
 
