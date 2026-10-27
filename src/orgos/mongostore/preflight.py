@@ -24,7 +24,7 @@ from pydantic import SecretStr
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
-from orgos.mongostore import MongoStoreError, redact
+from orgos.mongostore import MongoStoreError, describe
 from orgos.mongostore.dump import (
     COMPOSE_PROJECT,
     COMPOSE_SERVICE,
@@ -184,7 +184,8 @@ def _part(version: str, count: int) -> str:
 
 
 def _gb(value: int) -> str:
-    return f"{value / GB:.1f} GB"
+    # Rounded down, so a value under a limit never prints as the limit.
+    return f"{value * 10 // GB / 10:.1f} GB"
 
 
 def _not_checked(name: str, needs: str) -> CheckResult:
@@ -591,7 +592,7 @@ def gather_facts(
         live = live_counts(client)
         state = Fact(value=work_out_state(None if marker is None else marker.counts, live))
     except PyMongoError as error:
-        reason = redact(f"{type(error).__name__}: {error}", secrets)
+        reason = describe(error, secrets)
         if server.value is None:
             server = Fact(error=f"login to Mongo from this machine failed: {reason}")
         else:
@@ -611,7 +612,7 @@ def gather_facts(
             try:
                 reclaimable = Fact(value=reclaimable_bytes(client))
             except PyMongoError as error:
-                reclaimable = Fact(error=redact(str(error), secrets))
+                reclaimable = Fact(error=describe(error, secrets))
 
     others = _parsed(
         _docker("ps", "--format", '{{.Names}}\t{{.Label "com.docker.compose.project"}}'),

@@ -7,6 +7,7 @@ through the real `docker exec` call with injected expected counts.
 
 import hashlib
 import os
+import socket
 import struct
 import time
 import zipfile
@@ -17,6 +18,7 @@ from typing import Any
 
 import pytest
 from bson import Binary
+from pydantic import SecretStr
 from pymongo import MongoClient
 from pymongo.errors import OperationFailure
 from testcontainers.community.mongodb import MongoDbContainer
@@ -29,6 +31,7 @@ from orgos.mongostore.marker import MARKER_COLLECTION, MARKER_DATABASE
 from orgos.mongostore.preflight import Limits
 from orgos.mongostore.receipt import RECEIPT_KEYS, RECEIPT_NAME
 from orgos.mongostore.restore import restore
+from orgos.mongostore.verify import verify
 from tests.integration.conftest import MONGO_ROOT_PASSWORD, MONGO_ROOT_USER
 
 pytestmark = pytest.mark.integration
@@ -277,3 +280,220 @@ def test_ctrl_c_during_the_stream_stops_the_child_and_leaves_no_marker(
     while _mongorestore_running(mongo):
         assert time.monotonic() < deadline, "mongorestore still runs 30 s after the interrupt"
         time.sleep(0.5)
+
+
+# --check and the rerun states
+
+
+# covers: AC-12, AC-33
+def test_check_writes_nothing_then_says_a_plain_run_would_skip(
+    mongo_settings: Settings,
+    container_id: str,
+    root: MongoClient[dict[str, Any]],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level("INFO")
+    _restore(mongo_settings, container_id, check_only=True)
+    assert f"PASS\tcontainer\t{container_id} (given)" in caplog.messages
+    assert "check: no check blocks, a plain run would restore" in caplog.messages
+    assert DATABASE not in root.list_database_names()
+    assert MARKER_DATABASE not in root.list_database_names()
+    assert sorted(p.name for p in mongo_settings.data_dir.iterdir()) == [RECEIPT_NAME, ZIP_NAME]
+
+    _restore(mongo_settings, container_id)
+    caplog.clear()
+    _restore(mongo_settings, container_id, check_only=True)
+    assert f"check: {DATABASE} is already restored, a plain run would skip" in caplog.messages
+
+
+# covers: AC-12, AC-13
+def test_check_blocks_on_a_missing_receipt(
+    mongo_settings: Settings, container_id: str, root: MongoClient[dict[str, Any]]
+) -> None:
+    (mongo_settings.data_dir / RECEIPT_NAME).unlink()
+    with pytest.raises(MongoStoreError, match=r"receipt: no dataset\.receipt in "):
+        _restore(mongo_settings, container_id, check_only=True)
+    assert DATABASE not in root.list_database_names()
+
+
+# covers: AC-21
+def test_complete_skips_without_the_zip_and_ensures_the_reader(
+    mongo_settings: Settings,
+    container_id: str,
+    root: MongoClient[dict[str, Any]],
+    capfd: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _restore(mongo_settings, container_id)
+    for path in mongo_settings.data_dir.iterdir():
+        path.unlink()
+    root.admin.command("dropUser", READER_USER)
+    capfd.readouterr()
+    caplog.clear()
+    caplog.set_level("INFO")
+
+    _restore(mongo_settings, container_id)
+    out, err = capfd.readouterr()
+    assert out.startswith("verify PASS\n")
+    assert "archive on stdin" not in err
+    assert any(m.startswith("already restored (marker from 20") for m in caplog.messages)
+    assert any(m.startswith("PASS\tmongorestore\t100.") for m in caplog.messages)
+    assert root.admin.command("usersInfo", READER_USER)["users"]
+
+
+# covers: AC-20
+def test_data_without_a_marker_is_blocked_and_unchanged(
+    mongo_settings: Settings, container_id: str, root: MongoClient[dict[str, Any]]
+) -> None:
+    root[DATABASE].Alpha.insert_one({"_id": "left over"})
+    with pytest.raises(
+        MongoStoreError, match=r"has data but no restore record; rerun with --reset"
+    ):
+        _restore(mongo_settings, container_id)
+    assert _counts(root) == {"Alpha": 1}
+    assert _marker(root) is None
+
+
+# covers: AC-22
+@pytest.mark.parametrize("damage", ["drop a collection", "drop the database"])
+def test_a_failing_marker_is_blocked(
+    mongo_settings: Settings, container_id: str, root: MongoClient[dict[str, Any]], damage: str
+) -> None:
+    _restore(mongo_settings, container_id)
+    if damage == "drop a collection":
+        root[DATABASE].drop_collection("Beta")
+    else:
+        root.drop_database(DATABASE)
+    with pytest.raises(MongoStoreError, match=r"differs from its restore record.*--reset"):
+        _restore(mongo_settings, container_id)
+    assert _marker(root) is not None
+
+
+# covers: AC-23
+def test_reset_deletes_the_marker_then_drops_then_restores(
+    mongo_settings: Settings,
+    container_id: str,
+    root: MongoClient[dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _restore(mongo_settings, container_id)
+    root[DATABASE].drop_collection("Beta")
+    first = _marker(root)
+    seen: list[bool] = []
+    real_delete = restore_module.delete_marker
+
+    def spy(client: MongoClient[dict[str, Any]]) -> None:
+        seen.append(DATABASE in client.list_database_names())
+        real_delete(client)
+
+    monkeypatch.setattr(restore_module, "delete_marker", spy)
+    _restore(mongo_settings, container_id, reset=True)
+    assert seen == [True]
+    marker = _marker(root)
+    assert marker is not None and first is not None
+    assert marker["completed_at"] > first["completed_at"]
+    assert _counts(root) == TINY
+
+
+# covers: AC-23
+def test_reset_happens_only_after_every_check_passes(
+    mongo_settings: Settings, container_id: str, root: MongoClient[dict[str, Any]]
+) -> None:
+    _restore(mongo_settings, container_id)
+    (mongo_settings.data_dir / RECEIPT_NAME).unlink()
+    with pytest.raises(MongoStoreError, match="receipt"):
+        _restore(mongo_settings, container_id, reset=True)
+    assert _marker(root) is not None
+    assert _counts(root) == TINY
+
+
+# Standalone verify
+
+
+# covers: AC-35, AC-36
+def test_verify_passes_then_names_each_drift_and_keeps_the_marker(
+    mongo_settings: Settings,
+    container_id: str,
+    root: MongoClient[dict[str, Any]],
+    capfd: pytest.CaptureFixture[str],
+) -> None:
+    _restore(mongo_settings, container_id)
+    marker = _marker(root)
+    capfd.readouterr()
+
+    verify(mongo_settings)
+    assert (
+        capfd.readouterr().out == "verify PASS\nAlpha\t3\t3\tok\nBeta\t2\t2\tok\ntotal\t5\t5\tok\n"
+    )
+
+    root[DATABASE].Alpha.insert_one({"_id": "added"})
+    root[DATABASE].drop_collection("Beta")
+    root[DATABASE].Gamma.insert_one({"_id": 1})
+    with pytest.raises(MongoStoreError, match="verify FAIL: 3 collections differ"):
+        verify(mongo_settings)
+    assert capfd.readouterr().out.splitlines() == [
+        "verify FAIL",
+        "Alpha\t3\t4\tDIFF",
+        "Beta\t2\tnone\tMISSING",
+        "Gamma\tnone\t1\tEXTRA",
+        "total\t5\t5\tDIFF",
+    ]
+    assert _marker(root) == marker
+
+
+# covers: AC-37
+def test_verify_without_a_marker_says_there_is_no_record(mongo_settings: Settings) -> None:
+    with pytest.raises(MongoStoreError, match=f"no restore record for {DATABASE}"):
+        verify(mongo_settings)
+
+
+# Logins and secrets
+
+
+# covers: AC-17, AC-38
+def test_a_wrong_root_password_blocks_without_showing_it(
+    mongo_settings: Settings, container_id: str
+) -> None:
+    wrong = mongo_settings.model_copy(update={"mongo_password": SecretStr("wrong-root-pw")})
+    with pytest.raises(MongoStoreError) as excinfo:
+        _restore(wrong, container_id, check_only=True)
+    message = str(excinfo.value)
+    assert "host login: login to Mongo from this machine failed" in message
+    assert "Authentication failed" in message
+    for secret in ("wrong-root-pw", MONGO_ROOT_PASSWORD, READER_PASSWORD):
+        assert secret not in message
+
+
+# covers: AC-11, AC-38
+def test_an_unreachable_port_fails_in_seconds_without_secrets(mongo_settings: Settings) -> None:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    away = mongo_settings.model_copy(update={"mongo_port": port})
+    started = time.monotonic()
+    with pytest.raises(MongoStoreError) as excinfo:
+        verify(away)
+    assert time.monotonic() - started < 15
+    message = str(excinfo.value)
+    assert f":{port}: [Errno" in message
+    assert "Topology Description" not in message
+    for secret in (MONGO_ROOT_PASSWORD, READER_PASSWORD):
+        assert secret not in message
+
+
+# covers: AC-17 (a password changed after the container was created)
+def test_container_credentials_that_no_longer_work_block(
+    mongo_settings: Settings, container_id: str, root: MongoClient[dict[str, Any]]
+) -> None:
+    root.admin.command("updateUser", MONGO_ROOT_USER, pwd="rotated-root-pw")
+    rotated = mongo_settings.model_copy(update={"mongo_password": SecretStr("rotated-root-pw")})
+    try:
+        with pytest.raises(MongoStoreError) as excinfo:
+            _restore(rotated, container_id, check_only=True)
+        message = str(excinfo.value)
+        assert "restore blocked by 1 check(s)" in message
+        assert "container login: `docker exec` exited" in message
+        assert "rotated-root-pw" not in message
+    finally:
+        with MongoClient(rotated.mongo_uri) as client:
+            client.admin.command("updateUser", MONGO_ROOT_USER, pwd=MONGO_ROOT_PASSWORD)

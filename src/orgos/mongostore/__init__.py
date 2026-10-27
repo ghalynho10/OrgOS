@@ -35,6 +35,12 @@ def redact(message: str, secrets: tuple[SecretStr, ...]) -> str:
     return message
 
 
+def describe(error: Exception, secrets: tuple[SecretStr, ...]) -> str:
+    """`Type: message` for an error, secrets masked, pymongo's topology dump cut off."""
+    message = str(error).split(", Timeout: ", 1)[0]
+    return redact(f"{type(error).__name__}: {message}", secrets)
+
+
 @contextmanager
 def mongo_errors(action: str, secrets: tuple[SecretStr, ...] = ()) -> Iterator[None]:
     """Turn the expected Mongo, Docker, zip and file errors into a `MongoStoreError`.
@@ -44,5 +50,4 @@ def mongo_errors(action: str, secrets: tuple[SecretStr, ...] = ()) -> Iterator[N
     try:
         yield
     except WRAPPED_ERRORS as error:
-        reason = redact(f"{type(error).__name__}: {error}", secrets)
-        raise MongoStoreError(f"{action} failed: {reason}") from None
+        raise MongoStoreError(f"{action} failed: {describe(error, secrets)}") from None
