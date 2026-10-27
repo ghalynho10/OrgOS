@@ -47,6 +47,12 @@ class Settings(BaseSettings):
     mongo_port: int = Field(27017, validation_alias="ORGOS_MONGO_PORT")
     mongo_user: str = Field("orgos", validation_alias="MONGO_INITDB_ROOT_USERNAME")
     mongo_password: SecretStr = Field(validation_alias="MONGO_INITDB_ROOT_PASSWORD")
+    mongo_reader_user: str = Field("orgos_raw_reader", validation_alias="ORGOS_MONGO_READER_USER")
+    mongo_reader_password: SecretStr = Field(validation_alias="ORGOS_MONGO_READER_PASSWORD")
+
+    # The folder holding the dataset zip and its receipt, relative to the
+    # current folder like `.env`.
+    data_dir: Path = Field(Path("data"), validation_alias="ORGOS_DATA_DIR")
 
     # Neo4j (graph store)
     neo4j_host: str = Field("127.0.0.1", validation_alias="ORGOS_NEO4J_HOST")
@@ -89,13 +95,19 @@ class Settings(BaseSettings):
     def neo4j_uri(self) -> str:
         return f"bolt://{self.neo4j_host}:{self.neo4j_bolt_port}"
 
-    @property
-    def mongo_uri(self) -> str:
-        password = quote_plus(self.mongo_password.get_secret_value())
+    def _mongo_uri(self, user: str, password: SecretStr) -> str:
         return (
-            f"mongodb://{quote_plus(self.mongo_user)}:{password}"
+            f"mongodb://{quote_plus(user)}:{quote_plus(password.get_secret_value())}"
             f"@{self.mongo_host}:{self.mongo_port}/?authSource=admin"
         )
+
+    @property
+    def mongo_uri(self) -> str:
+        return self._mongo_uri(self.mongo_user, self.mongo_password)
+
+    @property
+    def mongo_reader_uri(self) -> str:
+        return self._mongo_uri(self.mongo_reader_user, self.mongo_reader_password)
 
     def pg_conninfo(self, role: str, *, dbname: str | None = None) -> str:
         """Connection string for `superuser`, `owner`, or `reader`."""

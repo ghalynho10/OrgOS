@@ -26,6 +26,7 @@ REQUIRED = {
     "ORGOS_PG_OWNER_PASSWORD": "owner-secret",
     "ORGOS_PG_READER_PASSWORD": "reader-secret",
     "MONGO_INITDB_ROOT_PASSWORD": "mongo-secret",
+    "ORGOS_MONGO_READER_PASSWORD": "mongo-reader-secret",
     "NEO4J_AUTH": "neo4j/graph-secret",
 }
 
@@ -88,6 +89,18 @@ def test_spec_defaults_apply_when_unset() -> None:
     assert settings.pg_owner_user == "orgos_owner"
     assert settings.pg_reader_user == "orgos_reader"
     assert settings.neo4j_uri == "bolt://127.0.0.1:7687"
+    assert settings.mongo_reader_user == "orgos_raw_reader"
+    assert settings.data_dir == Path("data")
+
+
+# covers: AC-10 (the reader login is built like the root one)
+def test_mongo_reader_uri_uses_the_reader_login() -> None:
+    settings = load_settings(
+        _env_file=None,
+        **{**REQUIRED, "ORGOS_MONGO_READER_USER": "raw", "ORGOS_MONGO_READER_PASSWORD": "r@w/pw"},
+    )
+    assert settings.mongo_reader_uri == "mongodb://raw:r%40w%2Fpw@127.0.0.1:27017/?authSource=admin"
+    assert "mongo-secret" not in settings.mongo_reader_uri
 
 
 @pytest.mark.parametrize(

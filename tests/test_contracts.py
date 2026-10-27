@@ -10,7 +10,7 @@ import pytest
 import yaml
 
 from orgos.config import Settings, load_settings
-from tests.integration.conftest import NEO4J_IMAGE, POSTGRES_IMAGE
+from tests.integration.conftest import MONGO_IMAGE, NEO4J_IMAGE, POSTGRES_IMAGE
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPOSE = yaml.safe_load((ROOT / "docker-compose.yml").read_text())
@@ -54,6 +54,7 @@ def test_neo4j_defaults_to_read_only() -> None:
 def test_integration_images_match_compose() -> None:
     assert SERVICES["postgres"]["image"] == POSTGRES_IMAGE
     assert SERVICES["neo4j"]["image"] == NEO4J_IMAGE
+    assert SERVICES["mongo"]["image"] == MONGO_IMAGE
 
 
 # The spec fixes these names (database `orgos`, roles `orgos_owner` and
@@ -108,6 +109,7 @@ def test_dbt_env_provides_every_variable_dbt_reads() -> None:
         ORGOS_PG_OWNER_PASSWORD="x",
         ORGOS_PG_READER_PASSWORD="x",
         MONGO_INITDB_ROOT_PASSWORD="x",
+        ORGOS_MONGO_READER_PASSWORD="x",
         NEO4J_AUTH="neo4j/x",
     )
     dbt_text = (ROOT / "dbt/profiles.yml").read_text() + (ROOT / "dbt/dbt_project.yml").read_text()

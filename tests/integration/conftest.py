@@ -13,10 +13,14 @@ from collections.abc import Iterator
 # testcontainers is imported, since it reads its config at import time.
 os.environ.setdefault("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", "/var/run/docker.sock")
 
+import time
 import uuid
 
 import docker
 import pytest
+from pymongo import MongoClient
+from pymongo.errors import PyMongoError
+from testcontainers.community.mongodb import MongoDbContainer
 from testcontainers.community.neo4j import Neo4jContainer
 from testcontainers.community.postgres import PostgresContainer
 
@@ -24,9 +28,12 @@ from orgos.config import Settings, load_settings
 
 POSTGRES_IMAGE = "postgres:18.6"
 NEO4J_IMAGE = "neo4j:2026.10.1-community"
+MONGO_IMAGE = "mongo:7.0.45"
 
 SUPERUSER_PASSWORD = "test-superuser"
 NEO4J_PASSWORD = "test-graph-password"
+MONGO_ROOT_USER = "orgos"
+MONGO_ROOT_PASSWORD = "test-mongo-root"
 
 
 @pytest.fixture(scope="session")
@@ -48,6 +55,7 @@ def pg_settings(postgres: PostgresContainer) -> Settings:
         ORGOS_PG_OWNER_PASSWORD="test-owner",
         ORGOS_PG_READER_PASSWORD="test-reader",
         MONGO_INITDB_ROOT_PASSWORD="unused",
+        ORGOS_MONGO_READER_PASSWORD="unused",
         NEO4J_AUTH="neo4j/unused-password",
         ORGOS_QUERY_TIMEOUT_S=5,
     )
@@ -77,3 +85,29 @@ def neo4j_read_only() -> Iterator[Neo4jContainer]:
             yield container
     finally:
         docker.from_env().volumes.get(volume).remove(force=True)
+
+
+@pytest.fixture(scope="session")
+def mongo() -> Iterator[MongoDbContainer]:
+    """Mongo with root auth on, like the compose service.
+
+    The image's init step logs "waiting for connections" for a local only
+    server first, so wait until the root login works from the host.
+    """
+    container = MongoDbContainer(
+        MONGO_IMAGE, username=MONGO_ROOT_USER, password=MONGO_ROOT_PASSWORD
+    ).with_command("mongod --wiredTigerCacheSizeGB 0.25")
+    with container:
+        deadline = time.monotonic() + 60
+        while True:
+            try:
+                with MongoClient(
+                    container.get_connection_url(), serverSelectionTimeoutMS=1000
+                ) as client:
+                    client.admin.command("listDatabases")
+                break
+            except PyMongoError:
+                if time.monotonic() > deadline:
+                    raise
+                time.sleep(0.5)
+        yield container
