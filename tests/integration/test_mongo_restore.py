@@ -162,6 +162,11 @@ def _marker(root: MongoClient[dict[str, Any]]) -> dict[str, Any] | None:
     return root[MARKER_DATABASE][MARKER_COLLECTION].find_one({"_id": DATABASE})
 
 
+def _assert_no_secrets(*texts: str) -> None:
+    for secret in (MONGO_ROOT_PASSWORD, READER_PASSWORD):
+        assert all(secret not in text for text in texts), secret
+
+
 def _counts(root: MongoClient[dict[str, Any]]) -> dict[str, int]:
     database = root[DATABASE]
     return {name: database[name].count_documents({}) for name in database.list_collection_names()}
@@ -181,6 +186,7 @@ def test_tiny_restore_passes_and_writes_the_marker(
 
     assert out == "verify PASS\nAlpha\t3\t3\tok\nBeta\t2\t2\tok\ntotal\t5\t5\tok\n"
     assert "\x1b" not in out
+    _assert_no_secrets(out, err, caplog.text)
     # mongorestore read the archive from stdin and wrote its progress to stderr.
     assert "from `archive on stdin`" in err
     assert "5 document(s) restored successfully. 0 document(s) failed to restore." in err
@@ -217,7 +223,9 @@ def test_a_failed_document_stops_mongorestore_and_leaves_no_marker(
     capfd: pytest.CaptureFixture[str],
 ) -> None:
     _place(mongo_settings.data_dir, archives["invalid"])
-    with pytest.raises(MongoStoreError, match=r"mongorestore exited with status 1;.*--reset"):
+    with pytest.raises(
+        MongoStoreError, match=r"mongorestore exited with status 1;.*--reset"
+    ) as excinfo:
         restore(
             mongo_settings,
             reset=False,
@@ -230,6 +238,7 @@ def test_a_failed_document_stops_mongorestore_and_leaves_no_marker(
     out, err = capfd.readouterr()
     assert "Document failed validation" in err
     assert out == ""
+    _assert_no_secrets(out, err, str(excinfo.value))
     assert _marker(root) is None
 
 
@@ -241,8 +250,9 @@ def test_a_crc_error_at_the_end_of_the_stream_leaves_no_marker(
     archives: dict[str, bytes],
 ) -> None:
     _place(mongo_settings.data_dir, _damage_crc(archives["good"]))
-    with pytest.raises(MongoStoreError, match=r"zip check \(Bad CRC-32.*--reset"):
+    with pytest.raises(MongoStoreError, match=r"zip check \(Bad CRC-32.*--reset") as excinfo:
         _restore(mongo_settings, container_id)
+    _assert_no_secrets(str(excinfo.value))
     assert _marker(root) is None
 
 
@@ -275,6 +285,7 @@ def test_ctrl_c_during_the_stream_stops_the_child_and_leaves_no_marker(
     assert message.count("\n") == 0
     assert "partial" in message
     assert "--reset" in message
+    _assert_no_secrets(message)
     assert _marker(root) is None
     deadline = time.monotonic() + 30
     while _mongorestore_running(mongo):
