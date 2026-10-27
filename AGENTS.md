@@ -1,4 +1,4 @@
-# orgOS
+# OrgOS
 
 ## Stack
 
@@ -6,7 +6,7 @@
 - **Stores**: MongoDB (untouched staging), Postgres (SQL store), Neo4j Community (graph store), all in one Docker Compose file
 - **Key dependencies**: dlt then dbt (one entity layer feeds both stores), neo4j driver, psycopg 3, Pydantic AI 2.x, pydantic-settings
 - **Package manager**: uv, `uv.lock` committed
-- Source of truth: [spec 0001](docs/specs/0001-stack-and-architecture/index.md)
+- Source of truth: spec 0001 (docs/specs/0001-stack-and-architecture/index.md)
 
 ## Build approach
 

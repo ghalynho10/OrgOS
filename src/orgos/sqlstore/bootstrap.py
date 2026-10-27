@@ -2,7 +2,7 @@
 
 Creates the `orgos` database, the owner and reader roles, the four schemas,
 and the grants that keep model written queries read only on `model`. Init
-scripts only run on an empty volume, so this runs from orgOS and is safe to
+scripts only run on an empty volume, so this runs from OrgOS and is safe to
 rerun: it creates what is missing and resets passwords, grants, and limits.
 
 Run it with `uv run orgos bootstrap`.

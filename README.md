@@ -1,4 +1,25 @@
-# orgOS
+<h1 align="center">OrgOS</h1>
+
+<p align="center"><strong>Making organizations queryable.</strong></p>
+
+<p align="center">
+  A shared memory of how an organization runs, that AI agents can query with
+  every answer citing its source, built twice (SQL and graph) to find out
+  which handles which questions better.
+</p>
+
+<p align="center">
+  <a href="https://github.com/ghalynho10/orgOS/actions"><img src="https://github.com/ghalynho10/orgOS/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/python-3.12-blue" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/code%20style-ruff-261230" alt="ruff">
+  <img src="https://img.shields.io/badge/types-mypy%20strict-2a6db2" alt="mypy strict">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+</p>
+
+<p align="center">
+  <a href="#setup">Quickstart</a> ·
+  <a href="#how-it-fits-together">Architecture</a>
+</p>
 
 A shared operational memory over a company's work data (projects, people, work, hours) that AI agents can query and cite. Phase 1 loads the same real Jira data into a SQL store (Postgres) and a graph store (Neo4j), then answers about 20 multi hop questions from both, so you can say plainly which question types the graph handles better and which it handles worse.
 
@@ -28,7 +49,7 @@ You need Docker Desktop, [uv](https://docs.astral.sh/uv/), and git. uv installs 
    uv sync
    uv run orgos --help
    ```
-2. **Create your `.env`.** Copy `.env.example` to `.env` and fill in every password. Compose and orgOS both read it. If a default port is taken on your machine (5432 and 7687 often are), change `ORGOS_PG_PORT`, `ORGOS_NEO4J_BOLT_PORT`, or `ORGOS_NEO4J_HTTP_PORT`.
+2. **Create your `.env`.** Copy `.env.example` to `.env` and fill in every password. Compose and OrgOS both read it. If a default port is taken on your machine (5432 and 7687 often are), change `ORGOS_PG_PORT`, `ORGOS_NEO4J_BOLT_PORT`, or `ORGOS_NEO4J_HTTP_PORT`.
 3. **Bring up the stores.** One command starts all three and returns only when each is healthy:
    ```sh
    docker compose --profile all up -d --wait

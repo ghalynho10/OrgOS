@@ -150,6 +150,6 @@ def load_settings(**overrides: object) -> Settings:
             if folder is not None:
                 problems.append(f"  no .env found in {folder}")
         raise ConfigError(
-            "Invalid orgOS configuration (check your .env, see .env.example):\n"
+            "Invalid OrgOS configuration (check your .env, see .env.example):\n"
             + "\n".join(problems)
         ) from None

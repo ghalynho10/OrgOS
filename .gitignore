@@ -9,6 +9,7 @@ data/
 .claude/
 skills-lock.json
 docs/
+CLAUDE.md
 
 # Python
 .venv/

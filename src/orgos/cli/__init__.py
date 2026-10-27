@@ -31,7 +31,7 @@ NAMED_ERRORS = tuple(error for error, _ in EXIT_CODES)
 
 app = typer.Typer(
     name="orgos",
-    help="orgOS: query one company's work data through a SQL store and a graph store.",
+    help="OrgOS: query one company's work data through a SQL store and a graph store.",
     no_args_is_help=True,
     add_completion=False,
     # `bootstrap()` holds a connection string with the superuser password in a
@@ -56,7 +56,7 @@ def main(
         is_eager=True,
     ),
 ) -> None:
-    """orgOS: query one company's work data through a SQL store and a graph store."""
+    """OrgOS: query one company's work data through a SQL store and a graph store."""
 
 
 @app.command("bootstrap")
