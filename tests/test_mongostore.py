@@ -270,7 +270,6 @@ def test_the_exec_call_has_the_exact_flags_and_no_password() -> None:
         "--archive",
         f'--nsInclude="{DATABASE}.*"',
         "--stopOnError",
-        "--numParallelCollections=1",
         '--password="$MONGO_INITDB_ROOT_PASSWORD"',
     ):
         assert flag in script.split(), flag

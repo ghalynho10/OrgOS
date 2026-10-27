@@ -56,7 +56,7 @@ RESTORE_SCRIPT = (
     " --authenticationDatabase=admin"
     " --gzip --archive"
     f' --nsInclude="{DATABASE}.*"'
-    " --stopOnError --numParallelCollections=1"
+    " --stopOnError"
 )
 
 
