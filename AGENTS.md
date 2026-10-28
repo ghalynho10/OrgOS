@@ -59,7 +59,7 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 
 ## Agent skills
 
-Stack skills live in [.agents/skills/](.agents/skills/) and are listed per tool in spec 0001 (`dbt-labs/dbt-agent-skills`, `dlt-hub/dlthub-ai-harness`, `pydantic/skills`, `neo4j-contrib/neo4j-skills`, `mongodb/agent-skills`). Open only the ones a task needs.
+Stack skills live in `.agents/skills/` (installed locally, not tracked in git) and are listed per tool in spec 0001 (`dbt-labs/dbt-agent-skills`, `dlt-hub/dlthub-ai-harness`, `pydantic/skills`, `neo4j-contrib/neo4j-skills`, `mongodb/agent-skills`). Open only the ones a task needs.
 Declined: a wider skills and MCP search (2026-10-25, the installed set covers the stack).
 
 ## Circuit breaker
