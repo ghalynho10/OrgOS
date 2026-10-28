@@ -72,9 +72,9 @@ You need Docker Desktop, [uv](https://docs.astral.sh/uv/), and git. uv installs 
 
 ### Docker disk and memory
 
-- **Disk.** The Mongo restore expands to about 60 GB. `uv run orgos mongo restore --check` measures the free space *inside Docker's virtual disk* (on the Mongo volume), not on your Mac disk, and blocks under 80 GB. If it blocks, free space or raise the Docker Desktop disk limit (Settings, Resources) to at least 128 GB.
-- **Memory.** The three containers are capped at 2.5 GB (Mongo), 1.5 GB (Postgres), and 2 GB (Neo4j), 6 GB in all. With 7.6 GB for Docker, stop other projects' containers before a restore or a load. Raising Docker's memory is cheaper than tuning.
-- **Restore time.** The dataset README says about 15 minutes on an unconstrained machine; with a 1 GB WiredTiger cache, budget about an hour.
+- **Disk.** The restored database takes 13.5 GB on disk (`storageSize` plus `indexSize`, measured 2026-10-27; the dataset README's "about 60 GB" is the logical size). `uv run orgos mongo restore --check` measures the free space *inside Docker's virtual disk* (on the Mongo volume), not on your Mac disk, and blocks under 23 GB: 1.5 times the 14.9 GB growth measured during one `--reset` restore on 2026-10-28. If it blocks, free space inside Docker's disk until it has at least 23 GB, or raise the Docker Desktop disk limit (Settings, Resources).
+- **Memory.** The three containers are capped at 2.5 GB (Mongo), 1.5 GB (Postgres), and 2 GB (Neo4j), 6 GB in all. With 8.2 GB for Docker (measured 2026-10-26), stop other projects' containers before a restore or a load. During a restore Mongo peaked at 2.125 GiB, under its limit. Raising Docker's memory is cheaper than tuning.
+- **Restore time.** The dataset README says about 15 minutes on an unconstrained machine; with a 1 GB WiredTiger cache, one restore took 376 seconds (measured 2026-10-27).
 
 ## Data
 
@@ -109,7 +109,7 @@ Run these from the repo root, so the script and `orgos` agree on `data/` (or poi
 bash scripts/fetch_data.sh                      # download (resumable), check the md5, write data/dataset.receipt
 docker compose --profile staging up -d --wait   # Mongo alone, so it has the memory
 uv run orgos mongo restore --check              # every check, writes nothing to Mongo
-uv run orgos mongo restore                      # about an hour; streams the archive, no extracted copy
+uv run orgos mongo restore                      # 376 s measured; streams the archive, no extracted copy
 uv run orgos mongo verify                       # live counts against the restore record
 ```
 

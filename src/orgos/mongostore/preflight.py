@@ -66,7 +66,7 @@ CheckStatus = Literal["PASS", "WARN", "BLOCK", "SKIP"]
 class Limits:
     """The thresholds a restore must meet, relaxed only by tests."""
 
-    min_free_disk: int = 80 * GB
+    min_free_disk: int = 23 * GB
     min_memory: int = 4 * GB
 
 
@@ -323,7 +323,7 @@ def _restore_checks(
                     "BLOCK",
                     "disk",
                     f"Docker has {shown} on the Mongo volume, under {_gb(limits.min_free_disk)}: "
-                    "free space or raise the Docker disk limit to at least 128 GB",
+                    f"a restore needs at least {_gb(limits.min_free_disk)} free there",
                 )
             )
 

@@ -108,18 +108,18 @@ def test_receipt_and_zip_problems_block(change: dict[str, object], name: str, re
 
 # covers: AC-14
 def test_low_disk_blocks_with_the_measured_space_and_the_fix() -> None:
-    blocks = _blocks(replace(GOOD, free_disk=Fact(value=79_999_999_999)))
-    assert "Docker has 79.9 GB free on the Mongo volume, under 80.0 GB" in blocks["disk"]
-    assert "raise the Docker disk limit to at least 128 GB" in blocks["disk"]
+    blocks = _blocks(replace(GOOD, free_disk=Fact(value=22_999_999_999)))
+    assert "Docker has 22.9 GB free on the Mongo volume, under 23.0 GB" in blocks["disk"]
+    assert "a restore needs at least 23.0 GB free there" in blocks["disk"]
 
 
 # covers: AC-14
 def test_reset_counts_the_existing_database_as_free() -> None:
-    low = replace(GOOD, free_disk=Fact(value=50 * GB), reclaimable=Fact(value=40 * GB))
+    low = replace(GOOD, free_disk=Fact(value=15 * GB), reclaimable=Fact(value=10 * GB))
     assert "disk" in _blocks(low)
     results = _results(replace(low, state=Fact(value=State.PARTIAL)), reset=True)
     assert results["disk"].status == "PASS"
-    assert "40.0 GB reclaimable by --reset" in results["disk"].value
+    assert "10.0 GB reclaimable by --reset" in results["disk"].value
 
 
 # covers: AC-15
