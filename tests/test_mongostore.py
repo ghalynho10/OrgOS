@@ -14,13 +14,19 @@ from orgos.config import Settings
 from orgos.mongostore import MongoStoreError, mongo_errors
 from orgos.mongostore.dump import (
     ARCHIVE_MAGIC,
+    ARCHIVE_MEMBER,
     DATABASE,
     EXPECTED_COUNTS,
     TruncatedHeader,
     parse_header,
 )
 from orgos.mongostore.receipt import RECEIPT_KEYS, parse_receipt
-from orgos.mongostore.restore import RESTORE_SCRIPT, mongorestore_argv, mongorestore_failure
+from orgos.mongostore.restore import (
+    RESTORE_SCRIPT,
+    mongorestore_argv,
+    mongorestore_failure,
+    stream,
+)
 from orgos.mongostore.verify import compare, failure_message, report_text
 from tests.test_scaffold import REQUIRED
 
@@ -285,3 +291,33 @@ def test_a_failed_mongorestore_names_its_status() -> None:
     assert "--reset" in mongorestore_failure(1)
     assert "ran out of memory" in mongorestore_failure(137)
     assert "memory" not in mongorestore_failure(1)
+
+
+def damaged_zip(path: Path) -> Path:
+    """A zip whose deflated member has an invalid block type, so reading it raises zlib.error."""
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr(ARCHIVE_MEMBER, b"orgos " * 50_000)
+    data = bytearray(path.read_bytes())
+    name_length, extra_length = struct.unpack_from("<HH", data, 26)
+    # Block type 11 (reserved) in the first deflate header.
+    data[30 + name_length + extra_length] = 0xFF
+    path.write_bytes(bytes(data))
+    return path
+
+
+# covers: AC-11
+def test_a_damaged_member_fails_the_zip_check_without_a_traceback(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    docker = bin_dir / "docker"
+    # Stands in for `docker exec -i ... mongorestore`: reads the archive and discards it.
+    docker.write_text("#!/bin/sh\nexec /bin/cat >/dev/null\n")
+    docker.chmod(0o755)
+    monkeypatch.setenv("PATH", str(bin_dir))
+    with pytest.raises(MongoStoreError) as excinfo:
+        stream("abc123", damaged_zip(tmp_path / "damaged.zip"), ARCHIVE_MEMBER)
+    message = str(excinfo.value)
+    assert message.startswith("the archive failed its zip check (Error -3 while decompressing")
+    assert message.endswith(f"{DATABASE} is partial, rerun with --reset")

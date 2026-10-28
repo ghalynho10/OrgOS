@@ -15,6 +15,7 @@ import logging
 import re
 import subprocess
 import zipfile
+import zlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,7 +25,7 @@ from pydantic import SecretStr
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
-from orgos.mongostore import MongoStoreError, describe
+from orgos.mongostore import MongoStoreError, describe, redact
 from orgos.mongostore.dump import (
     COMPOSE_PROJECT,
     COMPOSE_SERVICE,
@@ -458,7 +459,7 @@ def log_results(results: tuple[CheckResult, ...]) -> None:
 # The edge: gather facts from Docker, Mongo, and the data folder.
 
 
-def _docker(*args: str) -> Fact[str]:
+def _docker(*args: str, secrets: tuple[SecretStr, ...] = ()) -> Fact[str]:
     argv = ("docker", *args)
     try:
         done = subprocess.run(
@@ -470,7 +471,9 @@ def _docker(*args: str) -> Fact[str]:
         return Fact(error=f"`docker {args[0]}` did not answer in {DOCKER_TIMEOUT_S} s")
     if done.returncode != 0:
         reason = (done.stderr.strip() or done.stdout.strip()).splitlines()[-1:] or ["no output"]
-        return Fact(error=f"`docker {args[0]}` exited {done.returncode}: {reason[0]}")
+        return Fact(
+            error=f"`docker {args[0]}` exited {done.returncode}: {redact(reason[0], secrets)}"
+        )
     return Fact(value=done.stdout)
 
 
@@ -484,10 +487,11 @@ def _parsed[T](fact: Fact[str], parse: Callable[[str], T]) -> Fact[T]:
     return Fact(value=value)
 
 
-def find_container() -> Fact[tuple[str, ...]]:
+def find_container(secrets: tuple[SecretStr, ...] = ()) -> Fact[tuple[str, ...]]:
     """Ids of running containers labelled as the compose mongo service."""
     return _parsed(
-        _docker("ps", "-q", "--filter", LABELS[0], "--filter", LABELS[1]), parse_container_ids
+        _docker("ps", "-q", "--filter", LABELS[0], "--filter", LABELS[1], secrets=secrets),
+        parse_container_ids,
     )
 
 
@@ -553,7 +557,7 @@ def _gather_files(
         return Fact(value=receipt), Fact(error=f"cannot read {zip_path}: {error}"), Fact()
     try:
         header: Fact[DumpHeader] = Fact(value=read_header(zip_path, member))
-    except (MongoStoreError, zipfile.BadZipFile, OSError, EOFError) as error:
+    except (MongoStoreError, zipfile.BadZipFile, zlib.error, OSError, EOFError) as error:
         header = Fact(error=f"cannot read the archive header: {error}")
     return Fact(value=receipt), Fact(value=ZipFacts(size, md5)), header
 
@@ -568,7 +572,7 @@ def gather_facts(
     secrets: tuple[SecretStr, ...],
 ) -> Facts:
     """Gather every fact the checks need; failures become reasons, never crashes."""
-    containers = Fact(value=(container,)) if container is not None else find_container()
+    containers = Fact(value=(container,)) if container is not None else find_container(secrets)
     ids = containers.value
     container_id = ids[0] if ids is not None and len(ids) == 1 else None
 
@@ -577,10 +581,12 @@ def gather_facts(
     free: Fact[int] = Fact()
     if container_id is not None:
         tools = _parsed(
-            _docker("exec", container_id, "mongorestore", "--version"), parse_tools_version
+            _docker("exec", container_id, "mongorestore", "--version", secrets=secrets),
+            parse_tools_version,
         )
         login = _parsed(
-            _docker("exec", container_id, "sh", "-c", CONTAINER_LOGIN_SCRIPT), lambda _: "ok"
+            _docker("exec", container_id, "sh", "-c", CONTAINER_LOGIN_SCRIPT, secrets=secrets),
+            lambda _: "ok",
         )
 
     server: Fact[str] = Fact()
@@ -606,7 +612,8 @@ def gather_facts(
         receipt, zip_facts, header = _gather_files(data_dir, member)
         if container_id is not None:
             free = _parsed(
-                _docker("exec", container_id, "df", "-Pk", "/data/db"), parse_df_free_bytes
+                _docker("exec", container_id, "df", "-Pk", "/data/db", secrets=secrets),
+                parse_df_free_bytes,
             )
         if reset and server.value is not None:
             try:
@@ -615,10 +622,18 @@ def gather_facts(
                 reclaimable = Fact(error=describe(error, secrets))
 
     others = _parsed(
-        _docker("ps", "--format", '{{.Names}}\t{{.Label "com.docker.compose.project"}}'),
+        _docker(
+            "ps",
+            "--format",
+            '{{.Names}}\t{{.Label "com.docker.compose.project"}}',
+            secrets=secrets,
+        ),
         parse_other_containers,
     )
-    memory = _parsed(_docker("info", "--format", "{{.MemTotal}}"), lambda text: int(text.strip()))
+    memory = _parsed(
+        _docker("info", "--format", "{{.MemTotal}}", secrets=secrets),
+        lambda text: int(text.strip()),
+    )
     return Facts(
         containers=containers,
         container_given=container is not None,

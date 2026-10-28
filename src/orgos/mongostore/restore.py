@@ -12,6 +12,7 @@ import logging
 import subprocess
 import sys
 import zipfile
+import zlib
 from collections.abc import Iterator, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
@@ -111,7 +112,7 @@ def stream(container: str, zip_path: Path, member: str) -> None:
         raise MongoStoreError(
             f"interrupted: {DATABASE} is partial, rerun `orgos mongo restore --reset`"
         ) from None
-    except zipfile.BadZipFile as error:
+    except (zipfile.BadZipFile, zlib.error) as error:
         child.wait()
         raise MongoStoreError(
             f"the archive failed its zip check ({error}); {DATABASE} is partial, rerun with --reset"
