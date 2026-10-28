@@ -1,0 +1,11 @@
+collection,matched,mismatched,rate
+Apache,1791,0,1.0000
+Hyperledger,152,0,1.0000
+Jira,5037,33,0.9935
+JiraEcosystem,559,1,0.9982
+Qt,159,1,0.9938
+RedHat,1848,0,1.0000
+Sakai,576,2,0.9965
+SecondLife,523,1,0.9981
+Sonatype,1660,0,1.0000
+Spring,1860,0,1.0000

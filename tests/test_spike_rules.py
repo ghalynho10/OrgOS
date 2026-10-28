@@ -114,7 +114,7 @@ def test_spike_opens_no_other_connection() -> None:
     sources = {path.name: path.read_text() for path in SPIKE.glob("*.py")}
     assert "rules.py" in sources
     for name, text in sources.items():
-        for call in re.findall(r"MongoClient\(([^,)]*)", text):
+        for call in re.findall(r"MongoClient\(\s*([^,]*)", text):
             assert call.strip() == "Settings().mongo_reader_uri", name
         assert "mongodb://" not in text, name
         for banned in ("requests", "httpx", "urllib.request", "socket", "anthropic", "pydantic_ai"):
