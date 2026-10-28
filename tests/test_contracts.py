@@ -10,6 +10,7 @@ import pytest
 import yaml
 
 from orgos.config import Settings, load_settings
+from orgos.mongostore.receipt import RECEIPT_KEYS
 from tests.integration.conftest import MONGO_IMAGE, NEO4J_IMAGE, POSTGRES_IMAGE
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -143,6 +144,54 @@ def test_readme_package_versions_match_the_lock() -> None:
     assert packages
     for name, version in packages.items():
         assert locked[name] == version, name
+
+
+README_DATA = (ROOT / "README.md").read_text().split("\n## Data\n", 1)[1].split("\n### ", 1)[0]
+MANIFEST = dict(re.findall(r"^\| ([^|]+?) \| (.+?) \|$", README_DATA, re.MULTILINE))
+SCRIPT_PINS = {
+    name: value.strip("'")
+    for name, value in re.findall(
+        r"^([A-Z0-9_]+)=(.*)$", (ROOT / "scripts/fetch_data.sh").read_text(), re.MULTILINE
+    )
+}
+
+
+# covers: AC-39 (the manifest documents the script's pins, the only copy in code)
+@pytest.mark.parametrize(
+    ("item", "pin"),
+    [
+        ("Source", "RECORD"),
+        ("Version", "VERSION"),
+        ("URL", "URL"),
+        ("Local file", "NAME"),
+        ("Size", "SIZE"),
+        ("md5 of the zip", "MD5"),
+    ],
+)
+def test_readme_manifest_matches_the_fetch_script_pins(item: str, pin: str) -> None:
+    assert SCRIPT_PINS[pin] in MANIFEST[item]
+
+
+# covers: AC-39 (both DOIs, the licenses with where each was read, the receipt)
+def test_readme_manifest_names_the_dois_licenses_and_receipt() -> None:
+    record = SCRIPT_PINS["RECORD"]
+    assert f"`10.5281/zenodo.{record}` (this version)" in MANIFEST["DOI"]
+    assert "`10.5281/zenodo.5882881` (all versions)" in MANIFEST["DOI"]
+    assert "Data: CC BY 4.0, read from " in MANIFEST["License"]
+    assert "Code in the zip: MIT, read from " in MANIFEST["License"]
+    receipt = MANIFEST["Receipt"]
+    assert f"`data/{SCRIPT_PINS['RECEIPT']}`" in receipt
+    for key in RECEIPT_KEYS:
+        assert f"`{key}`" in receipt, key
+
+
+# covers: AC-39 (the attribution citation)
+def test_readme_quotes_the_attribution_citation() -> None:
+    attribution = README_DATA.split("**Attribution.**", 1)[1]
+    quoted = [line for line in attribution.splitlines() if line.startswith("> ")]
+    assert len(quoted) == 1
+    assert "An Alternative Issue Tracking Dataset of Public Jira Repositories" in quoted[0]
+    assert "(MSR) 2022" in quoted[0]
 
 
 # covers: DW-2 (data/ and .env never enter git)
