@@ -1,1 +1,1 @@
-"""Tests for orgOS: unit tests here, store backed tests under `integration/`."""
+"""Tests for OrgOS: unit tests here, store backed tests under `integration/`."""

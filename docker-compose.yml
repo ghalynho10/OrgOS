@@ -1,4 +1,4 @@
-# The three orgOS stores. Every service sits in a profile, so you can run
+# The three OrgOS stores. Every service sits in a profile, so you can run
 # only what you need (the Mongo restore wants the memory to itself).
 #
 #   docker compose --profile all up -d --wait     # all three, returns when healthy

@@ -6,6 +6,7 @@ authors = [
     { name = "Ghaly Nicolas Jules", email = "32783189+ghalynho10@users.noreply.github.com" }
 ]
 requires-python = ">=3.12,<3.13"
+license = "MIT"
 dependencies = [
     "dbt-core~=1.12.6",
     "dbt-postgres>=1.11,<2",

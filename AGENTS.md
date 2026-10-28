@@ -1,4 +1,4 @@
-# orgOS
+# OrgOS
 
 ## Stack
 
@@ -6,7 +6,7 @@
 - **Stores**: MongoDB (untouched staging), Postgres (SQL store), Neo4j Community (graph store), all in one Docker Compose file
 - **Key dependencies**: dlt then dbt (one entity layer feeds both stores), neo4j driver, psycopg 3, Pydantic AI 2.x, pydantic-settings
 - **Package manager**: uv, `uv.lock` committed
-- Source of truth: [spec 0001](docs/specs/0001-stack-and-architecture/index.md)
+- Source of truth: spec 0001 (docs/specs/0001-stack-and-architecture/index.md)
 
 ## Build approach
 
@@ -19,6 +19,8 @@ uv sync                                              # install
 uv run pre-commit install                            # pre-commit and commit-msg hooks, once per clone
 docker compose --profile all up -d --wait            # all three stores, healthy
 uv run orgos bootstrap                               # Postgres roles, schemas, grants (rerunnable)
+uv run orgos mongo restore [--check] [--reset]       # restore the Jira dump into Mongo; --check writes nothing
+uv run orgos mongo verify                            # live Mongo counts against the restore record
 uv run --env-file .env dbt <cmd> --project-dir dbt --profiles-dir dbt
 uv run pytest -m "not integration"                   # fast tests, no Docker
 uv run pytest                                        # all; stop the compose stack first
@@ -34,7 +36,7 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 - Data passed between steps is immutable: frozen dataclasses or frozen pydantic models, tuples over lists. Module level names are constants only; no shared mutable state.
 - Plain functions over classes where a function works; compose rather than inherit. `X | None` is fine; never return a sentinel.
 - Strict typing: `mypy --strict` (pydantic plugin) on `src/orgos`. Overrides only per untyped third party module, never a blanket ignore.
-- Folders match the scaffold: `config`, `cli`, `ingest`, `sqlstore`, `graphstore`, `agent`, `eval` under `src/orgos/`; new code goes in the subpackage for its stage or store.
+- Folders match the scaffold: `config`, `cli`, `mongostore`, `ingest`, `sqlstore`, `graphstore`, `agent`, `eval` under `src/orgos/`; new code goes in the subpackage for its stage or store.
 - Config is read only through `orgos.config.Settings` and validated at startup; errors surface as one `ConfigError` message. No `os.environ` reads elsewhere.
 - Every module has a docstring saying why it exists; every public function has one.
 - Errors: each subpackage raises its own named exception; the CLI turns them into a clear message and a non zero exit. No bare `except`.
@@ -57,7 +59,7 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 
 ## Agent skills
 
-Stack skills live in [.agents/skills/](.agents/skills/) and are listed per tool in spec 0001 (`dbt-labs/dbt-agent-skills`, `dlt-hub/dlthub-ai-harness`, `pydantic/skills`, `neo4j-contrib/neo4j-skills`, `mongodb/agent-skills`). Open only the ones a task needs.
+Stack skills live in `.agents/skills/` (installed locally, not tracked in git) and are listed per tool in spec 0001 (`dbt-labs/dbt-agent-skills`, `dlt-hub/dlthub-ai-harness`, `pydantic/skills`, `neo4j-contrib/neo4j-skills`, `mongodb/agent-skills`). Open only the ones a task needs.
 Declined: a wider skills and MCP search (2026-10-25, the installed set covers the stack).
 
 ## Circuit breaker
