@@ -1,0 +1,33 @@
+ladder_step,rank,collection,eligible,ineligibility_reason,passing_projects,group_size,group_qualifying,group
+0,1,Apache,yes,,1,1,239,STDCXX
+0,2,Hyperledger,yes,,0,0,0,
+0,3,IntelDAOS,no,no Stage 1 survivor,0,0,0,
+0,4,JFrog,no,no Stage 1 survivor,0,0,0,
+0,5,Jira,yes,,0,0,0,
+0,6,JiraEcosystem,yes,,0,0,0,
+0,7,MariaDB,no,no Stage 1 survivor,0,0,0,
+0,8,Mindville,no,no Stage 1 survivor,0,0,0,
+0,9,Mojang,no,no Stage 1 survivor,0,0,0,
+0,10,MongoDB,no,no Stage 1 survivor,0,0,0,
+0,11,Qt,yes,,0,0,0,
+0,12,RedHat,yes,,0,0,0,
+0,13,Sakai,yes,,0,0,0,
+0,14,SecondLife,yes,,0,0,0,
+0,15,Sonatype,yes,,0,0,0,
+0,16,Spring,yes,,0,0,0,
+1,1,Jira,yes,,9,7,2525,BAM;CLOUD;CLOV;CRUC;CWD;FE;JRASERVER
+1,2,JiraEcosystem,yes,,4,4,219,AG;APL;PLUG;STRM
+1,3,Apache,yes,,10,3,233,CONTINUUM;MNG;MRM
+1,4,RedHat,yes,,9,2,165,TEIID;TEIIDSB
+1,5,Sonatype,yes,,1,1,671,NEXUS
+1,6,Spring,yes,,3,1,430,INT
+1,7,SecondLife,yes,,1,1,171,STORM
+1,8,Qt,yes,,1,1,90,QTBUG
+1,9,Sakai,yes,,1,1,54,SAK
+1,10,Hyperledger,yes,,1,1,48,FAB
+1,11,IntelDAOS,no,no Stage 1 survivor,0,0,0,
+1,12,JFrog,no,no Stage 1 survivor,0,0,0,
+1,13,MariaDB,no,no Stage 1 survivor,0,0,0,
+1,14,Mindville,no,no Stage 1 survivor,0,0,0,
+1,15,Mojang,no,no Stage 1 survivor,0,0,0,
+1,16,MongoDB,no,no Stage 1 survivor,0,0,0,
