@@ -1,0 +1,199 @@
+{
+  "ladder_step": 1,
+  "n": 30,
+  "x_percent": null,
+  "p": 3,
+  "k": 2,
+  "collection": "Jira",
+  "group": [
+    "BAM",
+    "CLOUD",
+    "CLOV",
+    "CRUC",
+    "CWD",
+    "FE",
+    "JRASERVER"
+  ],
+  "brief_5_to_10_met": true,
+  "projects": [
+    {
+      "key": "CRUC",
+      "collection": "Jira",
+      "stage1_total": 6765,
+      "qualifying_timeoriginalestimate": 801,
+      "qualifying_timeestimate": 195,
+      "qualifying_percent": 11.84,
+      "people": 46,
+      "bot_positive_seconds": 0,
+      "positive_seconds": 30572460,
+      "links": [
+        {
+          "project": "JRASERVER",
+          "shared_people": 5
+        },
+        {
+          "project": "BAM",
+          "shared_people": 2
+        },
+        {
+          "project": "FE",
+          "shared_people": 36
+        },
+        {
+          "project": "CLOV",
+          "shared_people": 3
+        }
+      ]
+    },
+    {
+      "key": "JRASERVER",
+      "collection": "Jira",
+      "stage1_total": 47225,
+      "qualifying_timeoriginalestimate": 627,
+      "qualifying_timeestimate": 54,
+      "qualifying_percent": 1.33,
+      "people": 53,
+      "bot_positive_seconds": 0,
+      "positive_seconds": 20767500,
+      "links": [
+        {
+          "project": "CRUC",
+          "shared_people": 5
+        },
+        {
+          "project": "FE",
+          "shared_people": 2
+        },
+        {
+          "project": "CLOUD",
+          "shared_people": 2
+        },
+        {
+          "project": "CWD",
+          "shared_people": 2
+        }
+      ]
+    },
+    {
+      "key": "BAM",
+      "collection": "Jira",
+      "stage1_total": 14625,
+      "qualifying_timeoriginalestimate": 415,
+      "qualifying_timeestimate": 80,
+      "qualifying_percent": 2.84,
+      "people": 23,
+      "bot_positive_seconds": 0,
+      "positive_seconds": 12835800,
+      "links": [
+        {
+          "project": "CRUC",
+          "shared_people": 2
+        },
+        {
+          "project": "FE",
+          "shared_people": 2
+        },
+        {
+          "project": "CWD",
+          "shared_people": 4
+        }
+      ]
+    },
+    {
+      "key": "FE",
+      "collection": "Jira",
+      "stage1_total": 5561,
+      "qualifying_timeoriginalestimate": 263,
+      "qualifying_timeestimate": 74,
+      "qualifying_percent": 4.73,
+      "people": 41,
+      "bot_positive_seconds": 0,
+      "positive_seconds": 10095420,
+      "links": [
+        {
+          "project": "CRUC",
+          "shared_people": 36
+        },
+        {
+          "project": "JRASERVER",
+          "shared_people": 2
+        },
+        {
+          "project": "BAM",
+          "shared_people": 2
+        },
+        {
+          "project": "CLOV",
+          "shared_people": 3
+        }
+      ]
+    },
+    {
+      "key": "CLOUD",
+      "collection": "Jira",
+      "stage1_total": 7755,
+      "qualifying_timeoriginalestimate": 182,
+      "qualifying_timeestimate": 47,
+      "qualifying_percent": 2.35,
+      "people": 14,
+      "bot_positive_seconds": 0,
+      "positive_seconds": 7875960,
+      "links": [
+        {
+          "project": "JRASERVER",
+          "shared_people": 2
+        },
+        {
+          "project": "CWD",
+          "shared_people": 2
+        }
+      ]
+    },
+    {
+      "key": "CWD",
+      "collection": "Jira",
+      "stage1_total": 4407,
+      "qualifying_timeoriginalestimate": 172,
+      "qualifying_timeestimate": 33,
+      "qualifying_percent": 3.9,
+      "people": 17,
+      "bot_positive_seconds": 0,
+      "positive_seconds": 6423180,
+      "links": [
+        {
+          "project": "JRASERVER",
+          "shared_people": 2
+        },
+        {
+          "project": "BAM",
+          "shared_people": 4
+        },
+        {
+          "project": "CLOUD",
+          "shared_people": 2
+        }
+      ]
+    },
+    {
+      "key": "CLOV",
+      "collection": "Jira",
+      "stage1_total": 1501,
+      "qualifying_timeoriginalestimate": 65,
+      "qualifying_timeestimate": 22,
+      "qualifying_percent": 4.33,
+      "people": 4,
+      "bot_positive_seconds": 0,
+      "positive_seconds": 4530660,
+      "links": [
+        {
+          "project": "CRUC",
+          "shared_people": 3
+        },
+        {
+          "project": "FE",
+          "shared_people": 3
+        }
+      ]
+    }
+  ]
+}
