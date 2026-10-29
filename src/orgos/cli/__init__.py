@@ -15,6 +15,7 @@ import typer
 
 from orgos import __version__
 from orgos.config import ConfigError, load_settings
+from orgos.eval import EvalError
 from orgos.mongostore import MongoStoreError
 from orgos.mongostore.restore import restore
 from orgos.mongostore.verify import verify
@@ -30,6 +31,7 @@ EXIT_CODES: tuple[tuple[type[Exception], int], ...] = (
     (ConfigError, 2),
     (SqlStoreError, 1),
     (MongoStoreError, 3),
+    (EvalError, 4),
 )
 NAMED_ERRORS = tuple(error for error, _ in EXIT_CODES)
 
@@ -103,6 +105,14 @@ def mongo_verify_command() -> None:
     """Compare the live JiraReposAnon with its restore record (changes nothing)."""
     settings = load_settings()
     verify(settings)
+
+
+eval_app = typer.Typer(
+    name="eval",
+    help="Describe the data, check the hand written questions, and compute their known answers.",
+    no_args_is_help=True,
+)
+app.add_typer(eval_app)
 
 
 def run(args: Sequence[str] | None = None) -> None:
