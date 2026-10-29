@@ -1,0 +1,192 @@
+# Template for eval/questions.toml (spec 0005). Rules and placeholders only, no question text.
+#
+# Copy the [[question]] block below 20 times into eval/questions.toml, uncomment it,
+# and replace every <placeholder>. `orgos eval check-questions` checks every rule marked
+# CHECKER; rules marked YOUR JUDGEMENT rest on you. /develop never writes, drafts,
+# completes or suggests question text or reading notes.
+#
+# ---------------------------------------------------------------------------------------
+# What you may look at before the step 1 commit
+# ---------------------------------------------------------------------------------------
+# Allowed: the spike 0001 results, the fixtures under tests/fixtures/corpus/, the brief,
+# and Mongo through the reader login for single document shapes, field fill rates
+# (overall or per project), and the distinct values of categorical fields (issue types,
+# statuses, resolutions, priorities, link types). Two logged exceptions are allowed, and
+# only inside `orgos eval describe`: links and parents kept or dropped per project, and
+# negative entries per project.
+# Not allowed: any other count, sum or ranking, any query grouped by person, and any
+# traversal of links or shared people.
+# Log the text (never the output) of every Mongo query you run yourself to
+# eval/exploration.log as a `manual` block, and commit it with questions.toml.
+# YOUR JUDGEMENT: looks outside that log (Compass, mongosh history) rest on your discipline.
+#
+# One `manual` block in eval/exploration.log looks like this (no output, no connection
+# string, no user name):
+#
+#   ## <UTC time with seconds, like 2026-10-30T14:05:09Z> · manual
+#   ```
+#   <the query text you ran>
+#   ```
+#
+# ---------------------------------------------------------------------------------------
+# The fields of each question (CHECKER for presence, TOML type and allowed values)
+# ---------------------------------------------------------------------------------------
+# id        Q01 to Q20, each exactly once.
+# text      The question as asked, not empty. Hours questions say "logged hours"
+#           (YOUR JUDGEMENT).
+# type      aggregate, path_connection or mixed, by the type rule below.
+# hops      Integer 0, 1 or 2 (2 means 2 or more): the connection hops the question
+#           asks for. An integer, never a string.
+# hop_mode  fixed or variable. fixed when hops = 0.
+# max_hops  Only when hop_mode = "variable": the longest path the question allows,
+#           an integer of at least 2. Absent otherwise.
+# shape     number, map, ranking, set, path or boolean.
+# unit      seconds, count or ratio for number, map and ranking; none for set, path
+#           and boolean.
+# fields    Every field path the question uses, never empty. Each is an exact path
+#           from `## Usable fields` in eval/data-description.md, and none is listed
+#           under `## Free text, not usable`.
+# reading   Your reading note, not empty (what it must state is below).
+# data      "real" only in phase 1. "synthetic" and any other value fail.
+# tracer    true on exactly one question, which is Q01 and an aggregate; false or
+#           absent elsewhere. A boolean, never a string or a number.
+# No other key is allowed.
+#
+# ---------------------------------------------------------------------------------------
+# The type rule and its tie break
+# ---------------------------------------------------------------------------------------
+# aggregate        Joins only along ownership (time entry to issue, issue to project,
+#                  time entry to person) and ends in a grouping or total (count, sum,
+#                  average or ranking).
+# path_connection  At least one hop through an issue to issue relation (issue links,
+#                  parent and sub task) or a shared person, and the answer is a set, a
+#                  path or a yes or no, not a total.
+# mixed            At least one such hop, followed by a grouping or total over what it
+#                  reaches.
+# A question that fits no type is rewritten before the step 1 commit.
+# You label each question at step 1, and the label never changes, amendments included.
+# CHECKER: an aggregate has hops = 0; a path_connection or mixed has hops of 1 or more;
+# a path_connection has shape set, path or boolean; a mixed or aggregate has shape
+# number, map or ranking.
+# YOUR JUDGEMENT: that the question really fits its type's definition.
+#
+# Counts: exactly 7 aggregate, 7 path_connection and 6 mixed, total 20 (CHECKER).
+# Question 1 is the one aggregate you mark tracer = true, with id = "Q01" (CHECKER).
+# It sets build order only; the entity model still traces all 20.
+#
+# ---------------------------------------------------------------------------------------
+# Connection hops, fixed or variable, and paths
+# ---------------------------------------------------------------------------------------
+# Read hops from what the question asks (its text and reading note), never from its
+# answer. An ownership move (entry to issue, issue to project, entry to person) is not
+# a hop. hop_mode = "fixed" when the question names the number of hops, "variable" when
+# it leaves it open (for example "connected at all"); a variable question sets max_hops,
+# and that cap binds the known answer and both stores.
+# hops and hop_mode are never scored as rows; the findings show every question's result
+# beside them, and any pattern named along them states how many questions it rests on.
+# CHECKER: allowed values, max_hops present exactly when variable, and the type
+# consistency above. YOUR JUDGEMENT: the count itself, and the hop kinds.
+#
+# ---------------------------------------------------------------------------------------
+# Answer shapes (closed set; another shape means rewriting the question before step 1)
+# ---------------------------------------------------------------------------------------
+# number   one count, sum or average.
+# map      entity IDs, each with one value, order ignored.
+# ranking  ordered entity IDs with their values, stored as tie groups.
+# set      entity IDs, order ignored.
+# path     every path that satisfies the question, each an ordered list of entity IDs.
+# boolean  yes or no.
+#
+# Units: durations are whole seconds; averages and ratios are stored as the two
+# integers as computed (for example total seconds and number of entries). Hours appear
+# only as seconds / 3600 for display. "Logged hours" always means time added: the sum of
+# non bot entries above 0.
+#
+# ---------------------------------------------------------------------------------------
+# What a reading note must state (YOUR JUDGEMENT; the checker only checks it is not empty)
+# ---------------------------------------------------------------------------------------
+# - the population: which projects, issues, people or entries are in scope, and for a
+#   field filled only in some projects, that scope;
+# - how each term in the question maps to a field in `fields`
+#   (<term> means <field path> equal to <value>);
+# - the date bounds, in UTC, half open [start, end);
+# - for a ranking, its direction (highest first or lowest first) and the cut, knowing
+#   that every item tied at the cut is included;
+# - for an average or ratio, what is divided by what;
+# - for a path or connection, which hop kinds count and whether link direction matters;
+# - the sources: every record that supports the answer, never one example, step by
+#   step, with the kinds each step lists;
+# - whether changelog history (beyond time entries) is used; without that line,
+#   current dump values are used.
+# If a reading is missing or unclear for the code, /develop stops and asks you.
+#
+# ---------------------------------------------------------------------------------------
+# Rules every known answer and both stores apply (spec 0005, AC-22 to AC-25 and AC-48)
+# ---------------------------------------------------------------------------------------
+# Hours (AC-22): logged hours, in every answer, are the sum of the amounts of non bot
+#   time entries with an amount above 0. There is no per question choice and no second
+#   hours measure.
+# Person (AC-23): a person who logged time is a "non bot person with an entry above 0
+#   in the project", applied to any of the 7 corpus projects, wherever a question counts
+#   or lists people who logged time. Other roles are read from their field's .key
+#   (for example <role field>.key) whether or not that person logged time. A flagged bot
+#   account is never a person, in any role.
+# Boundary (AC-24): an issue belongs to the project in its current fields.project.key.
+#   An issue link or parent relation counts only when both issues belong to the 7
+#   corpus projects; an issue link is counted once, by its link id, though it is stored
+#   on both issues. A parent relation is read from the child's fields.parent.
+# Paths (AC-48): paths are simple (no entity repeated). Link direction is ignored unless
+#   the reading note says otherwise. Hop kinds are as the reading states. A question with
+#   hop_mode = "variable" is answered with no path longer than its max_hops, and the same
+#   cap applies to both stores.
+# Time zone (AC-25): every date bound is read in UTC as a half open interval
+#   [start, end). A time entry's time is its changelog history's created, parsed as an
+#   ISO 8601 string with a +HHMM offset and converted to UTC; a missing or unparseable
+#   offset stops the run and names the issue. The author's timeZone is never used.
+#   Current fields (assignee, status, project and the rest) are their values in the dump.
+#
+# ---------------------------------------------------------------------------------------
+# Amendments (after step 1, before the freeze), in eval/amendments.toml
+# ---------------------------------------------------------------------------------------
+# Only these reasons, each with its fixed fix:
+# tie_at_cut       the answer lists every tied item and the cut does not move.
+# unresolved_term  a term the code can't resolve one way: settled by your reading note,
+#                  and where the note is silent, by the narrowest reading the question
+#                  text supports.
+# empty_answer     an empty answer (including a zero denominator or a boolean "no"):
+# unfilled_field   or a field the corpus doesn't fill: the question's scope is widened
+#                  once, only along the axis named in the reason; if that still fails,
+#                  it stays as written and is named as flawed in the findings.
+# The type and id are kept and nothing is dropped. Each amendment's eval/FROZEN line is
+# added or updated, and that commit is pushed before the answer is recomputed (CHECKER
+# validates the file; `orgos eval answers` checks the hash and the push).
+#
+#   [[amendment]]
+#   question = "<the id of the amended question>"
+#   reason = "<tie_at_cut | empty_answer | unresolved_term | unfilled_field>"
+#   code_output = "<what the code printed>"
+#   reading_chosen = "<the reading you chose>"
+#   date = "<YYYY-MM-DD>"
+#   [amendment.before]
+#   <the full question table as it was>
+#   [amendment.after]
+#   <the full question table as amended, same id and type>
+#
+# ---------------------------------------------------------------------------------------
+# One question (copy 20 times, uncomment, replace every <placeholder>)
+# ---------------------------------------------------------------------------------------
+# [[question]]
+# id = "<Q01 to Q20>"
+# text = "<the question as asked>"
+# type = "<aggregate | path_connection | mixed>"
+# hops = <0 | 1 | 2>
+# hop_mode = "<fixed | variable>"
+# max_hops = <integer, at least 2; only when hop_mode = "variable", else delete this line>
+# shape = "<number | map | ranking | set | path | boolean>"
+# unit = "<seconds | count | ratio | none>"
+# fields = ["<exact path from ## Usable fields>", "<another path>"]
+# reading = """
+# <your reading note>
+# """
+# data = "real"
+# tracer = <true on Q01 only; false or delete this line elsewhere>

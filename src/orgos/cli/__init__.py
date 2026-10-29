@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
+from pathlib import Path
+from typing import Annotated
 
 import typer
 
 from orgos import __version__
 from orgos.config import ConfigError, load_settings
 from orgos.eval import EvalError
+from orgos.eval.checker import check_files
 from orgos.mongostore import MongoStoreError
 from orgos.mongostore.restore import restore
 from orgos.mongostore.verify import verify
@@ -113,6 +116,22 @@ eval_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(eval_app)
+
+EVAL_DIR = Path("eval")
+QUESTIONS_FILE = EVAL_DIR / "questions.toml"
+
+
+@eval_app.command("check-questions")
+def eval_check_questions_command(
+    file: Annotated[
+        Path, typer.Option("--file", help="The question file to check.")
+    ] = QUESTIONS_FILE,
+) -> None:
+    """Check the questions (and eval/amendments.toml when present) against every checker rule.
+
+    Lists every broken rule together. Reads no database.
+    """
+    typer.echo(check_files(file, EVAL_DIR / "data-description.md", EVAL_DIR / "amendments.toml"))
 
 
 def run(args: Sequence[str] | None = None) -> None:
