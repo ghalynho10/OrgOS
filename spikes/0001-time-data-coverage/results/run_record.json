@@ -31,6 +31,70 @@
       }
     ]
   },
+  "fixtures": {
+    "issues": 270,
+    "rules_blob": "28dc37e6e665975bdd0f000d07ff4f38701d14f6",
+    "rules_commit": "b6638b8a63ef9c42530cc41f34921d02e5176843",
+    "shortfalls": [
+      {
+        "drawn": 0,
+        "group": "flagged_entry",
+        "quota": 30
+      }
+    ],
+    "total_bytes": 9695035
+  },
+  "run": {
+    "amendments": [
+      "AC-17 amendment (2026-10-28): fields.comments[].body added to the replaced paths",
+      "AC-17 amendment 2 (2026-10-28): from and to of changelog items whose field is Comment added to the replaced paths"
+    ],
+    "commands": [
+      "uv run orgos mongo verify",
+      "uv run --env-file .env python spikes/0001-time-data-coverage/stage1_counts.py SecondLife",
+      "uv run --env-file .env python spikes/0001-time-data-coverage/stage2_entries.py SecondLife",
+      "uv run --env-file .env python spikes/0001-time-data-coverage/stage1_counts.py",
+      "uv run --env-file .env python spikes/0001-time-data-coverage/stage2_entries.py",
+      "uv run --env-file .env python spikes/0001-time-data-coverage/choose.py",
+      "uv run --env-file .env python spikes/0001-time-data-coverage/select_fixtures.py",
+      "uv run orgos mongo verify"
+    ],
+    "commands_note": "Stage 1 and Stage 2 were run a second time after a whitespace only ruff format of the scripts; all six result CSVs were byte identical. select_fixtures.py ran three times: run 1 was over 10 MB and left comment text at fields.comments[].body, run 2 followed AC-17 amendment 1, run 3 followed amendment 2. All three drew the same keys and links.",
+    "date": "2026-10-28",
+    "histories_with_two_timespent_items": 0,
+    "ladder_step_reached": 1,
+    "marker_completed_at": "not recorded: the reader login cannot read orgos_meta (AC-20)",
+    "person_id_field": {
+      "Apache": "key",
+      "Hyperledger": "key",
+      "Jira": "key",
+      "JiraEcosystem": "accountId",
+      "Qt": "key",
+      "RedHat": "key",
+      "Sakai": "accountId",
+      "SecondLife": "key",
+      "Sonatype": "key",
+      "Spring": "key"
+    },
+    "rules_blob": "28dc37e6e665975bdd0f000d07ff4f38701d14f6",
+    "rules_commit": "b6638b8a63ef9c42530cc41f34921d02e5176843",
+    "verify_after": {
+      "date": "2026-10-29T03:19:05Z",
+      "exit": 0,
+      "output": "verify PASS\nApache\t1014926\t1014926\tok\nHyperledger\t28146\t28146\tok\nIntelDAOS\t9474\t9474\tok\nJFrog\t15535\t15535\tok\nJira\t274545\t274545\tok\nJiraEcosystem\t41866\t41866\tok\nMariaDB\t31229\t31229\tok\nMindville\t2134\t2134\tok\nMojang\t420819\t420819\tok\nMongoDB\t137172\t137172\tok\nQt\t148579\t148579\tok\nRedHat\t353000\t353000\tok\nSakai\t50550\t50550\tok\nSecondLife\t1867\t1867\tok\nSonatype\t87284\t87284\tok\nSpring\t69156\t69156\tok\ntotal\t2686282\t2686282\tok"
+    },
+    "verify_before": {
+      "date": "2026-10-28T22:52:13Z",
+      "exit": 0,
+      "output": "verify PASS\nApache\t1014926\t1014926\tok\nHyperledger\t28146\t28146\tok\nIntelDAOS\t9474\t9474\tok\nJFrog\t15535\t15535\tok\nJira\t274545\t274545\tok\nJiraEcosystem\t41866\t41866\tok\nMariaDB\t31229\t31229\tok\nMindville\t2134\t2134\tok\nMojang\t420819\t420819\tok\nMongoDB\t137172\t137172\tok\nQt\t148579\t148579\tok\nRedHat\t353000\t353000\tok\nSakai\t50550\t50550\tok\nSecondLife\t1867\t1867\tok\nSonatype\t87284\t87284\tok\nSpring\t69156\t69156\tok\ntotal\t2686282\t2686282\tok"
+    },
+    "versions": {
+      "mongo_image": "mongo:7.0.45",
+      "pymongo": "4.19.0",
+      "python": "3.12.12",
+      "uv": "0.11.32"
+    }
+  },
   "stage1": {
     "collections": [
       "Apache",

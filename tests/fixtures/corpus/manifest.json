@@ -1,0 +1,3201 @@
+{
+  "dataset": "The Public Jira Dataset, Zenodo record 15719919 (2025-06-23), CC BY 4.0",
+  "collection": "Jira",
+  "seed": 20261028,
+  "ladder_step": 1,
+  "projects": [
+    "CRUC",
+    "JRASERVER",
+    "BAM",
+    "FE",
+    "CLOUD",
+    "CWD",
+    "CLOV"
+  ],
+  "groups": [
+    {
+      "group": "timed",
+      "quota": 100,
+      "drawn": 100,
+      "candidates": 2525,
+      "keys": [
+        "BAM-3336",
+        "CLOUD-1411",
+        "CLOV-600",
+        "CRUC-4927",
+        "CWD-2555",
+        "FE-3282",
+        "JRASERVER-17955",
+        "BAM-4849",
+        "CLOUD-516",
+        "CLOV-606",
+        "CRUC-1164",
+        "CWD-685",
+        "FE-1045",
+        "JRASERVER-16617",
+        "BAM-2346",
+        "CLOUD-391",
+        "CLOV-566",
+        "CRUC-1807",
+        "CWD-2186",
+        "FE-948",
+        "JRASERVER-15175",
+        "BAM-3230",
+        "CLOUD-4960",
+        "CLOV-658",
+        "CRUC-5390",
+        "CWD-2263",
+        "FE-1131",
+        "JRASERVER-17669",
+        "BAM-3821",
+        "CLOUD-2546",
+        "CLOV-392",
+        "CRUC-1297",
+        "CWD-2092",
+        "FE-4340",
+        "JRASERVER-17204",
+        "BAM-4679",
+        "CLOUD-1720",
+        "CLOV-627",
+        "CRUC-2775",
+        "CWD-2576",
+        "FE-1421",
+        "JRASERVER-12886",
+        "BAM-4235",
+        "CLOUD-1093",
+        "CLOV-1068",
+        "CRUC-4340",
+        "CWD-1564",
+        "FE-3334",
+        "JRASERVER-8902",
+        "BAM-3933",
+        "CLOUD-2553",
+        "CLOV-892",
+        "CRUC-2171",
+        "CWD-2556",
+        "FE-1938",
+        "JRASERVER-8950",
+        "BAM-3256",
+        "CLOUD-1547",
+        "CLOV-455",
+        "CRUC-2174",
+        "CWD-1524",
+        "FE-979",
+        "JRASERVER-17672",
+        "BAM-4680",
+        "CLOUD-1492",
+        "CLOV-546",
+        "CRUC-2166",
+        "CWD-2138",
+        "FE-1103",
+        "JRASERVER-18137",
+        "BAM-5182",
+        "CLOUD-1169",
+        "CLOV-767",
+        "CRUC-2192",
+        "CWD-427",
+        "FE-1029",
+        "JRASERVER-14381",
+        "BAM-3744",
+        "CLOUD-1830",
+        "CLOV-607",
+        "CRUC-1374",
+        "CWD-2130",
+        "FE-1284",
+        "JRASERVER-17551",
+        "BAM-3869",
+        "CLOUD-2274",
+        "CLOV-538",
+        "CRUC-2290",
+        "CWD-1482",
+        "FE-1390",
+        "JRASERVER-14549",
+        "BAM-3623",
+        "CLOUD-1368",
+        "CLOV-777",
+        "CRUC-3637",
+        "CWD-2089",
+        "FE-931",
+        "JRASERVER-16644",
+        "BAM-4905",
+        "CLOUD-2113"
+      ]
+    },
+    {
+      "group": "no_time",
+      "quota": 60,
+      "drawn": 60,
+      "candidates": 83411,
+      "keys": [
+        "BAM-884",
+        "CLOUD-9785",
+        "CLOV-848",
+        "CRUC-3553",
+        "CWD-4422",
+        "FE-7136",
+        "JRASERVER-71177",
+        "BAM-17969",
+        "CLOUD-8967",
+        "CLOV-350",
+        "CRUC-7204",
+        "CWD-4902",
+        "FE-1792",
+        "JRASERVER-11173",
+        "BAM-16433",
+        "CLOUD-9644",
+        "CLOV-579",
+        "CRUC-4986",
+        "CWD-2723",
+        "FE-4885",
+        "JRASERVER-27015",
+        "BAM-9505",
+        "CLOUD-3181",
+        "CLOV-92",
+        "CRUC-6544",
+        "CWD-489",
+        "FE-4986",
+        "JRASERVER-43357",
+        "BAM-12792",
+        "CLOUD-3012",
+        "CLOV-923",
+        "CRUC-161",
+        "CWD-1913",
+        "FE-6440",
+        "JRASERVER-12465",
+        "BAM-3755",
+        "CLOUD-10949",
+        "CLOV-151",
+        "CRUC-1001",
+        "CWD-638",
+        "FE-3968",
+        "JRASERVER-27516",
+        "BAM-4320",
+        "CLOUD-5027",
+        "CLOV-1586",
+        "CRUC-1525",
+        "CWD-4215",
+        "FE-1856",
+        "JRASERVER-42138",
+        "BAM-19991",
+        "CLOUD-10246",
+        "CLOV-108",
+        "CRUC-3944",
+        "CWD-4186",
+        "FE-3486",
+        "JRASERVER-35868",
+        "BAM-16117",
+        "CLOUD-3932",
+        "CLOV-1208",
+        "CRUC-6004"
+      ]
+    },
+    {
+      "group": "flagged_entry",
+      "quota": 30,
+      "drawn": 0,
+      "candidates": 0,
+      "keys": []
+    },
+    {
+      "group": "negative_entry",
+      "quota": 30,
+      "drawn": 30,
+      "candidates": 49,
+      "keys": [
+        "CLOUD-643",
+        "CLOV-852",
+        "CRUC-4918",
+        "CWD-306",
+        "FE-1021",
+        "JRASERVER-17234",
+        "CLOV-803",
+        "CRUC-944",
+        "CWD-2410",
+        "FE-1114",
+        "JRASERVER-21586",
+        "CRUC-1839",
+        "CWD-2593",
+        "FE-1113",
+        "JRASERVER-17449",
+        "CRUC-3295",
+        "FE-1006",
+        "JRASERVER-1604",
+        "CRUC-3243",
+        "FE-1167",
+        "JRASERVER-17705",
+        "CRUC-4934",
+        "FE-1285",
+        "JRASERVER-19421",
+        "CRUC-1142",
+        "FE-1111",
+        "JRASERVER-10393",
+        "CRUC-2204",
+        "FE-2695",
+        "JRASERVER-16807"
+      ]
+    }
+  ],
+  "links": {
+    "quota": 40,
+    "drawn": 40,
+    "candidates": 21721,
+    "links": [
+      {
+        "id": 205038,
+        "ends": [
+          "BAM-16628",
+          "BAM-17032"
+        ]
+      },
+      {
+        "id": 399270,
+        "ends": [
+          "CRUC-1172",
+          "CRUC-1174"
+        ]
+      },
+      {
+        "id": 72683,
+        "ends": [
+          "JRASERVER-14220",
+          "JRASERVER-29487"
+        ]
+      },
+      {
+        "id": 11936,
+        "ends": [
+          "JRASERVER-3884",
+          "JRASERVER-4065"
+        ]
+      },
+      {
+        "id": 10811,
+        "ends": [
+          "JRASERVER-1410",
+          "JRASERVER-1630"
+        ]
+      },
+      {
+        "id": 355894,
+        "ends": [
+          "BAM-16765",
+          "BAM-17856"
+        ]
+      },
+      {
+        "id": 16377,
+        "ends": [
+          "JRASERVER-5310",
+          "JRASERVER-5383"
+        ]
+      },
+      {
+        "id": 41944,
+        "ends": [
+          "JRASERVER-11682",
+          "JRASERVER-20776"
+        ]
+      },
+      {
+        "id": 61380,
+        "ends": [
+          "FE-3790",
+          "FE-3895"
+        ]
+      },
+      {
+        "id": 186053,
+        "ends": [
+          "CRUC-7193",
+          "CRUC-7337"
+        ]
+      },
+      {
+        "id": 240474,
+        "ends": [
+          "CRUC-2872",
+          "CRUC-7902"
+        ]
+      },
+      {
+        "id": 400792,
+        "ends": [
+          "CWD-1850",
+          "CWD-1893"
+        ]
+      },
+      {
+        "id": 93088,
+        "ends": [
+          "BAM-10947",
+          "BAM-10948"
+        ]
+      },
+      {
+        "id": 63099,
+        "ends": [
+          "CWD-1283",
+          "CWD-2759"
+        ]
+      },
+      {
+        "id": 20085,
+        "ends": [
+          "JRASERVER-10404",
+          "JRASERVER-10958"
+        ]
+      },
+      {
+        "id": 27734,
+        "ends": [
+          "CWD-648",
+          "CWD-654"
+        ]
+      },
+      {
+        "id": 192403,
+        "ends": [
+          "JRASERVER-21436",
+          "JRASERVER-45342"
+        ]
+      },
+      {
+        "id": 45951,
+        "ends": [
+          "JRASERVER-22980",
+          "JRASERVER-23054"
+        ]
+      },
+      {
+        "id": 168717,
+        "ends": [
+          "CRUC-5898",
+          "CRUC-6181"
+        ]
+      },
+      {
+        "id": 187595,
+        "ends": [
+          "BAM-16215",
+          "BAM-16216"
+        ]
+      },
+      {
+        "id": 400147,
+        "ends": [
+          "BAM-3918",
+          "BAM-3938"
+        ]
+      },
+      {
+        "id": 343262,
+        "ends": [
+          "JRASERVER-12891",
+          "JRASERVER-34015"
+        ]
+      },
+      {
+        "id": 72633,
+        "ends": [
+          "BAM-12078",
+          "BAM-5137"
+        ]
+      },
+      {
+        "id": 46911,
+        "ends": [
+          "JRASERVER-22207",
+          "JRASERVER-23355"
+        ]
+      },
+      {
+        "id": 87951,
+        "ends": [
+          "JRASERVER-22699",
+          "JRASERVER-22916"
+        ]
+      },
+      {
+        "id": 30444,
+        "ends": [
+          "CWD-1069",
+          "CWD-183"
+        ]
+      },
+      {
+        "id": 10535,
+        "ends": [
+          "JRASERVER-1641",
+          "JRASERVER-1642"
+        ]
+      },
+      {
+        "id": 10162,
+        "ends": [
+          "JRASERVER-1020",
+          "JRASERVER-1315"
+        ]
+      },
+      {
+        "id": 39040,
+        "ends": [
+          "JRASERVER-17109",
+          "JRASERVER-2735"
+        ]
+      },
+      {
+        "id": 28802,
+        "ends": [
+          "JRASERVER-13858",
+          "JRASERVER-7661"
+        ]
+      },
+      {
+        "id": 61296,
+        "ends": [
+          "JRASERVER-25304",
+          "JRASERVER-26618"
+        ]
+      },
+      {
+        "id": 22878,
+        "ends": [
+          "JRASERVER-1558",
+          "JRASERVER-7948"
+        ]
+      },
+      {
+        "id": 198966,
+        "ends": [
+          "JRASERVER-36246",
+          "JRASERVER-45928"
+        ]
+      },
+      {
+        "id": 62337,
+        "ends": [
+          "BAM-10508",
+          "BAM-10596"
+        ]
+      },
+      {
+        "id": 361998,
+        "ends": [
+          "FE-7017",
+          "JRASERVER-24133"
+        ]
+      },
+      {
+        "id": 46287,
+        "ends": [
+          "CRUC-4708",
+          "CRUC-4985"
+        ]
+      },
+      {
+        "id": 72586,
+        "ends": [
+          "BAM-12088",
+          "BAM-12089"
+        ]
+      },
+      {
+        "id": 211509,
+        "ends": [
+          "JRASERVER-40049",
+          "JRASERVER-6798"
+        ]
+      },
+      {
+        "id": 110971,
+        "ends": [
+          "JRASERVER-2740",
+          "JRASERVER-34619"
+        ]
+      },
+      {
+        "id": 66266,
+        "ends": [
+          "FE-4001",
+          "FE-4029"
+        ]
+      }
+    ]
+  },
+  "shortfalls": [
+    {
+      "group": "flagged_entry",
+      "quota": 30,
+      "drawn": 0
+    }
+  ],
+  "files": {
+    "BAM": [
+      "BAM-884",
+      "BAM-2346",
+      "BAM-3230",
+      "BAM-3256",
+      "BAM-3336",
+      "BAM-3623",
+      "BAM-3744",
+      "BAM-3755",
+      "BAM-3821",
+      "BAM-3869",
+      "BAM-3918",
+      "BAM-3933",
+      "BAM-3938",
+      "BAM-4235",
+      "BAM-4320",
+      "BAM-4679",
+      "BAM-4680",
+      "BAM-4849",
+      "BAM-4905",
+      "BAM-5137",
+      "BAM-5182",
+      "BAM-9505",
+      "BAM-10508",
+      "BAM-10596",
+      "BAM-10947",
+      "BAM-10948",
+      "BAM-12078",
+      "BAM-12088",
+      "BAM-12089",
+      "BAM-12792",
+      "BAM-16117",
+      "BAM-16215",
+      "BAM-16216",
+      "BAM-16433",
+      "BAM-16628",
+      "BAM-16765",
+      "BAM-17032",
+      "BAM-17856",
+      "BAM-17969",
+      "BAM-19991"
+    ],
+    "CLOUD": [
+      "CLOUD-4960",
+      "CLOUD-5027",
+      "CLOUD-1169",
+      "CLOUD-3012",
+      "CLOUD-2546",
+      "CLOUD-391",
+      "CLOUD-3181",
+      "CLOUD-643",
+      "CLOUD-1547",
+      "CLOUD-1368",
+      "CLOUD-1720",
+      "CLOUD-2113",
+      "CLOUD-2274",
+      "CLOUD-1411",
+      "CLOUD-2553",
+      "CLOUD-516",
+      "CLOUD-1830",
+      "CLOUD-1492",
+      "CLOUD-1093",
+      "CLOUD-3932",
+      "CLOUD-8967",
+      "CLOUD-9644",
+      "CLOUD-9785",
+      "CLOUD-10246",
+      "CLOUD-10949"
+    ],
+    "CLOV": [
+      "CLOV-92",
+      "CLOV-108",
+      "CLOV-151",
+      "CLOV-350",
+      "CLOV-392",
+      "CLOV-455",
+      "CLOV-579",
+      "CLOV-538",
+      "CLOV-546",
+      "CLOV-566",
+      "CLOV-600",
+      "CLOV-606",
+      "CLOV-607",
+      "CLOV-627",
+      "CLOV-658",
+      "CLOV-767",
+      "CLOV-777",
+      "CLOV-803",
+      "CLOV-848",
+      "CLOV-852",
+      "CLOV-892",
+      "CLOV-923",
+      "CLOV-1068",
+      "CLOV-1208",
+      "CLOV-1586"
+    ],
+    "CRUC": [
+      "CRUC-161",
+      "CRUC-944",
+      "CRUC-1001",
+      "CRUC-1142",
+      "CRUC-1164",
+      "CRUC-1172",
+      "CRUC-1174",
+      "CRUC-1297",
+      "CRUC-1374",
+      "CRUC-1525",
+      "CRUC-1807",
+      "CRUC-1839",
+      "CRUC-2166",
+      "CRUC-2171",
+      "CRUC-2174",
+      "CRUC-2192",
+      "CRUC-2204",
+      "CRUC-2290",
+      "CRUC-2775",
+      "CRUC-2872",
+      "CRUC-3243",
+      "CRUC-3295",
+      "CRUC-3553",
+      "CRUC-3637",
+      "CRUC-3944",
+      "CRUC-4340",
+      "CRUC-4708",
+      "CRUC-4918",
+      "CRUC-4927",
+      "CRUC-4934",
+      "CRUC-4985",
+      "CRUC-4986",
+      "CRUC-5390",
+      "CRUC-5898",
+      "CRUC-6004",
+      "CRUC-6181",
+      "CRUC-6544",
+      "CRUC-7193",
+      "CRUC-7204",
+      "CRUC-7337",
+      "CRUC-7902"
+    ],
+    "CWD": [
+      "CWD-183",
+      "CWD-306",
+      "CWD-427",
+      "CWD-489",
+      "CWD-638",
+      "CWD-648",
+      "CWD-654",
+      "CWD-685",
+      "CWD-1069",
+      "CWD-1283",
+      "CWD-1482",
+      "CWD-1524",
+      "CWD-1564",
+      "CWD-1850",
+      "CWD-1893",
+      "CWD-1913",
+      "CWD-2089",
+      "CWD-2092",
+      "CWD-2130",
+      "CWD-2138",
+      "CWD-2186",
+      "CWD-2263",
+      "CWD-2410",
+      "CWD-2555",
+      "CWD-2556",
+      "CWD-2576",
+      "CWD-2593",
+      "CWD-2723",
+      "CWD-2759",
+      "CWD-4186",
+      "CWD-4215",
+      "CWD-4422",
+      "CWD-4902"
+    ],
+    "FE": [
+      "FE-931",
+      "FE-948",
+      "FE-979",
+      "FE-1006",
+      "FE-1021",
+      "FE-1029",
+      "FE-1045",
+      "FE-1103",
+      "FE-1111",
+      "FE-1113",
+      "FE-1114",
+      "FE-1131",
+      "FE-1167",
+      "FE-1284",
+      "FE-1285",
+      "FE-1390",
+      "FE-1421",
+      "FE-1792",
+      "FE-1856",
+      "FE-1938",
+      "FE-3334",
+      "FE-3282",
+      "FE-2695",
+      "FE-3486",
+      "FE-3790",
+      "FE-3895",
+      "FE-3968",
+      "FE-4001",
+      "FE-4029",
+      "FE-4340",
+      "FE-4885",
+      "FE-4986",
+      "FE-6440",
+      "FE-7017",
+      "FE-7136"
+    ],
+    "JRASERVER": [
+      "JRASERVER-1020",
+      "JRASERVER-1315",
+      "JRASERVER-1410",
+      "JRASERVER-1558",
+      "JRASERVER-1604",
+      "JRASERVER-1630",
+      "JRASERVER-1641",
+      "JRASERVER-1642",
+      "JRASERVER-2735",
+      "JRASERVER-2740",
+      "JRASERVER-3884",
+      "JRASERVER-4065",
+      "JRASERVER-5310",
+      "JRASERVER-5383",
+      "JRASERVER-6798",
+      "JRASERVER-7661",
+      "JRASERVER-7948",
+      "JRASERVER-8902",
+      "JRASERVER-8950",
+      "JRASERVER-10393",
+      "JRASERVER-10404",
+      "JRASERVER-10958",
+      "JRASERVER-11173",
+      "JRASERVER-11682",
+      "JRASERVER-12465",
+      "JRASERVER-12886",
+      "JRASERVER-12891",
+      "JRASERVER-13858",
+      "JRASERVER-14220",
+      "JRASERVER-14381",
+      "JRASERVER-14549",
+      "JRASERVER-15175",
+      "JRASERVER-16617",
+      "JRASERVER-16644",
+      "JRASERVER-16807",
+      "JRASERVER-17109",
+      "JRASERVER-17204",
+      "JRASERVER-17234",
+      "JRASERVER-17449",
+      "JRASERVER-17551",
+      "JRASERVER-17669",
+      "JRASERVER-17672",
+      "JRASERVER-17705",
+      "JRASERVER-17955",
+      "JRASERVER-18137",
+      "JRASERVER-19421",
+      "JRASERVER-20776",
+      "JRASERVER-21436",
+      "JRASERVER-21586",
+      "JRASERVER-22207",
+      "JRASERVER-22916",
+      "JRASERVER-22699",
+      "JRASERVER-22980",
+      "JRASERVER-23054",
+      "JRASERVER-23355",
+      "JRASERVER-24133",
+      "JRASERVER-25304",
+      "JRASERVER-26618",
+      "JRASERVER-27015",
+      "JRASERVER-27516",
+      "JRASERVER-29487",
+      "JRASERVER-34015",
+      "JRASERVER-34619",
+      "JRASERVER-35868",
+      "JRASERVER-36246",
+      "JRASERVER-40049",
+      "JRASERVER-42138",
+      "JRASERVER-43357",
+      "JRASERVER-45342",
+      "JRASERVER-45928",
+      "JRASERVER-71177"
+    ]
+  },
+  "total_bytes": 9695035,
+  "replaced_paths": [
+    "fields.description",
+    "fields.environment",
+    "fields.comment.comments[].body",
+    "fields.comments[].body (AC-17 amendment: where the Jira collection keeps comments)",
+    "renderedFields.description",
+    "renderedFields.environment",
+    "renderedFields.comment.comments[].body",
+    "changelog.histories[].items[].fromString (field description, comment or environment)",
+    "changelog.histories[].items[].toString (field description, comment or environment)",
+    "changelog.histories[].items[].from (field Comment, AC-17 amendment 2)",
+    "changelog.histories[].items[].to (field Comment, AC-17 amendment 2)"
+  ],
+  "placeholder": "[prose removed for fixtures]",
+  "replaced": {
+    "JRASERVER-1020": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "JRASERVER-1315": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-1410": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "changelog.histories[14].items[0].from",
+      "changelog.histories[15].items[0].from"
+    ],
+    "JRASERVER-1558": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "fields.comments[43].body",
+      "fields.comments[44].body",
+      "fields.comments[45].body",
+      "fields.comments[46].body",
+      "fields.comments[47].body",
+      "fields.comments[48].body",
+      "fields.comments[49].body",
+      "fields.comments[50].body",
+      "fields.comments[51].body",
+      "fields.comments[52].body",
+      "fields.comments[53].body",
+      "fields.comments[54].body",
+      "fields.comments[55].body",
+      "fields.comments[56].body",
+      "fields.comments[57].body",
+      "fields.comments[58].body",
+      "fields.comments[59].body",
+      "fields.comments[60].body",
+      "changelog.histories[36].items[0].fromString",
+      "changelog.histories[36].items[0].toString",
+      "changelog.histories[41].items[0].fromString",
+      "changelog.histories[41].items[0].toString",
+      "changelog.histories[43].items[0].fromString",
+      "changelog.histories[43].items[0].toString",
+      "changelog.histories[49].items[0].fromString",
+      "changelog.histories[49].items[0].toString",
+      "changelog.histories[58].items[0].fromString",
+      "changelog.histories[58].items[0].toString",
+      "changelog.histories[63].items[0].fromString",
+      "changelog.histories[63].items[0].toString"
+    ],
+    "JRASERVER-1604": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "fields.comments[43].body",
+      "fields.comments[44].body",
+      "fields.comments[45].body",
+      "fields.comments[46].body",
+      "fields.comments[47].body",
+      "fields.comments[48].body",
+      "fields.comments[49].body",
+      "fields.comments[50].body",
+      "fields.comments[51].body",
+      "fields.comments[52].body",
+      "fields.comments[53].body",
+      "fields.comments[54].body",
+      "fields.comments[55].body",
+      "fields.comments[56].body",
+      "fields.comments[57].body",
+      "fields.comments[58].body",
+      "fields.comments[59].body",
+      "fields.comments[60].body",
+      "fields.comments[61].body",
+      "fields.comments[62].body",
+      "fields.comments[63].body",
+      "fields.comments[64].body",
+      "fields.comments[65].body",
+      "fields.comments[66].body",
+      "fields.comments[67].body",
+      "fields.comments[68].body",
+      "fields.comments[69].body",
+      "fields.comments[70].body",
+      "fields.comments[71].body",
+      "fields.comments[72].body",
+      "fields.comments[73].body",
+      "fields.comments[74].body",
+      "fields.comments[75].body",
+      "fields.comments[76].body",
+      "fields.comments[77].body",
+      "fields.comments[78].body",
+      "fields.comments[79].body",
+      "fields.comments[80].body",
+      "fields.comments[81].body",
+      "fields.comments[82].body",
+      "fields.comments[83].body",
+      "fields.comments[84].body",
+      "fields.comments[85].body",
+      "fields.comments[86].body",
+      "fields.comments[87].body",
+      "fields.comments[88].body",
+      "fields.comments[89].body",
+      "fields.comments[90].body",
+      "fields.comments[91].body",
+      "fields.comments[92].body",
+      "fields.comments[93].body",
+      "fields.comments[94].body",
+      "fields.comments[95].body",
+      "fields.comments[96].body",
+      "fields.comments[97].body",
+      "fields.comments[98].body",
+      "fields.comments[99].body",
+      "fields.comments[100].body",
+      "fields.comments[101].body",
+      "fields.comments[102].body",
+      "fields.comments[103].body",
+      "fields.comments[104].body",
+      "fields.comments[105].body",
+      "fields.comments[106].body",
+      "fields.comments[107].body",
+      "fields.comments[108].body",
+      "fields.comments[109].body",
+      "fields.comments[110].body",
+      "fields.comments[111].body",
+      "fields.comments[112].body",
+      "fields.comments[113].body",
+      "fields.comments[114].body",
+      "fields.comments[115].body",
+      "fields.comments[116].body",
+      "fields.comments[117].body",
+      "fields.comments[118].body",
+      "fields.comments[119].body",
+      "fields.comments[120].body",
+      "fields.comments[121].body",
+      "fields.comments[122].body",
+      "fields.comments[123].body",
+      "fields.comments[124].body",
+      "fields.comments[125].body",
+      "fields.comments[126].body",
+      "fields.comments[127].body",
+      "fields.comments[128].body",
+      "fields.comments[129].body",
+      "fields.comments[130].body",
+      "fields.comments[131].body",
+      "fields.comments[132].body",
+      "fields.comments[133].body",
+      "fields.comments[134].body",
+      "fields.comments[135].body",
+      "fields.comments[136].body",
+      "fields.comments[137].body",
+      "fields.comments[138].body",
+      "fields.comments[139].body",
+      "fields.comments[140].body",
+      "fields.comments[141].body",
+      "fields.comments[142].body",
+      "fields.comments[143].body",
+      "fields.comments[144].body",
+      "fields.comments[145].body",
+      "changelog.histories[150].items[0].from",
+      "changelog.histories[151].items[0].from",
+      "changelog.histories[152].items[0].from"
+    ],
+    "JRASERVER-1630": [
+      "fields.description"
+    ],
+    "JRASERVER-1641": [
+      "fields.description"
+    ],
+    "JRASERVER-1642": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body"
+    ],
+    "JRASERVER-2735": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "changelog.histories[27].items[0].fromString",
+      "changelog.histories[27].items[0].toString",
+      "changelog.histories[32].items[0].fromString",
+      "changelog.histories[32].items[0].toString"
+    ],
+    "JRASERVER-2740": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "fields.comments[43].body",
+      "fields.comments[44].body",
+      "fields.comments[45].body",
+      "fields.comments[46].body",
+      "fields.comments[47].body",
+      "fields.comments[48].body",
+      "fields.comments[49].body",
+      "fields.comments[50].body",
+      "fields.comments[51].body",
+      "fields.comments[52].body",
+      "fields.comments[53].body",
+      "fields.comments[54].body",
+      "fields.comments[55].body",
+      "fields.comments[56].body",
+      "fields.comments[57].body",
+      "fields.comments[58].body",
+      "fields.comments[59].body",
+      "fields.comments[60].body",
+      "fields.comments[61].body",
+      "fields.comments[62].body",
+      "fields.comments[63].body",
+      "fields.comments[64].body",
+      "fields.comments[65].body",
+      "fields.comments[66].body",
+      "fields.comments[67].body",
+      "fields.comments[68].body",
+      "fields.comments[69].body",
+      "fields.comments[70].body",
+      "fields.comments[71].body",
+      "fields.comments[72].body",
+      "fields.comments[73].body",
+      "fields.comments[74].body",
+      "fields.comments[75].body",
+      "fields.comments[76].body",
+      "fields.comments[77].body",
+      "fields.comments[78].body",
+      "fields.comments[79].body",
+      "fields.comments[80].body",
+      "fields.comments[81].body",
+      "fields.comments[82].body",
+      "fields.comments[83].body",
+      "fields.comments[84].body",
+      "changelog.histories[23].items[0].fromString",
+      "changelog.histories[23].items[0].toString",
+      "changelog.histories[24].items[0].fromString",
+      "changelog.histories[24].items[0].toString",
+      "changelog.histories[31].items[0].fromString",
+      "changelog.histories[31].items[0].toString",
+      "changelog.histories[33].items[0].fromString",
+      "changelog.histories[33].items[0].toString",
+      "changelog.histories[34].items[0].fromString",
+      "changelog.histories[34].items[0].toString",
+      "changelog.histories[45].items[0].fromString",
+      "changelog.histories[45].items[0].toString",
+      "changelog.histories[56].items[0].fromString",
+      "changelog.histories[56].items[0].toString",
+      "changelog.histories[59].items[0].fromString",
+      "changelog.histories[59].items[0].toString",
+      "changelog.histories[65].items[0].fromString",
+      "changelog.histories[65].items[0].toString",
+      "changelog.histories[175].items[0].fromString",
+      "changelog.histories[175].items[0].toString"
+    ],
+    "JRASERVER-3884": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "JRASERVER-4065": [
+      "fields.description"
+    ],
+    "JRASERVER-5310": [
+      "fields.description"
+    ],
+    "JRASERVER-5383": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body"
+    ],
+    "JRASERVER-6798": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "fields.comments[43].body",
+      "fields.comments[44].body",
+      "fields.comments[45].body",
+      "fields.comments[46].body",
+      "fields.comments[47].body",
+      "fields.comments[48].body",
+      "fields.comments[49].body",
+      "fields.comments[50].body",
+      "fields.comments[51].body",
+      "fields.comments[52].body",
+      "fields.comments[53].body",
+      "fields.comments[54].body",
+      "fields.comments[55].body",
+      "fields.comments[56].body",
+      "fields.comments[57].body",
+      "fields.comments[58].body",
+      "fields.comments[59].body",
+      "fields.comments[60].body",
+      "fields.comments[61].body",
+      "fields.comments[62].body",
+      "fields.comments[63].body",
+      "fields.comments[64].body",
+      "fields.comments[65].body",
+      "fields.comments[66].body",
+      "fields.comments[67].body",
+      "fields.comments[68].body",
+      "fields.comments[69].body",
+      "fields.comments[70].body",
+      "fields.comments[71].body",
+      "fields.comments[72].body",
+      "fields.comments[73].body",
+      "fields.comments[74].body",
+      "fields.comments[75].body",
+      "fields.comments[76].body",
+      "fields.comments[77].body",
+      "fields.comments[78].body",
+      "fields.comments[79].body",
+      "fields.comments[80].body",
+      "fields.comments[81].body",
+      "fields.comments[82].body",
+      "fields.comments[83].body",
+      "fields.comments[84].body",
+      "fields.comments[85].body",
+      "fields.comments[86].body",
+      "fields.comments[87].body",
+      "fields.comments[88].body",
+      "fields.comments[89].body",
+      "fields.comments[90].body",
+      "fields.comments[91].body",
+      "fields.comments[92].body",
+      "fields.comments[93].body",
+      "fields.comments[94].body",
+      "fields.comments[95].body",
+      "fields.comments[96].body",
+      "fields.comments[97].body",
+      "fields.comments[98].body",
+      "fields.comments[99].body",
+      "fields.comments[100].body",
+      "fields.comments[101].body",
+      "fields.comments[102].body",
+      "fields.comments[103].body",
+      "fields.comments[104].body",
+      "fields.comments[105].body",
+      "fields.comments[106].body",
+      "fields.comments[107].body",
+      "fields.comments[108].body",
+      "fields.comments[109].body",
+      "fields.comments[110].body",
+      "fields.comments[111].body",
+      "fields.comments[112].body",
+      "fields.comments[113].body",
+      "fields.comments[114].body",
+      "fields.comments[115].body",
+      "fields.comments[116].body",
+      "fields.comments[117].body",
+      "fields.comments[118].body",
+      "fields.comments[119].body",
+      "fields.comments[120].body",
+      "fields.comments[121].body",
+      "fields.comments[122].body",
+      "fields.comments[123].body",
+      "fields.comments[124].body",
+      "fields.comments[125].body",
+      "fields.comments[126].body",
+      "fields.comments[127].body",
+      "fields.comments[128].body",
+      "changelog.histories[6].items[0].fromString",
+      "changelog.histories[6].items[0].toString",
+      "changelog.histories[30].items[0].fromString",
+      "changelog.histories[30].items[0].toString",
+      "changelog.histories[33].items[0].fromString",
+      "changelog.histories[33].items[0].toString",
+      "changelog.histories[61].items[0].fromString",
+      "changelog.histories[61].items[0].toString",
+      "changelog.histories[70].items[0].fromString",
+      "changelog.histories[70].items[0].toString",
+      "changelog.histories[76].items[0].fromString",
+      "changelog.histories[76].items[0].toString",
+      "changelog.histories[87].items[0].fromString",
+      "changelog.histories[87].items[0].toString",
+      "changelog.histories[135].items[1].fromString",
+      "changelog.histories[135].items[1].toString"
+    ],
+    "JRASERVER-7661": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "fields.comments[43].body",
+      "fields.comments[44].body",
+      "fields.comments[45].body",
+      "fields.comments[46].body",
+      "fields.comments[47].body",
+      "fields.comments[48].body",
+      "fields.comments[49].body",
+      "fields.comments[50].body",
+      "fields.comments[51].body",
+      "fields.comments[52].body",
+      "fields.comments[53].body",
+      "fields.comments[54].body",
+      "fields.comments[55].body",
+      "fields.comments[56].body",
+      "fields.comments[57].body",
+      "fields.comments[58].body",
+      "fields.comments[59].body",
+      "fields.comments[60].body",
+      "fields.comments[61].body",
+      "fields.comments[62].body",
+      "fields.comments[63].body",
+      "fields.comments[64].body"
+    ],
+    "JRASERVER-7948": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "changelog.histories[2].items[0].from",
+      "changelog.histories[17].items[0].fromString",
+      "changelog.histories[17].items[0].toString"
+    ],
+    "JRASERVER-8902": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body"
+    ],
+    "JRASERVER-8950": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body"
+    ],
+    "JRASERVER-10393": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "changelog.histories[1].items[0].fromString",
+      "changelog.histories[1].items[0].toString",
+      "changelog.histories[3].items[0].from",
+      "changelog.histories[51].items[0].fromString",
+      "changelog.histories[51].items[0].toString"
+    ],
+    "JRASERVER-10404": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "JRASERVER-10958": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body"
+    ],
+    "JRASERVER-11173": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "JRASERVER-11682": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "changelog.histories[12].items[0].from",
+      "changelog.histories[13].items[0].from"
+    ],
+    "BAM-884": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "CWD-183": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body"
+    ],
+    "JRASERVER-12465": [
+      "fields.description"
+    ],
+    "CWD-306": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body"
+    ],
+    "JRASERVER-12886": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body"
+    ],
+    "JRASERVER-12891": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "changelog.histories[3].items[6].fromString",
+      "changelog.histories[3].items[6].toString",
+      "changelog.histories[18].items[0].fromString",
+      "changelog.histories[18].items[0].toString"
+    ],
+    "CWD-427": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body"
+    ],
+    "CWD-489": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "changelog.histories[1].items[0].toString"
+    ],
+    "JRASERVER-13858": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CLOV-92": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CLOV-108": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body"
+    ],
+    "CRUC-161": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CWD-638": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CWD-648": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CWD-654": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "CWD-685": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-14220": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body"
+    ],
+    "CLOV-151": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString"
+    ],
+    "JRASERVER-14381": [
+      "fields.description"
+    ],
+    "JRASERVER-14549": [
+      "fields.description"
+    ],
+    "BAM-2346": [
+      "fields.description"
+    ],
+    "CWD-1069": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-15175": [
+      "fields.description",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString"
+    ],
+    "CLOV-350": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CWD-1283": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body"
+    ],
+    "BAM-3230": [
+      "fields.description"
+    ],
+    "BAM-3256": [],
+    "CLOV-392": [],
+    "BAM-3336": [
+      "fields.description",
+      "changelog.histories[1].items[0].toString",
+      "changelog.histories[5].items[0].fromString",
+      "changelog.histories[5].items[0].toString"
+    ],
+    "CRUC-944": [
+      "fields.description",
+      "changelog.histories[1].items[0].toString"
+    ],
+    "FE-931": [
+      "fields.description"
+    ],
+    "FE-948": [],
+    "FE-979": [],
+    "FE-1006": [
+      "fields.description"
+    ],
+    "FE-1021": [],
+    "FE-1029": [],
+    "CRUC-1001": [
+      "fields.description"
+    ],
+    "FE-1045": [],
+    "FE-1103": [],
+    "FE-1111": [
+      "fields.description"
+    ],
+    "FE-1113": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "FE-1114": [
+      "fields.comments[0].body"
+    ],
+    "FE-1131": [],
+    "FE-1167": [
+      "fields.description"
+    ],
+    "CRUC-1142": [
+      "fields.description",
+      "changelog.histories[0].items[0].toString"
+    ],
+    "CRUC-1164": [],
+    "CRUC-1172": [],
+    "CRUC-1174": [],
+    "CLOV-455": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "BAM-3623": [],
+    "JRASERVER-16617": [
+      "fields.description"
+    ],
+    "JRASERVER-16644": [
+      "fields.comments[0].body"
+    ],
+    "FE-1284": [],
+    "FE-1285": [],
+    "JRASERVER-16807": [],
+    "CWD-1482": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body"
+    ],
+    "FE-1390": [
+      "fields.description"
+    ],
+    "CRUC-1297": [
+      "fields.description"
+    ],
+    "BAM-3744": [
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "BAM-3755": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "FE-1421": [
+      "fields.description"
+    ],
+    "BAM-3821": [
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CRUC-1374": [],
+    "JRASERVER-17109": [
+      "fields.description"
+    ],
+    "CLOV-579": [
+      "fields.comments[0].body"
+    ],
+    "BAM-3869": [
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-17204": [],
+    "JRASERVER-17234": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CWD-1524": [],
+    "BAM-3918": [
+      "fields.comments[0].body"
+    ],
+    "BAM-3933": [],
+    "BAM-3938": [],
+    "CLOV-538": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-17449": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body"
+    ],
+    "CRUC-1525": [
+      "fields.description"
+    ],
+    "JRASERVER-17551": [
+      "fields.description"
+    ],
+    "CLOV-546": [
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-17669": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-17672": [
+      "fields.description",
+      "fields.comments[0].body",
+      "changelog.histories[0].items[5].toString"
+    ],
+    "CLOV-566": [],
+    "CLOV-600": [
+      "fields.description",
+      "changelog.histories[0].items[0].toString"
+    ],
+    "JRASERVER-17705": [
+      "fields.description"
+    ],
+    "CWD-1564": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CLOV-606": [],
+    "CLOV-607": [
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "FE-1792": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "FE-1856": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CLOV-627": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body"
+    ],
+    "CRUC-1807": [],
+    "FE-1938": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "JRASERVER-17955": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "BAM-4235": [
+      "fields.description",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[5].items[0].fromString",
+      "changelog.histories[5].items[0].toString"
+    ],
+    "CRUC-1839": [
+      "fields.description"
+    ],
+    "CLOV-658": [
+      "fields.description"
+    ],
+    "JRASERVER-18137": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "BAM-4320": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CRUC-2166": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CRUC-2171": [
+      "fields.description",
+      "fields.environment"
+    ],
+    "CRUC-2174": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CRUC-2192": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body"
+    ],
+    "CRUC-2204": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString"
+    ],
+    "CRUC-2290": [],
+    "BAM-4679": [
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "BAM-4680": [],
+    "CLOV-767": [
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-19421": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body"
+    ],
+    "CLOV-777": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CLOV-803": [
+      "fields.description"
+    ],
+    "BAM-4849": [],
+    "CRUC-2775": [
+      "fields.description",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[1].items[0].fromString",
+      "changelog.histories[1].items[0].toString"
+    ],
+    "BAM-4905": [
+      "fields.description"
+    ],
+    "CRUC-2872": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "changelog.histories[8].items[0].toString"
+    ],
+    "BAM-5137": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "changelog.histories[0].items[1].fromString",
+      "changelog.histories[0].items[1].toString"
+    ],
+    "BAM-5182": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "CLOV-848": [
+      "fields.description"
+    ],
+    "CLOV-852": [],
+    "CLOV-892": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CWD-1850": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CLOV-923": [
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "CRUC-3243": [
+      "fields.description"
+    ],
+    "JRASERVER-20776": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body"
+    ],
+    "CRUC-3295": [
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[1].items[0].fromString"
+    ],
+    "FE-3334": [
+      "fields.description",
+      "fields.comments[0].body",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString",
+      "changelog.histories[4].items[0].fromString",
+      "changelog.histories[4].items[0].toString",
+      "changelog.histories[5].items[0].fromString",
+      "changelog.histories[5].items[0].toString"
+    ],
+    "CWD-1893": [
+      "fields.description"
+    ],
+    "CWD-1913": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CRUC-3553": [
+      "fields.description"
+    ],
+    "FE-3282": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-21436": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "fields.comments[43].body",
+      "fields.comments[44].body",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString",
+      "changelog.histories[6].items[0].fromString",
+      "changelog.histories[6].items[0].toString",
+      "changelog.histories[7].items[0].fromString",
+      "changelog.histories[7].items[0].toString"
+    ],
+    "CRUC-3637": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body"
+    ],
+    "JRASERVER-21586": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "changelog.histories[5].items[0].from"
+    ],
+    "FE-2695": [
+      "fields.description",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString"
+    ],
+    "CRUC-3944": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body"
+    ],
+    "JRASERVER-22207": [
+      "fields.description",
+      "fields.comments[0].body",
+      "changelog.histories[18].items[0].from"
+    ],
+    "CRUC-4340": [],
+    "CRUC-4708": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body"
+    ],
+    "JRASERVER-22916": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body"
+    ],
+    "JRASERVER-22699": [
+      "fields.description",
+      "changelog.histories[16].items[0].fromString"
+    ],
+    "JRASERVER-22980": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CRUC-4918": [
+      "fields.comments[0].body"
+    ],
+    "CRUC-4927": [
+      "fields.comments[0].body"
+    ],
+    "CRUC-4934": [],
+    "JRASERVER-23054": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body"
+    ],
+    "CRUC-4985": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body"
+    ],
+    "CRUC-4986": [
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CWD-2089": [],
+    "CWD-2092": [],
+    "CWD-2130": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body"
+    ],
+    "CWD-2138": [
+      "fields.description"
+    ],
+    "JRASERVER-23355": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CWD-2186": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CRUC-5390": [
+      "fields.comments[0].body"
+    ],
+    "CWD-2263": [
+      "fields.description"
+    ],
+    "JRASERVER-24133": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "changelog.histories[9].items[0].fromString",
+      "changelog.histories[9].items[0].toString"
+    ],
+    "CWD-2410": [
+      "fields.description"
+    ],
+    "FE-3486": [
+      "fields.description"
+    ],
+    "CWD-2555": [
+      "fields.description"
+    ],
+    "CWD-2556": [
+      "fields.description",
+      "changelog.histories[0].items[0].toString"
+    ],
+    "CWD-2576": [
+      "fields.description"
+    ],
+    "CWD-2593": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "changelog.histories[0].items[0].toString"
+    ],
+    "JRASERVER-25304": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "fields.comments[36].body",
+      "fields.comments[37].body",
+      "fields.comments[38].body",
+      "fields.comments[39].body",
+      "fields.comments[40].body",
+      "fields.comments[41].body",
+      "fields.comments[42].body",
+      "fields.comments[43].body",
+      "fields.comments[44].body",
+      "fields.comments[45].body",
+      "fields.comments[46].body",
+      "fields.comments[47].body",
+      "fields.comments[48].body",
+      "fields.comments[49].body",
+      "fields.comments[50].body",
+      "fields.comments[51].body",
+      "fields.comments[52].body",
+      "fields.comments[53].body",
+      "fields.comments[54].body",
+      "fields.comments[55].body",
+      "fields.comments[56].body",
+      "fields.comments[57].body",
+      "fields.comments[58].body",
+      "fields.comments[59].body",
+      "fields.comments[60].body",
+      "fields.comments[61].body",
+      "fields.comments[62].body",
+      "fields.comments[63].body",
+      "fields.comments[64].body",
+      "fields.comments[65].body",
+      "fields.comments[66].body",
+      "fields.comments[67].body",
+      "fields.comments[68].body",
+      "fields.comments[69].body",
+      "fields.comments[70].body",
+      "fields.comments[71].body",
+      "fields.comments[72].body",
+      "fields.comments[73].body",
+      "fields.comments[74].body",
+      "fields.comments[75].body",
+      "fields.comments[76].body",
+      "fields.comments[77].body",
+      "fields.comments[78].body",
+      "fields.comments[79].body",
+      "fields.comments[80].body",
+      "fields.comments[81].body",
+      "fields.comments[82].body",
+      "fields.comments[83].body",
+      "fields.comments[84].body",
+      "fields.comments[85].body",
+      "fields.comments[86].body",
+      "fields.comments[87].body",
+      "fields.comments[88].body",
+      "fields.comments[89].body",
+      "fields.comments[90].body",
+      "fields.comments[91].body",
+      "fields.comments[92].body",
+      "fields.comments[93].body",
+      "fields.comments[94].body",
+      "fields.comments[95].body",
+      "fields.comments[96].body",
+      "fields.comments[97].body",
+      "fields.comments[98].body",
+      "fields.comments[99].body",
+      "fields.comments[100].body",
+      "fields.comments[101].body",
+      "fields.comments[102].body",
+      "fields.comments[103].body",
+      "fields.comments[104].body",
+      "fields.comments[105].body",
+      "fields.comments[106].body",
+      "fields.comments[107].body",
+      "fields.comments[108].body",
+      "fields.comments[109].body",
+      "fields.comments[110].body",
+      "fields.comments[111].body",
+      "fields.comments[112].body",
+      "fields.comments[113].body",
+      "fields.comments[114].body",
+      "fields.comments[115].body",
+      "fields.comments[116].body",
+      "fields.comments[117].body",
+      "fields.comments[118].body",
+      "fields.comments[119].body",
+      "fields.comments[120].body",
+      "fields.comments[121].body",
+      "fields.comments[122].body",
+      "fields.comments[123].body",
+      "fields.comments[124].body",
+      "fields.comments[125].body",
+      "fields.comments[126].body",
+      "fields.comments[127].body",
+      "fields.comments[128].body",
+      "fields.comments[129].body",
+      "fields.comments[130].body",
+      "fields.comments[131].body",
+      "fields.comments[132].body",
+      "fields.comments[133].body",
+      "fields.comments[134].body",
+      "fields.comments[135].body",
+      "fields.comments[136].body",
+      "fields.comments[137].body",
+      "fields.comments[138].body",
+      "fields.comments[139].body",
+      "fields.comments[140].body",
+      "fields.comments[141].body",
+      "fields.comments[142].body",
+      "fields.comments[143].body",
+      "fields.comments[144].body",
+      "fields.comments[145].body",
+      "fields.comments[146].body",
+      "fields.comments[147].body",
+      "fields.comments[148].body",
+      "fields.comments[149].body",
+      "fields.comments[150].body",
+      "fields.comments[151].body",
+      "fields.comments[152].body",
+      "fields.comments[153].body",
+      "fields.comments[154].body",
+      "fields.comments[155].body",
+      "fields.comments[156].body",
+      "fields.comments[157].body",
+      "fields.comments[158].body",
+      "fields.comments[159].body",
+      "fields.comments[160].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[4].items[0].fromString",
+      "changelog.histories[4].items[0].toString",
+      "changelog.histories[16].items[0].from",
+      "changelog.histories[17].items[0].from",
+      "changelog.histories[18].items[0].from",
+      "changelog.histories[19].items[0].from",
+      "changelog.histories[20].items[0].from",
+      "changelog.histories[36].items[0].fromString",
+      "changelog.histories[36].items[0].toString"
+    ],
+    "BAM-9505": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CRUC-5898": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body"
+    ],
+    "FE-3790": [
+      "fields.description"
+    ],
+    "CWD-2723": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CRUC-6004": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "JRASERVER-26618": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "BAM-10508": [],
+    "FE-3895": [
+      "fields.description"
+    ],
+    "BAM-10596": [
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CWD-2759": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "JRASERVER-27015": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "changelog.histories[6].items[0].fromString",
+      "changelog.histories[6].items[0].toString"
+    ],
+    "BAM-10947": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "changelog.histories[1].items[0].fromString",
+      "changelog.histories[1].items[0].toString",
+      "changelog.histories[2].items[0].fromString",
+      "changelog.histories[2].items[0].toString",
+      "changelog.histories[13].items[0].fromString",
+      "changelog.histories[13].items[0].toString",
+      "changelog.histories[15].items[0].fromString",
+      "changelog.histories[15].items[0].toString"
+    ],
+    "BAM-10948": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString"
+    ],
+    "FE-3968": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-27516": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "FE-4001": [
+      "fields.description"
+    ],
+    "FE-4029": [
+      "fields.description",
+      "changelog.histories[9].items[0].fromString",
+      "changelog.histories[9].items[0].toString"
+    ],
+    "CLOV-1068": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[5].items[0].fromString",
+      "changelog.histories[5].items[0].toString"
+    ],
+    "CRUC-6181": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "changelog.histories[1].items[0].from"
+    ],
+    "BAM-12078": [
+      "fields.description"
+    ],
+    "BAM-12088": [
+      "fields.description"
+    ],
+    "BAM-12089": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "changelog.histories[4].items[0].from",
+      "changelog.histories[5].items[0].from"
+    ],
+    "JRASERVER-29487": [
+      "fields.description",
+      "fields.comments[0].body",
+      "changelog.histories[1].items[0].fromString",
+      "changelog.histories[1].items[0].toString",
+      "changelog.histories[2].items[0].fromString",
+      "changelog.histories[2].items[0].toString",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString",
+      "changelog.histories[39].items[0].fromString",
+      "changelog.histories[39].items[0].toString"
+    ],
+    "CLOUD-4960": [],
+    "CLOUD-5027": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body"
+    ],
+    "CLOUD-1169": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "CLOUD-3012": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[1].items[0].from"
+    ],
+    "CLOUD-2546": [
+      "fields.description",
+      "fields.comments[0].body",
+      "changelog.histories[0].items[2].fromString",
+      "changelog.histories[0].items[2].toString",
+      "changelog.histories[1].items[2].fromString",
+      "changelog.histories[1].items[2].toString"
+    ],
+    "CLOUD-391": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CLOUD-3181": [
+      "fields.description",
+      "fields.environment"
+    ],
+    "CLOUD-643": [
+      "fields.description",
+      "fields.comments[0].body",
+      "changelog.histories[2].items[0].fromString",
+      "changelog.histories[2].items[0].toString",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString",
+      "changelog.histories[5].items[1].fromString",
+      "changelog.histories[5].items[1].toString",
+      "changelog.histories[6].items[0].fromString",
+      "changelog.histories[6].items[0].toString",
+      "changelog.histories[7].items[1].fromString",
+      "changelog.histories[7].items[1].toString",
+      "changelog.histories[10].items[0].fromString",
+      "changelog.histories[10].items[0].toString"
+    ],
+    "CLOUD-1547": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "CLOUD-1368": [
+      "fields.description"
+    ],
+    "CLOUD-1720": [
+      "fields.comments[0].body"
+    ],
+    "CLOUD-2113": [
+      "fields.description"
+    ],
+    "CLOUD-2274": [],
+    "CLOUD-1411": [
+      "fields.description"
+    ],
+    "CLOUD-2553": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CLOUD-516": [
+      "fields.description"
+    ],
+    "CLOUD-1830": [
+      "fields.description"
+    ],
+    "CLOUD-1492": [],
+    "CLOUD-1093": [
+      "fields.description",
+      "fields.environment"
+    ],
+    "CLOUD-3932": [
+      "fields.description"
+    ],
+    "FE-4340": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString",
+      "changelog.histories[7].items[1].fromString",
+      "changelog.histories[7].items[1].toString",
+      "changelog.histories[8].items[0].fromString",
+      "changelog.histories[8].items[0].toString"
+    ],
+    "CLOV-1208": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "BAM-12792": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body"
+    ],
+    "CRUC-6544": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString"
+    ],
+    "JRASERVER-34015": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "changelog.histories[10].items[0].fromString",
+      "changelog.histories[10].items[0].toString"
+    ],
+    "JRASERVER-34619": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "changelog.histories[2].items[0].from",
+      "changelog.histories[8].items[0].fromString",
+      "changelog.histories[8].items[0].toString"
+    ],
+    "FE-4885": [
+      "fields.description",
+      "changelog.histories[2].items[0].fromString",
+      "changelog.histories[2].items[0].toString"
+    ],
+    "JRASERVER-35868": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body"
+    ],
+    "FE-4986": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "JRASERVER-36246": [
+      "fields.description",
+      "changelog.histories[12].items[0].fromString",
+      "changelog.histories[12].items[0].toString"
+    ],
+    "JRASERVER-40049": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "fields.comments[12].body",
+      "fields.comments[13].body",
+      "fields.comments[14].body",
+      "fields.comments[15].body",
+      "fields.comments[16].body",
+      "fields.comments[17].body",
+      "fields.comments[18].body",
+      "fields.comments[19].body",
+      "fields.comments[20].body",
+      "fields.comments[21].body",
+      "fields.comments[22].body",
+      "fields.comments[23].body",
+      "fields.comments[24].body",
+      "fields.comments[25].body",
+      "fields.comments[26].body",
+      "fields.comments[27].body",
+      "fields.comments[28].body",
+      "fields.comments[29].body",
+      "fields.comments[30].body",
+      "fields.comments[31].body",
+      "fields.comments[32].body",
+      "fields.comments[33].body",
+      "fields.comments[34].body",
+      "fields.comments[35].body",
+      "changelog.histories[7].items[0].fromString",
+      "changelog.histories[7].items[0].toString"
+    ],
+    "CLOV-1586": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CWD-4186": [
+      "fields.description"
+    ],
+    "CWD-4215": [
+      "fields.description",
+      "fields.environment",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "JRASERVER-42138": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CRUC-7193": [
+      "fields.description",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString"
+    ],
+    "CRUC-7204": [
+      "fields.description"
+    ],
+    "JRASERVER-43357": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CWD-4422": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "BAM-16117": [
+      "fields.description"
+    ],
+    "CRUC-7337": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body"
+    ],
+    "BAM-16215": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "BAM-16216": [
+      "fields.description"
+    ],
+    "JRASERVER-45342": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[7].items[0].fromString",
+      "changelog.histories[7].items[0].toString",
+      "changelog.histories[8].items[0].fromString",
+      "changelog.histories[8].items[0].toString",
+      "changelog.histories[18].items[0].fromString",
+      "changelog.histories[18].items[0].toString"
+    ],
+    "BAM-16433": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-45928": [
+      "fields.description",
+      "fields.comments[0].body",
+      "changelog.histories[25].items[0].fromString",
+      "changelog.histories[25].items[0].toString"
+    ],
+    "BAM-16628": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "changelog.histories[4].items[0].fromString",
+      "changelog.histories[4].items[0].toString",
+      "changelog.histories[10].items[0].fromString",
+      "changelog.histories[10].items[0].toString",
+      "changelog.histories[13].items[0].fromString",
+      "changelog.histories[13].items[0].toString",
+      "changelog.histories[38].items[0].from"
+    ],
+    "BAM-16765": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "BAM-17032": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body",
+      "fields.comments[7].body",
+      "fields.comments[8].body",
+      "fields.comments[9].body",
+      "fields.comments[10].body",
+      "fields.comments[11].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[6].items[0].fromString",
+      "changelog.histories[6].items[0].toString"
+    ],
+    "FE-6440": [
+      "fields.comments[0].body"
+    ],
+    "CLOUD-8967": [
+      "fields.description"
+    ],
+    "BAM-17856": [
+      "fields.description",
+      "changelog.histories[1].items[0].fromString",
+      "changelog.histories[1].items[0].toString",
+      "changelog.histories[2].items[0].fromString",
+      "changelog.histories[2].items[0].toString",
+      "changelog.histories[4].items[0].fromString",
+      "changelog.histories[4].items[0].toString"
+    ],
+    "BAM-17969": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CRUC-7902": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body"
+    ],
+    "CLOUD-9644": [
+      "fields.comments[0].body"
+    ],
+    "CLOUD-9785": [
+      "fields.comments[0].body"
+    ],
+    "CWD-4902": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "fields.comments[3].body",
+      "fields.comments[4].body",
+      "fields.comments[5].body",
+      "fields.comments[6].body"
+    ],
+    "CLOUD-10246": [
+      "fields.comments[0].body"
+    ],
+    "FE-7017": [
+      "fields.description",
+      "fields.environment",
+      "changelog.histories[7].items[0].fromString",
+      "changelog.histories[7].items[0].toString",
+      "changelog.histories[8].items[0].fromString",
+      "changelog.histories[8].items[0].toString"
+    ],
+    "BAM-19991": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body"
+    ],
+    "FE-7136": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "CLOUD-10949": [
+      "fields.description",
+      "fields.comments[0].body"
+    ],
+    "JRASERVER-71177": [
+      "fields.description",
+      "fields.comments[0].body",
+      "fields.comments[1].body",
+      "fields.comments[2].body",
+      "changelog.histories[0].items[0].fromString",
+      "changelog.histories[0].items[0].toString",
+      "changelog.histories[3].items[0].fromString",
+      "changelog.histories[3].items[0].toString",
+      "changelog.histories[4].items[0].fromString",
+      "changelog.histories[4].items[0].toString",
+      "changelog.histories[5].items[0].fromString",
+      "changelog.histories[5].items[0].toString",
+      "changelog.histories[6].items[0].fromString",
+      "changelog.histories[6].items[0].toString"
+    ]
+  }
+}
