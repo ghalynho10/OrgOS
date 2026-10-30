@@ -45,8 +45,15 @@
 #           and boolean.
 # fields    Every field path the question uses, never empty. Each is an exact path
 #           from `## Usable fields` in eval/data-description.md, and none is listed
-#           under `## Free text, not usable`.
-# reading   Your reading note, not empty (what it must state is below).
+#           under `## Free text, not usable`. A changelog item, if listed, is cited
+#           by its changelog.items[field=<name>].from/to path (raw values) or its
+#           changelog.items[field=<name>].fromString/toString path (display values).
+#           The change author, time and id are cited by changelog.histories[].author.key,
+#           changelog.histories[].created and changelog.histories[].id; a cited history
+#           id covers every history, not only time entries. An object such as
+#           fields.status is never listed, so cite its leaf (for example
+#           fields.status.name, format only).
+# reading  Your reading note, not empty (what it must state is below).
 # data      "real" only in phase 1. "synthetic" and any other value fail.
 # tracer    true on exactly one question, which is Q01 and an aggregate; false or
 #           absent elsewhere. A boolean, never a string or a number.

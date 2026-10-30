@@ -15,7 +15,7 @@ from orgos.cli import run
 from orgos.eval.checker import FieldLists, check, read_field_lists
 
 LISTS = FieldLists(
-    usable=frozenset({"x.alpha", "x.beta[].key", "changelog.items[field=timespent]"}),
+    usable=frozenset({"x.alpha", "x.beta[].key", "changelog.items[field=timespent].from/to"}),
     free_text=frozenset({"x.prose"}),
 )
 
@@ -179,7 +179,7 @@ def test_field_lists_are_read_from_their_two_sections_only() -> None:
             "- `x.outside`",
             "## Usable fields",
             "- `x.alpha`",
-            "- `changelog.items[field=timespent]` (always listed)",
+            "- `changelog.items[field=timespent].from/to` (always listed)",
             "## Free text, not usable",
             "- `x.prose`",
             "## Fill rates",
@@ -187,7 +187,7 @@ def test_field_lists_are_read_from_their_two_sections_only() -> None:
         ]
     )
     lists = read_field_lists(markdown)
-    assert lists.usable == {"x.alpha", "changelog.items[field=timespent]"}
+    assert lists.usable == {"x.alpha", "changelog.items[field=timespent].from/to"}
     assert lists.free_text == {"x.prose"}
 
 
