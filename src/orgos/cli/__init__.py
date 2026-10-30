@@ -19,6 +19,7 @@ from orgos import __version__
 from orgos.config import ConfigError, load_settings
 from orgos.eval import EvalError
 from orgos.eval.checker import check_files
+from orgos.eval.describe import describe
 from orgos.mongostore import MongoStoreError
 from orgos.mongostore.restore import restore
 from orgos.mongostore.verify import verify
@@ -119,6 +120,17 @@ app.add_typer(eval_app)
 
 EVAL_DIR = Path("eval")
 QUESTIONS_FILE = EVAL_DIR / "questions.toml"
+
+
+@eval_app.command("describe")
+def eval_describe_command() -> None:
+    """Describe the corpus for question writing: write eval/data-description.md.
+
+    Runs only the allowed reads through the reader login and appends each
+    query's text to eval/exploration.log. Writes nothing to Mongo.
+    """
+    settings = load_settings()
+    typer.echo(describe(settings, EVAL_DIR).summary)
 
 
 @eval_app.command("check-questions")
