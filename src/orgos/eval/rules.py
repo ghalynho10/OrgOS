@@ -66,6 +66,30 @@ def people_who_logged(entries: Iterable[TimeEntry], flagged: Collection[str]) ->
     )
 
 
+def other_person_share(entries: Iterable[TimeEntry], flagged: Collection[str]) -> tuple[int, int]:
+    """Logged seconds credited to someone other than each issue's top person, over all (AC-36).
+
+    The top person has the most positive seconds on the issue, ties to the
+    smallest key. Returned as `(num, den)` over every issue with positive
+    seconds. AC-36 does not say who an entry with no author is credited to, so
+    one stops the run and names it.
+    """
+    by_issue: dict[str, dict[str, int]] = {}
+    for entry in counted_entries(entries, flagged):
+        if entry.author_key is None:
+            raise EvalError(
+                f"{entry.issue_key}: entry {entry.history_id} has no author; "
+                "AC-36 does not say who it is credited to"
+            )
+        people = by_issue.setdefault(entry.issue_key, {})
+        people[entry.author_key] = people.get(entry.author_key, 0) + entry.amount
+    total = top = 0
+    for people in by_issue.values():
+        total += sum(people.values())
+        top += min(people.items(), key=lambda person: (-person[1], person[0]))[1]
+    return total - top, total
+
+
 def role_person(key: object, flagged: Collection[str]) -> str | None:
     """A role field's `.key` as a person, whether or not they logged time; never a bot (AC-23)."""
     if not isinstance(key, str) or not key or key in flagged:
