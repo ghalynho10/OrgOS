@@ -57,6 +57,7 @@ from orgos.eval.writer import (
     answer_triggers,
     dumped,
     is_empty_answer,
+    is_zero_count,
     render,
     render_json,
     unfilled_triggers,
@@ -182,7 +183,7 @@ def check_registry(questions: Sequence[Question], registry: Mapping[str, Registe
 def check_sources(question_id: str, answer: Answer, spec: Registered) -> None:
     """Stop unless every source step lists exactly the registered kinds (AC-32).
 
-    An empty step list is allowed for an empty answer or a "no" only.
+    An empty step list is allowed for an empty answer, a "no" or a count of 0 only.
     """
     step_lists = (
         [item.sources for item in answer.value]
@@ -190,7 +191,7 @@ def check_sources(question_id: str, answer: Answer, spec: Registered) -> None:
         else [answer.sources]
     )
     for steps in step_lists:
-        if not steps and is_empty_answer(answer):
+        if not steps and (is_empty_answer(answer) or is_zero_count(answer)):
             continue
         kinds = tuple(tuple(sorted(s)) for s in steps)
         expected = tuple(tuple(sorted(s)) for s in spec.steps)
@@ -321,16 +322,20 @@ def notes(prepared: Prepared) -> tuple[str, ...]:
     )
 
 
-def only(prepared: Prepared, question_id: str) -> tuple[str, ...]:
+def only(
+    prepared: Prepared, question_id: str, registry: Mapping[str, Registered] = REGISTRY
+) -> tuple[str, ...]:
     """`--only`: one answer printed with its triggers; nothing is written (AC-45)."""
-    computed = compute(prepared, question_id)
+    computed = compute(prepared, question_id, registry)
     shown = render_json({question_id: dumped(computed.answer)}).decode().rstrip("\n")
     return (*notes(prepared), shown, *(computed.triggers or (f"{question_id}: no triggers",)))
 
 
-def check_written(prepared: Prepared, root: Path) -> tuple[str, ...]:
+def check_written(
+    prepared: Prepared, root: Path, registry: Mapping[str, Registered] = REGISTRY
+) -> tuple[str, ...]:
     """`--check`: recompute in memory and require identical bytes; nothing is written (AC-34)."""
-    computed = compute_all(prepared)
+    computed = compute_all(prepared, registry)
     rendered = render(
         {c.question_id: c.answer for c in computed},
         prepared.hashes.questions,
@@ -345,9 +350,11 @@ def check_written(prepared: Prepared, root: Path) -> tuple[str, ...]:
     return (*notes(prepared), f"check: {len(computed)} answers match {ANSWERS} byte for byte")
 
 
-def write_all(prepared: Prepared, root: Path) -> tuple[str, ...]:
+def write_all(
+    prepared: Prepared, root: Path, registry: Mapping[str, Registered] = REGISTRY
+) -> tuple[str, ...]:
     """A full run: write `answers.json`, then the run record, and print every trigger."""
-    computed = compute_all(prepared)
+    computed = compute_all(prepared, registry)
     rendered = render(
         {c.question_id: c.answer for c in computed},
         prepared.hashes.questions,

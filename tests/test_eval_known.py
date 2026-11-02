@@ -41,6 +41,7 @@ Q01_FIELDS = (
     "fields.assignee.key",
 )
 Q01 = REGISTRY["Q01"]
+ONLY_Q01 = {"Q01": Q01}
 AUTHOR = {"key": "u1", "displayName": "U One"}
 
 
@@ -130,11 +131,11 @@ def question(question_id: str = "Q01") -> Question:
 
 
 def test_the_registry_must_match_the_question_ids() -> None:
-    check_registry([question()], REGISTRY)
+    check_registry([question()], ONLY_Q01)
     with pytest.raises(EvalError, match=r"^registry: no function for \['Q02'\]"):
-        check_registry([question(), question("Q02")], REGISTRY)
+        check_registry([question(), question("Q02")], ONLY_Q01)
     with pytest.raises(EvalError, match=r"registered but not asked \['Q01'\]"):
-        check_registry([], REGISTRY)
+        check_registry([], ONLY_Q01)
 
 
 def test_source_steps_must_list_the_registered_kinds() -> None:
@@ -206,7 +207,7 @@ def test_each_collapsed_key_is_reported_in_the_printed_notes_and_the_run_record(
     collapsed = Collapsed("BAM-1", "low", ("high",))
     run = replace(run, snapshot=replace(run.snapshot, collapsed=(collapsed,)))
     assert only(run, "Q01")[0] == "uniqueness note: collapsed BAM-1: kept low, dropped high"
-    write_all(run, root)
+    write_all(run, root, ONLY_Q01)
     record = json.loads((root / RUN_RECORD).read_text())
     assert record["collapsed_documents"] == {"BAM-1": {"kept": "low", "dropped": ["high"]}}
 
@@ -215,7 +216,7 @@ def test_only_needs_a_registered_question() -> None:
     with pytest.raises(EvalError, match="Q02 is not a question"):
         only(prepared(doc("BAM-1")), "Q02")
     with pytest.raises(EvalError, match="Q02 has no registered function"):
-        only(prepared(doc("BAM-1"), questions=(question(), question("Q02"))), "Q02")
+        only(prepared(doc("BAM-1"), questions=(question(), question("Q02"))), "Q02", ONLY_Q01)
 
 
 def test_a_full_run_writes_the_answers_and_the_run_record_then_check_passes(root: Path) -> None:
@@ -225,7 +226,7 @@ def test_a_full_run_writes_the_answers_and_the_run_record_then_check_passes(root
         ),
         doc("BAM-2", resolution={"name": "Fixed"}),
     )
-    lines = write_all(run, root)
+    lines = write_all(run, root, ONLY_Q01)
     assert lines[-1] == f"wrote {ANSWERS} (1 answers, 0 triggers) and {RUN_RECORD}"
     record = json.loads((root / RUN_RECORD).read_text())
     assert record["other_person_share"] == {"num": 30, "den": 90}
@@ -238,18 +239,20 @@ def test_a_full_run_writes_the_answers_and_the_run_record_then_check_passes(root
         "ok": False,
     }
     assert "password" not in json.dumps(record) and "mongodb://" not in json.dumps(record)
-    assert check_written(run, root)[-1] == f"check: 1 answers match {ANSWERS} byte for byte"
+    assert (
+        check_written(run, root, ONLY_Q01)[-1] == f"check: 1 answers match {ANSWERS} byte for byte"
+    )
     before = (root / ANSWERS).read_bytes()
     record_before = (root / RUN_RECORD).read_bytes()
     (root / ANSWERS).write_bytes(before.replace(b'"int": 0', b'"int": 1', 1))
     with pytest.raises(EvalError, match=rf"^check: Q01 differs from {ANSWERS}"):
-        check_written(run, root)
+        check_written(run, root, ONLY_Q01)
     assert (root / RUN_RECORD).read_bytes() == record_before
 
 
 def test_check_without_answers_stops(root: Path) -> None:
     with pytest.raises(EvalError, match=f"check: {ANSWERS} not found"):
-        check_written(prepared(doc("BAM-1")), root)
+        check_written(prepared(doc("BAM-1")), root, ONLY_Q01)
 
 
 def test_first_difference_names_the_header_when_only_it_differs() -> None:

@@ -121,14 +121,10 @@ def path_answer(paths: Iterable[tuple[Sequence[str], Sequence[Step]]]) -> PathAn
     )
 
 
-def ranking_answer(
-    kind: str,
-    values: Mapping[str, Number],
-    direction: Direction,
-    cut: int,
-    sources: Sequence[Step],
-) -> RankingAnswer:
-    """A `ranking` of tie groups by exact value, cut after `cut` items (AC-31).
+def tie_groups(
+    kind: str, values: Mapping[str, Number], direction: Direction, cut: int
+) -> tuple[TieGroup, ...]:
+    """The tie groups of a ranking by exact value, cut after `cut` items (AC-31).
 
     The last group at the cut keeps every tied item, so it may run past the cut.
     """
@@ -152,7 +148,23 @@ def ranking_answer(
             )
         ids = _sorted_once((i for i, _ in members), "a ranking tie group")
         kept.append(TieGroup(value=members[0][1], ids=ids))
-    return RankingAnswer(shape="ranking", sources=tuple(sources), value=tuple(kept))
+    return tuple(kept)
+
+
+def ranked(groups: Sequence[TieGroup], sources: Sequence[Step]) -> RankingAnswer:
+    """A `ranking` answer from its tie groups and the sources of the items they hold."""
+    return RankingAnswer(shape="ranking", sources=tuple(sources), value=tuple(groups))
+
+
+def ranking_answer(
+    kind: str,
+    values: Mapping[str, Number],
+    direction: Direction,
+    cut: int,
+    sources: Sequence[Step],
+) -> RankingAnswer:
+    """A `ranking` answer whose sources do not depend on which items the cut returns."""
+    return ranked(tie_groups(kind, values, direction, cut), sources)
 
 
 # Writing (AC-29)
@@ -199,6 +211,15 @@ def is_empty_answer(answer: Answer) -> bool:
     if isinstance(answer, NumberAnswer):
         return False
     return len(answer.value) == 0
+
+
+def is_zero_count(answer: Answer) -> bool:
+    """A `number` answer of `{"int": 0}`: a valid answer whose sources are `[]`, and no trigger."""
+    return (
+        isinstance(answer, NumberAnswer)
+        and isinstance(answer.value, IntNumber)
+        and answer.value.int_ == 0
+    )
 
 
 def answer_triggers(question_id: str, answer: Answer, cut: int | None) -> tuple[str, ...]:

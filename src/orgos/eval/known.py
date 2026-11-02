@@ -11,17 +11,29 @@ the boundary, paths and UTC, so no question carries its own variant.
 from __future__ import annotations
 
 import datetime as dt
+import re
 import types
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 
 from orgos.eval import EvalError
-from orgos.eval.models import Answer, Number, SourceKind
-from orgos.eval.rules import in_interval, utc_time
+from orgos.eval.entries import TimeEntry
+from orgos.eval.models import Answer, Number, SourceKind, TieGroup
+from orgos.eval.rules import counted_entries, in_interval, role_person, utc_time
 from orgos.eval.snapshot import Issue, Snapshot
-from orgos.eval.writer import Direction, count, map_answer, step
+from orgos.eval.writer import (
+    Direction,
+    count,
+    map_answer,
+    number_answer,
+    ranked,
+    step,
+    tie_groups,
+)
 
 Window = tuple[dt.datetime, dt.datetime]
+
+DATE_ONLY = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 @dataclass(frozen=True)
@@ -57,11 +69,64 @@ def single(issue: Issue, path: str) -> object:
     return values[0]
 
 
+def optional(issue: Issue, path: str) -> object | None:
+    """The value at `path`, or None when missing, null or `""`; several stops the run."""
+    values = issue.values(path)
+    if len(values) > 1:
+        raise EvalError(f"{issue.key}: {path} holds {len(values)} values, not one")
+    return values[0] if values else None
+
+
 def window(spec: Registered) -> Window:
     """The registered date window; a function that needs one stops without it."""
     if spec.window is None:
         raise EvalError("this question's registration has no date window")
     return spec.window
+
+
+def scope_entries(snapshot: Snapshot, spec: Registered) -> tuple[TimeEntry, ...]:
+    """The entries logged hours count (AC-22) on issues in the registered scope."""
+    projects = frozenset(spec.scope)
+    return tuple(
+        entry
+        for entry in counted_entries(snapshot.entries, snapshot.flagged)
+        if entry.project_key in projects
+    )
+
+
+def estimate(issue: Issue) -> int | None:
+    """The current `fields.timeoriginalestimate` in seconds; anything but an integer stops."""
+    value = optional(issue, "fields.timeoriginalestimate")
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise EvalError(f"{issue.key}: fields.timeoriginalestimate is not an integer")
+    return value
+
+
+def seconds_per(entries: Iterable[TimeEntry], key: Callable[[TimeEntry], str]) -> dict[str, int]:
+    """The entries' amounts summed under each `key`."""
+    totals: dict[str, int] = {}
+    for entry in entries:
+        totals[key(entry)] = totals.get(key(entry), 0) + entry.amount
+    return totals
+
+
+def issue_count(keys: Iterable[str]) -> Answer:
+    """A count of issue records; a count of 0 has the empty step list `[]`."""
+    issues = tuple(keys)
+    return number_answer(count(len(issues)), (step({"issue": issues}),) if issues else ())
+
+
+def top_groups(
+    kind: str, totals: Mapping[str, int], spec: Registered
+) -> tuple[tuple[TieGroup, ...], frozenset[str]]:
+    """The tie groups at the registered cut and direction, and the bare ids they return."""
+    if spec.cut is None or spec.direction is None:
+        raise EvalError("this question's registration has no cut or direction")
+    values = {key: count(total) for key, total in totals.items()}
+    groups = tie_groups(kind, values, spec.direction, spec.cut)
+    return groups, frozenset(i.removeprefix(f"{kind}:") for group in groups for i in group.ids)
 
 
 # Q01: aggregate, map, count
@@ -92,6 +157,185 @@ def q01(snapshot: Snapshot, spec: Registered) -> Answer:
     return map_answer("project", counts, (step({"issue": issues}),))
 
 
+# Q02: aggregate, number, count
+
+
+def q02(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The issues in the scope marked Fixed in at least one version not yet released.
+
+    The reading: `fields.resolution.name` equals "Fixed", and at least one
+    `fields.fixVersions[].released` value equals false; each issue counts once.
+    Sources: one step listing the qualifying issue records.
+    """
+    return issue_count(
+        issue.key
+        for issue in in_scope(snapshot, spec)
+        if optional(issue, "fields.resolution.name") == "Fixed"
+        and any(value is False for value in issue.values("fields.fixVersions[].released"))
+    )
+
+
+# Q03: aggregate, number, count
+
+
+def due_instant(value: object, issue_key: str) -> dt.datetime:
+    """A due value in UTC; a date only value is midnight UTC at the start of that day."""
+    if isinstance(value, str) and DATE_ONLY.fullmatch(value):
+        try:
+            return dt.datetime.fromisoformat(value).replace(tzinfo=dt.UTC)
+        except ValueError:
+            raise EvalError(f"{issue_key}: fields.duedate cannot be read") from None
+    return utc_time(value, issue_key)
+
+
+def _resolved_late(issue: Issue, start: dt.datetime, end: dt.datetime) -> bool:
+    if optional(issue, "fields.resolution.name") is None:
+        return False
+    resolved = optional(issue, "fields.resolutiondate")
+    if resolved is None:
+        return False
+    at = utc_time(resolved, issue.key)
+    if not in_interval(at, start, end):
+        return False
+    due = optional(issue, "fields.duedate")
+    return due is not None and at > due_instant(due, issue.key)
+
+
+def q03(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The issues in the scope resolved in the window, strictly after their due date.
+
+    The reading: `fields.resolution.name` exists and is not `""`, no status
+    condition; `fields.resolutiondate` in `[2012-04-01, 2012-07-01)` UTC and
+    strictly later than `fields.duedate`, which must be present. Sources: one
+    step listing the qualifying issue records.
+    """
+    start, end = window(spec)
+    return issue_count(
+        issue.key for issue in in_scope(snapshot, spec) if _resolved_late(issue, start, end)
+    )
+
+
+# Q04: aggregate, map, seconds
+
+
+def q04(snapshot: Snapshot, spec: Registered) -> Answer:
+    """Per project, total logged seconds minus total original estimated seconds.
+
+    The reading: logged time is the positive, non bot entries; a missing
+    estimate contributes 0; every project is listed. Sources: one step listing
+    the issues with at least one such entry or a non null estimate (an estimate
+    of 0 counts as one, your ruling of 2026-11-02) and those entries.
+    """
+    entries = scope_entries(snapshot, spec)
+    totals = {project: 0 for project in spec.scope}
+    with_entry = frozenset(entry.issue_key for entry in entries)
+    listed: list[str] = []
+    for project, logged in seconds_per(entries, lambda e: str(e.project_key)).items():
+        totals[project] += logged
+    for issue in in_scope(snapshot, spec):
+        estimated = estimate(issue)
+        if estimated is not None:
+            totals[issue.project_key] -= estimated
+        if estimated is not None or issue.key in with_entry:
+            listed.append(issue.key)
+    values = {project: count(total) for project, total in totals.items()}
+    sources = step({"issue": listed, "time_entry": [e.history_id for e in entries]})
+    return map_answer("project", values, (sources,))
+
+
+# Q05: aggregate, map, seconds
+
+
+def q05(snapshot: Snapshot, spec: Registered) -> Answer:
+    """Per person, the seconds they logged on issues currently assigned to someone else.
+
+    The reading: an issue with no assignee or a flagged assignee is left out;
+    a person is a non bot entry author, so an entry with no author is not
+    summed for anyone; the author's key differs from the current assignee's.
+    Sources: one step listing the contributing issues and time entries.
+    """
+    assignees = {
+        issue.key: role_person(optional(issue, "fields.assignee.key"), snapshot.flagged)
+        for issue in in_scope(snapshot, spec)
+    }
+    kept = tuple(
+        entry
+        for entry in scope_entries(snapshot, spec)
+        if entry.author_key is not None
+        and assignees[entry.issue_key] is not None
+        and entry.author_key != assignees[entry.issue_key]
+    )
+    totals = seconds_per(kept, lambda e: str(e.author_key))
+    values: Mapping[str, Number] = {person: count(total) for person, total in totals.items()}
+    sources = step(
+        {
+            "issue": {entry.issue_key for entry in kept},
+            "time_entry": [entry.history_id for entry in kept],
+        }
+    )
+    return map_answer("person", values, (sources,) if kept else ())
+
+
+# Q06: aggregate, ranking, seconds
+
+
+def q06(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The top issues by seconds logged in the window, among those currently unresolved.
+
+    The reading: current `fields.resolution.name` is missing, null or `""`; an
+    entry counts when its `created` is in `[2009-10-01, 2010-01-01)` UTC;
+    highest first, cut at five, ties at the fifth kept. Sources: one step
+    listing the returned issues and their counted entries; the project key is
+    a display value (your ruling of 2026-11-02).
+    """
+    start, end = window(spec)
+    unresolved = frozenset(
+        issue.key
+        for issue in in_scope(snapshot, spec)
+        if optional(issue, "fields.resolution.name") is None
+    )
+    kept = tuple(
+        entry
+        for entry in scope_entries(snapshot, spec)
+        if entry.issue_key in unresolved and in_interval(entry.created_utc, start, end)
+    )
+    groups, returned = top_groups("issue", seconds_per(kept, lambda e: e.issue_key), spec)
+    contributing = [entry.history_id for entry in kept if entry.issue_key in returned]
+    sources = step({"issue": returned, "time_entry": contributing})
+    return ranked(groups, (sources,) if returned else ())
+
+
+# Q07: aggregate, ranking, seconds
+
+
+def q07(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The top issues by the absolute difference between estimate and logged seconds.
+
+    The reading: the current estimate is above 0 and the issue has at least one
+    positive, non bot entry; highest first, cut at ten, ties at the tenth kept.
+    Sources: one step listing the returned issues, their counted entries, and
+    one flat list of the distinct non bot authors across them (your ruling of
+    2026-11-02; an entry with no author counts in hours and is no person).
+    """
+    entries = scope_entries(snapshot, spec)
+    logged = seconds_per(entries, lambda e: e.issue_key)
+    differences: dict[str, int] = {}
+    for issue in in_scope(snapshot, spec):
+        estimated = estimate(issue)
+        if estimated is not None and estimated > 0 and issue.key in logged:
+            differences[issue.key] = abs(estimated - logged[issue.key])
+    groups, returned = top_groups("issue", differences, spec)
+    contributing = tuple(entry for entry in entries if entry.issue_key in returned)
+    sources = step(
+        {
+            "issue": returned,
+            "time_entry": [entry.history_id for entry in contributing],
+            "person": {e.author_key for e in contributing if e.author_key is not None},
+        }
+    )
+    return ranked(groups, (sources,) if returned else ())
+
+
 # The registry (AC-28)
 
 CORPUS_PROJECTS = ("BAM", "CLOUD", "CLOV", "CRUC", "CWD", "FE", "JRASERVER")
@@ -106,6 +350,36 @@ REGISTRY: Mapping[str, Registered] = types.MappingProxyType(
                 dt.datetime(2013, 1, 1, tzinfo=dt.UTC),
                 dt.datetime(2013, 4, 1, tzinfo=dt.UTC),
             ),
+        ),
+        "Q02": Registered(q02, scope=("CWD",), steps=(("issue",),)),
+        "Q03": Registered(
+            q03,
+            scope=("FE",),
+            steps=(("issue",),),
+            window=(
+                dt.datetime(2012, 4, 1, tzinfo=dt.UTC),
+                dt.datetime(2012, 7, 1, tzinfo=dt.UTC),
+            ),
+        ),
+        "Q04": Registered(q04, scope=CORPUS_PROJECTS, steps=(("issue", "time_entry"),)),
+        "Q05": Registered(q05, scope=CORPUS_PROJECTS, steps=(("issue", "time_entry"),)),
+        "Q06": Registered(
+            q06,
+            scope=CORPUS_PROJECTS,
+            steps=(("issue", "time_entry"),),
+            window=(
+                dt.datetime(2009, 10, 1, tzinfo=dt.UTC),
+                dt.datetime(2010, 1, 1, tzinfo=dt.UTC),
+            ),
+            cut=5,
+            direction="descending",
+        ),
+        "Q07": Registered(
+            q07,
+            scope=CORPUS_PROJECTS,
+            steps=(("issue", "person", "time_entry"),),
+            cut=10,
+            direction="descending",
         ),
     }
 )
