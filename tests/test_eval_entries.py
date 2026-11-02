@@ -1,8 +1,9 @@
-"""Unit tests for the entry rebuild of the known answer code (spec 0005, AC-20, AC-25).
+"""Unit tests for the entry rebuild, bot flags and person field (spec 0005, AC-20, AC-21, AC-25).
 
-The AC-7 cases are the spike's inputs and expected outputs
-(`tests/test_spike_rules.py`), rewritten against `rebuild_entries`. Each
-synthetic history now carries an `id`, which an entry needs here.
+The AC-7, AC-8 and AC-11 cases are the spike's inputs and expected outputs
+(`tests/test_spike_rules.py`), rewritten against `rebuild_entries`,
+`flag_bots` and `choose_person_field`. Each synthetic history now carries an
+`id`, which an entry needs here.
 """
 
 import datetime as dt
@@ -12,7 +13,15 @@ from typing import Any
 import pytest
 
 from orgos.eval import EvalError
-from orgos.eval.entries import TimeEntry, parse_utc, rebuild_entries
+from orgos.eval.entries import (
+    TimeEntry,
+    choose_person_field,
+    entry_authors,
+    flag_bots,
+    parse_utc,
+    rebuild_entries,
+    top_amount,
+)
 
 _ids = count(1)
 
@@ -148,3 +157,69 @@ def test_a_missing_or_unreadable_offset_stops_and_names_the_issue(bad: Any) -> N
     doc["changelog"]["histories"][0]["created"] = bad
     with pytest.raises(EvalError, match="P-4"):
         rebuild_entries(doc, "key")
+
+
+# AC-8 (spec 0004), through flag_bots: the spike's cases
+
+
+def entry(amount: int, key: str | None = "u1") -> TimeEntry:
+    return TimeEntry("1", "P-1", "P", key, dt.datetime(2020, 1, 1, tzinfo=dt.UTC), amount)
+
+
+def entries(amounts: list[int], key: str | None = "a") -> list[TimeEntry]:
+    return [entry(amount, key) for amount in amounts]
+
+
+def test_nineteen_positive_entries_never_flag() -> None:
+    assert flag_bots(entries([3600] * 19)) == frozenset()
+
+
+def test_ninety_percent_flags_and_eighty_nine_does_not() -> None:
+    assert flag_bots(entries([60] * 18 + [120, 180])) == {"a"}  # 18 of 20 = 90 percent
+    assert flag_bots(entries([60] * 89 + list(range(1000, 1011)))) == frozenset()  # 89 of 100
+
+
+def test_zero_and_negative_entries_do_not_count_as_positive() -> None:
+    assert flag_bots(entries([60] * 19 + [0, -60, -60])) == frozenset()
+
+
+def test_tie_for_top_amount_takes_the_smaller() -> None:
+    assert top_amount([120] * 3 + [60] * 3) == (60, 3)
+    assert top_amount([]) == (0, 0)
+
+
+def test_a_flag_covers_the_account_wherever_its_entries_are() -> None:
+    bot = entries([60] * 20 + [0, -60], key="bot")
+    assert flag_bots([*bot, entry(600, key="h")]) == {"bot"}
+
+
+def test_entries_without_person_id_are_never_flagged() -> None:
+    assert flag_bots(entries([60] * 25, key=None)) == frozenset()
+
+
+# AC-11 (spec 0004), through choose_person_field
+
+
+def authors(with_account_id: int, total: int) -> list[dict[str, Any] | None]:
+    return [{"key": "k", "accountId": "a"}] * with_account_id + [{"key": "k", "accountId": ""}] * (
+        total - with_account_id
+    )
+
+
+def test_forty_nine_percent_chooses_key_and_fifty_chooses_account_id() -> None:
+    assert choose_person_field(authors(49, 100)) == "key"
+    assert choose_person_field(authors(50, 100)) == "accountId"
+    assert choose_person_field([]) == "key"
+
+
+def test_an_author_missing_counts_as_lacking_the_account_id() -> None:
+    assert choose_person_field([{"accountId": "a"}, None, None]) == "key"
+
+
+def test_entry_authors_are_the_authors_of_time_entry_histories_only() -> None:
+    doc = issue(
+        history(spent(None, "60"), author={"key": "k1"}),
+        history({"field": "status"}, author={"key": "k2"}),
+    )
+    doc["changelog"]["histories"].append({"id": "x", "items": [spent(None, "60")]})
+    assert entry_authors(doc) == ({"key": "k1"}, None)

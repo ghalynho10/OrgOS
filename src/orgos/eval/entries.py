@@ -4,14 +4,16 @@ There is no worklog field in the dump, so logged time is read from the
 changelog: each history holding a `timespent` item of fieldtype `jira` is one
 entry. These functions are the known answer code's own reading of that rule
 (spec 0005, AC-20), kept apart from the spike and from the loads, so a shared
-bug cannot pass unseen. Pure: a document goes in, frozen entries come out.
+bug cannot pass unseen. The person id field (AC-11) and the bot flags (AC-8)
+are chosen here too. Pure: documents go in, frozen entries and flags come out.
 """
 
 from __future__ import annotations
 
 import datetime as dt
 import re
-from collections.abc import Iterator, Mapping
+from collections import Counter
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -112,3 +114,64 @@ def rebuild_entries(issue: Mapping[str, Any], person_field: str) -> tuple[TimeEn
     time without its offset stops the run, naming the issue.
     """
     return tuple(_entries(issue, person_field))
+
+
+def entry_authors(issue: Mapping[str, Any]) -> tuple[Mapping[str, Any] | None, ...]:
+    """The author object of each history that is a time entry, None where it has none."""
+    return tuple(
+        author if isinstance(author := history.get("author"), Mapping) else None
+        for history in (issue.get("changelog") or {}).get("histories") or ()
+        if any(_is_entry_item(item) for item in history.get("items") or ())
+    )
+
+
+# Person id field and bot flags, from spec 0004 AC-11 and AC-8
+
+KEY_FIELD = "key"
+ACCOUNT_ID_FIELD = "accountId"
+# `accountId` when at least half of the entry authors carry it.
+ACCOUNT_ID_SHARE = (1, 2)
+BOT_MIN_POSITIVE = 20
+# Flagged when `10 * top_count >= 9 * positive_count`.
+BOT_TOP_SHARE = (9, 10)
+
+
+def choose_person_field(authors: Iterable[Mapping[str, Any] | None]) -> str:
+    """`accountId` when at least 50 percent of entry authors carry a non empty one, else `key`."""
+    total = carrying = 0
+    for author in authors:
+        total += 1
+        value = author.get(ACCOUNT_ID_FIELD) if author is not None else None
+        carrying += isinstance(value, str) and value != ""
+    share_num, share_den = ACCOUNT_ID_SHARE
+    if total and share_den * carrying >= share_num * total:
+        return ACCOUNT_ID_FIELD
+    return KEY_FIELD
+
+
+def top_amount(amounts: Iterable[int]) -> tuple[int, int]:
+    """The most common amount and its count; on a tie the smaller amount is the top."""
+    counts = Counter(amounts)
+    if not counts:
+        return 0, 0
+    amount, count = min(counts.items(), key=lambda pair: (-pair[1], pair[0]))
+    return amount, count
+
+
+def flag_bots(entries: Iterable[TimeEntry]) -> frozenset[str]:
+    """Accounts with at least 20 positive entries, 90 percent of them one exact amount.
+
+    Counted over every entry given (the whole collection, spec 0005 AC-21).
+    An entry with no author key is never flagged.
+    """
+    positive: dict[str, list[int]] = {}
+    for entry in entries:
+        if entry.author_key is not None and entry.amount > 0:
+            positive.setdefault(entry.author_key, []).append(entry.amount)
+    top_num, top_den = BOT_TOP_SHARE
+    return frozenset(
+        account
+        for account, amounts in positive.items()
+        if len(amounts) >= BOT_MIN_POSITIVE
+        and top_den * top_amount(amounts)[1] >= top_num * len(amounts)
+    )
