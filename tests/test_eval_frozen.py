@@ -5,6 +5,7 @@ run on this repo; it never skips. The others drive the same rule on a
 temporary git repo.
 """
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -30,7 +31,12 @@ def test_the_repo_eval_set_is_unwritten_or_frozen() -> None:
 
 
 def git(root: Path, *args: str) -> str:
-    done = subprocess.run(["git", *args], cwd=root, capture_output=True, text=True, check=True)
+    # Under a pre-commit hook, git sets GIT_INDEX_FILE and friends for this repo;
+    # left in, they make the scratch repo's `git add` write into the hook's index.
+    env = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
+    done = subprocess.run(
+        ["git", *args], cwd=root, env=env, capture_output=True, text=True, check=True
+    )
     return done.stdout
 
 
