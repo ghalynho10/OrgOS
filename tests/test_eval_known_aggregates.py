@@ -79,7 +79,7 @@ def test_the_registered_constants() -> None:
     constants = {
         qid: (spec.scope, spec.cut, spec.direction)
         for qid, spec in REGISTRY.items()
-        if qid != "Q01"
+        if qid in ("Q02", "Q03", "Q04", "Q05", "Q06", "Q07")
     }
     assert constants == {
         "Q02": (("CWD",), None, None),

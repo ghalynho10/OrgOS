@@ -104,6 +104,11 @@ def set_answer(kind: str, keys: Iterable[str], sources: Sequence[Step]) -> SetAn
     return SetAnswer(shape="set", sources=tuple(sources), value=ids)
 
 
+def typed_set_answer(ids: Iterable[str], sources: Sequence[Step]) -> SetAnswer:
+    """A `set` answer holding ids of several kinds, already typed, sorted."""
+    return SetAnswer(shape="set", sources=tuple(sources), value=_sorted_once(ids, "a set answer"))
+
+
 def boolean_answer(value: bool, sources: Sequence[Step]) -> BooleanAnswer:
     """A `boolean` answer; a "no" has an empty step list (AC-32)."""
     return BooleanAnswer(shape="boolean", sources=tuple(sources), value=value)

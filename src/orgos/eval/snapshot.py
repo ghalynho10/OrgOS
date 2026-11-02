@@ -47,6 +47,8 @@ ISSUE_PROJECTION = {
     "fields.parent.key": 1,
     "fields.issuelinks.id": 1,
     "fields.issuelinks.type.name": 1,
+    "fields.issuelinks.type.outward": 1,
+    "fields.issuelinks.type.inward": 1,
     "fields.issuelinks.inwardIssue.key": 1,
     "fields.issuelinks.outwardIssue.key": 1,
 }

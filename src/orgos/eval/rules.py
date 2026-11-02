@@ -19,12 +19,18 @@ from orgos.eval.entries import TimeEntry, parse_utc
 
 @dataclass(frozen=True)
 class IssueLink:
-    """One issue link: the issue in its `inwardIssue` end and the one in its `outwardIssue` end."""
+    """One issue link: the issue in its `inwardIssue` end and the one in its `outwardIssue` end.
+
+    Reading along the link's outward label goes from `inward_key` to
+    `outward_key`; along its inward label, from `outward_key` to `inward_key`.
+    """
 
     link_id: str
     type_name: str | None
     inward_key: str
     outward_key: str
+    outward_label: str | None = None
+    inward_label: str | None = None
 
 
 @dataclass(frozen=True)
@@ -137,21 +143,26 @@ def stored_links(issue_key: str, issuelinks: object) -> tuple[IssueLink, ...]:
             raise EvalError(f"{issue_key}: issue link {link_id} names both of its ends")
         if inward is None and outward is None:
             continue
-        type_name = (link.get("type") or {}).get("name")
+        kind = link.get("type") or {}
         links.append(
             IssueLink(
                 str(link_id),
-                type_name if isinstance(type_name, str) else None,
+                _text(kind.get("name")),
                 inward or issue_key,
                 outward or issue_key,
+                _text(kind.get("outward")),
+                _text(kind.get("inward")),
             )
         )
     return tuple(links)
 
 
+def _text(value: object) -> str | None:
+    return value if isinstance(value, str) and value else None
+
+
 def _end(link: Mapping[str, Any], end: str) -> str | None:
-    key = (link.get(end) or {}).get("key")
-    return key if isinstance(key, str) and key else None
+    return _text((link.get(end) or {}).get("key"))
 
 
 def corpus_links(links: Iterable[IssueLink], corpus_keys: Collection[str]) -> tuple[IssueLink, ...]:
@@ -203,3 +214,34 @@ def simple_paths(
                 yield from walk((*path, nxt))
 
     return tuple(sorted(walk((start,))))
+
+
+def complete_paths(
+    successors: Mapping[str, Iterable[str]],
+    predecessors: Mapping[str, Iterable[str]],
+    max_hops: int,
+) -> tuple[tuple[str, ...], ...]:
+    """Every simple path of 1 to `max_hops` hops that cannot be extended at either end.
+
+    An end can be extended when it has a neighbour outside the path, so a
+    section of a longer chain is never complete and a chain longer than the
+    cap has no complete section. Each path is found once, in the direction of
+    `successors`; on an undirected graph that gives both directions of a chain.
+    """
+
+    def closed(neighbours: Mapping[str, Iterable[str]], end: str, path: tuple[str, ...]) -> bool:
+        return all(other in path for other in neighbours.get(end, ()))
+
+    def walk(path: tuple[str, ...]) -> Iterator[tuple[str, ...]]:
+        if (
+            len(path) > 1
+            and closed(successors, path[-1], path)
+            and closed(predecessors, path[0], path)
+        ):
+            yield path
+        if len(path) - 1 < max_hops:
+            for nxt in successors.get(path[-1], ()):
+                if nxt not in path:
+                    yield from walk((*path, nxt))
+
+    return tuple(sorted(path for start in sorted(successors) for path in walk((start,))))

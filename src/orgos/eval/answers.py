@@ -12,7 +12,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import platform
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -180,23 +180,30 @@ def check_registry(questions: Sequence[Question], registry: Mapping[str, Registe
         raise EvalError(f"registry: no function for {missing}; registered but not asked {extra}")
 
 
-def check_sources(question_id: str, answer: Answer, spec: Registered) -> None:
-    """Stop unless every source step lists exactly the registered kinds (AC-32).
+def _kinds(steps: Iterable[Iterable[str]]) -> tuple[tuple[str, ...], ...]:
+    return tuple(tuple(sorted(step)) for step in steps)
 
-    An empty step list is allowed for an empty answer, a "no" or a count of 0 only.
+
+def check_sources(question_id: str, answer: Answer, spec: Registered) -> None:
+    """Stop unless the source steps list exactly the registered kinds (AC-32).
+
+    A path has one step per hop, each with the registered kinds. Any other
+    answer has the registered steps, or an empty step list when it is an empty
+    answer, a "no" or a count of 0.
     """
-    step_lists = (
-        [item.sources for item in answer.value]
-        if isinstance(answer, PathAnswer)
-        else [answer.sources]
-    )
-    for steps in step_lists:
-        if not steps and (is_empty_answer(answer) or is_zero_count(answer)):
-            continue
-        kinds = tuple(tuple(sorted(s)) for s in steps)
-        expected = tuple(tuple(sorted(s)) for s in spec.steps)
-        if kinds != expected:
-            raise EvalError(f"{question_id}: source steps list {kinds}, registered {expected}")
+    expected = _kinds(spec.steps)
+    if isinstance(answer, PathAnswer):
+        for item in answer.value:
+            kinds = _kinds(item.sources)
+            if kinds != expected * (len(item.path) - 1):
+                raise EvalError(f"{question_id}: {item.path} has source steps {kinds}")
+        return
+    if not answer.sources and (is_empty_answer(answer) or is_zero_count(answer)):
+        return
+    if _kinds(answer.sources) != expected:
+        raise EvalError(
+            f"{question_id}: source steps list {_kinds(answer.sources)}, registered {expected}"
+        )
 
 
 def compute(
@@ -209,6 +216,10 @@ def compute(
     spec = registry.get(question_id)
     if spec is None:
         raise EvalError(f"{question_id} has no registered function")
+    if spec.max_hops != question.max_hops:
+        raise EvalError(
+            f"{question_id}: registered max_hops {spec.max_hops}, question {question.max_hops}"
+        )
     answer = spec.function(prepared.snapshot, spec)
     if answer.shape != question.shape:
         raise EvalError(

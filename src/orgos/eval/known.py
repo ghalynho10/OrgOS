@@ -15,20 +15,33 @@ import re
 import types
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
+from itertools import pairwise
 
 from orgos.eval import EvalError
 from orgos.eval.entries import TimeEntry
 from orgos.eval.models import Answer, Number, SourceKind, TieGroup
-from orgos.eval.rules import counted_entries, in_interval, role_person, utc_time
+from orgos.eval.rules import (
+    IssueLink,
+    complete_paths,
+    counted_entries,
+    in_interval,
+    role_person,
+    utc_time,
+)
 from orgos.eval.snapshot import Issue, Snapshot
 from orgos.eval.writer import (
     Direction,
+    boolean_answer,
     count,
     map_answer,
     number_answer,
+    path_answer,
     ranked,
+    set_answer,
     step,
     tie_groups,
+    typed,
+    typed_set_answer,
 )
 
 Window = tuple[dt.datetime, dt.datetime]
@@ -43,13 +56,16 @@ class Registered:
     function: Callable[[Snapshot, Registered], Answer]
     # The projects the reading's population names, by current `fields.project.key`.
     scope: tuple[str, ...]
-    # The kinds each source step lists, one entry per step (AC-32).
+    # The kinds each source step lists, one entry per step; for a path, the kinds of
+    # the step every hop has (AC-32).
     steps: tuple[tuple[SourceKind, ...], ...]
     # A half open UTC date window `[start, end)` (AC-25), when the reading sets one.
     window: Window | None = None
     cut: int | None = None
     direction: Direction | None = None
     max_hops: int | None = None
+    # The one issue the question starts from, when its reading names one.
+    anchor: str | None = None
 
 
 def in_scope(snapshot: Snapshot, spec: Registered) -> tuple[Issue, ...]:
@@ -336,6 +352,289 @@ def q07(snapshot: Snapshot, spec: Registered) -> Answer:
     return ranked(groups, (sources,) if returned else ())
 
 
+# Paths over issue links (AC-24, AC-48)
+
+Hop = tuple[str, str]
+
+
+def chain_answer(between: Mapping[Hop, Iterable[str]], spec: Registered) -> Answer:
+    """The complete chains over directed hops, each hop's step its two issues and its links.
+
+    Several links between the same two issues stay one path, with all their
+    ids in that hop's step (your ruling of 2026-11-02).
+    """
+    if spec.max_hops is None:
+        raise EvalError("this question's registration has no max_hops")
+    successors: dict[str, set[str]] = {}
+    predecessors: dict[str, set[str]] = {}
+    for start, end in between:
+        successors.setdefault(start, set()).add(end)
+        predecessors.setdefault(end, set()).add(start)
+    paths = complete_paths(successors, predecessors, spec.max_hops)
+    return path_answer(
+        (
+            [typed("issue", key) for key in path],
+            [step({"issue": hop, "issue_link": between[hop]}) for hop in pairwise(path)],
+        )
+        for path in paths
+    )
+
+
+def link_hops(hops: Iterable[tuple[Hop, IssueLink]]) -> dict[Hop, set[str]]:
+    """Each directed hop with the ids of every link that supports it."""
+    between: dict[Hop, set[str]] = {}
+    for hop, link in hops:
+        between.setdefault(hop, set()).add(link.link_id)
+    return between
+
+
+# Q08: path_connection, path
+
+
+def q08(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The complete chains of outward "depends on" links among unresolved issues.
+
+    The reading: every issue is in the scope with `fields.resolution.name`
+    missing, null or `""`; links are followed only from the source to its
+    `outwardIssue`; a chain cannot be extended at either end and has at most
+    `max_hops` hops. A one hop chain counts (your ruling of 2026-11-02). Each
+    hop's step lists its link ids and both of its issues.
+    """
+    unresolved = frozenset(
+        issue.key
+        for issue in in_scope(snapshot, spec)
+        if optional(issue, "fields.resolution.name") is None
+    )
+    return chain_answer(
+        link_hops(
+            ((link.inward_key, link.outward_key), link)
+            for link in snapshot.links
+            if link.outward_label == "depends on"
+            and link.inward_key in unresolved
+            and link.outward_key in unresolved
+        ),
+        spec,
+    )
+
+
+# Q09: path_connection, path
+
+
+def assignees_in_scope(snapshot: Snapshot, spec: Registered) -> dict[str, str]:
+    """Each issue in the scope with its qualifying current assignee: non bot and filled."""
+    found = {
+        issue.key: role_person(optional(issue, "fields.assignee.key"), snapshot.flagged)
+        for issue in in_scope(snapshot, spec)
+    }
+    return {key: person for key, person in found.items() if person is not None}
+
+
+def q09(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The complete chains of any link type where consecutive issues have different assignees.
+
+    The reading: every issue is in the scope with a qualifying current
+    assignee; links are followed in either direction; a chain cannot be
+    extended at either end and has at most `max_hops` hops. A one hop chain
+    counts, and each chain is stored in both directions as two paths (your
+    rulings of 2026-11-02). Each hop's step lists its link ids and both issues.
+    """
+    assignees = assignees_in_scope(snapshot, spec)
+    kept = tuple(
+        link
+        for link in snapshot.links
+        if link.inward_key in assignees
+        and link.outward_key in assignees
+        and assignees[link.inward_key] != assignees[link.outward_key]
+    )
+    return chain_answer(
+        link_hops(
+            (hop, link)
+            for link in kept
+            for hop in (
+                (link.inward_key, link.outward_key),
+                (link.outward_key, link.inward_key),
+            )
+        ),
+        spec,
+    )
+
+
+# Q10: path_connection, set
+
+
+OUTWARD_RELATIONS = frozenset({"blocks", "depends on", "duplicates"})
+INWARD_RELATIONS = frozenset({"supersedes"})
+
+
+def _relations(link: IssueLink) -> Iterable[Hop]:
+    if link.outward_label in OUTWARD_RELATIONS:
+        yield link.inward_key, link.outward_key
+    if link.inward_label in INWARD_RELATIONS:
+        yield link.outward_key, link.inward_key
+
+
+def q10(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The people assigned to source issues of a relation to an issue of another assignee.
+
+    The reading: the source has outward "blocks", "depends on" or "duplicates"
+    to its `outwardIssue`, or inward "supersedes" to its `inwardIssue`; both
+    issues are in the scope with qualifying, different assignees. Sources: one
+    step listing the source and target issues, the links, and one flat list of
+    the source and target assignees (your ruling of 2026-11-02).
+    """
+    assignees = assignees_in_scope(snapshot, spec)
+    relations = tuple(
+        (source, target, link)
+        for link in snapshot.links
+        for source, target in _relations(link)
+        if source in assignees and target in assignees and assignees[source] != assignees[target]
+    )
+    sources = step(
+        {
+            "issue": {key for source, target, _ in relations for key in (source, target)},
+            "issue_link": {link.link_id for _, _, link in relations},
+            "person": {
+                assignees[key] for source, target, _ in relations for key in (source, target)
+            },
+        }
+    )
+    people = {assignees[source] for source, _, _ in relations}
+    return set_answer("person", people, (sources,) if relations else ())
+
+
+# Q11: path_connection, set
+
+
+ROLE_FIELDS = ("fields.assignee.key", "fields.reporter.key", "fields.creator.key")
+
+
+def q11(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The people sharing an issue through any role, and the projects of those issues.
+
+    The reading: the roles are assignee, reporter, creator and the author of a
+    positive time entry, none empty or flagged; two distinct people holding
+    roles on one issue are connected. Sources: one step listing the shared
+    issues and the entries that establish a logging role on them (your ruling
+    of 2026-11-02).
+    """
+    entries_on: dict[str, list[TimeEntry]] = {}
+    for entry in scope_entries(snapshot, spec):
+        if entry.author_key is not None:
+            entries_on.setdefault(entry.issue_key, []).append(entry)
+    shared: list[Issue] = []
+    people: set[str] = set()
+    for issue in in_scope(snapshot, spec):
+        roles = {role_person(optional(issue, path), snapshot.flagged) for path in ROLE_FIELDS}
+        roles |= {entry.author_key for entry in entries_on.get(issue.key, ())}
+        roles.discard(None)
+        if len(roles) >= 2:
+            shared.append(issue)
+            people |= {person for person in roles if person is not None}
+    sources = step(
+        {
+            "issue": [issue.key for issue in shared],
+            "time_entry": [
+                entry.history_id for issue in shared for entry in entries_on.get(issue.key, ())
+            ],
+        }
+    )
+    ids = (
+        *(typed("person", person) for person in people),
+        *(typed("project", project) for project in {issue.project_key for issue in shared}),
+    )
+    return typed_set_answer(ids, (sources,) if shared else ())
+
+
+# Q12: path_connection, set
+
+
+def q12(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The parent issues whose direct sub-tasks have at least two qualifying assignees.
+
+    The reading: parent and sub-task are both in the scope; only direct
+    children count, by each child's `fields.parent.key`. Sources: one step
+    listing the returned parents and their contributing sub-tasks, those child
+    keys, and one flat list of their assignees (your rulings of 2026-11-02).
+    """
+    assignees = assignees_in_scope(snapshot, spec)
+    in_projects = frozenset(issue.key for issue in in_scope(snapshot, spec))
+    children: dict[str, list[str]] = {}
+    for relation in snapshot.parents:
+        if relation.parent_key in in_projects and relation.child_key in assignees:
+            children.setdefault(relation.parent_key, []).append(relation.child_key)
+    returned = {
+        parent: kids
+        for parent, kids in children.items()
+        if len({assignees[kid] for kid in kids}) >= 2
+    }
+    kids = [kid for each in returned.values() for kid in each]
+    sources = step(
+        {
+            "issue": (*returned, *kids),
+            "parent": kids,
+            "person": {assignees[kid] for kid in kids},
+        }
+    )
+    return set_answer("issue", returned, (sources,) if returned else ())
+
+
+# Q13 and Q14: a named parent and its direct sub-tasks
+
+
+def anchor_children(snapshot: Snapshot, spec: Registered) -> tuple[str, tuple[str, ...]]:
+    """The registered parent issue and its direct children, by each child's `fields.parent.key`.
+
+    The registered scope holds them all, so a parent or child outside it stops the run.
+    """
+    if spec.anchor is None:
+        raise EvalError("this question's registration has no anchor issue")
+    in_projects = frozenset(issue.key for issue in in_scope(snapshot, spec))
+    if spec.anchor not in in_projects:
+        raise EvalError(f"{spec.anchor} is not an issue in the registered scope")
+    children = tuple(
+        relation.child_key for relation in snapshot.parents if relation.parent_key == spec.anchor
+    )
+    outside = sorted(set(children) - in_projects)
+    if outside:
+        raise EvalError(f"sub-tasks of {spec.anchor} are outside the registered scope: {outside}")
+    return spec.anchor, children
+
+
+def q13(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The direct sub-tasks of the registered parent.
+
+    The reading: every direct child is returned, with no assignee or no logged
+    time included. Assignee, status and total hours are not stored, because a
+    `set` holds ids only. Sources: one step listing the parent and its
+    sub-tasks, those child keys, and every sub-task's counted time entries.
+    """
+    parent, children = anchor_children(snapshot, spec)
+    wanted = frozenset(children)
+    entries = [e.history_id for e in scope_entries(snapshot, spec) if e.issue_key in wanted]
+    sources = step({"issue": (parent, *children), "parent": children, "time_entry": entries})
+    return set_answer("issue", children, (sources,) if children else ())
+
+
+def q14(snapshot: Snapshot, spec: Registered) -> Answer:
+    """Whether every direct sub-task of the registered parent has a resolution.
+
+    The reading: the parent must have at least one direct sub-task. Sources:
+    one step listing the parent and its sub-tasks and those child keys; a "no"
+    has the empty step list under AC-32 (your ruling of 2026-11-02).
+    """
+    parent, children = anchor_children(snapshot, spec)
+    if not children:
+        raise EvalError(f"{parent} has no direct sub-task, which the reading requires")
+    wanted = frozenset(children)
+    resolved = all(
+        optional(issue, "fields.resolution.name") is not None
+        for issue in in_scope(snapshot, spec)
+        if issue.key in wanted
+    )
+    sources = step({"issue": (parent, *children), "parent": children})
+    return boolean_answer(resolved, (sources,) if resolved else ())
+
+
 # The registry (AC-28)
 
 CORPUS_PROJECTS = ("BAM", "CLOUD", "CLOV", "CRUC", "CWD", "FE", "JRASERVER")
@@ -381,5 +680,14 @@ REGISTRY: Mapping[str, Registered] = types.MappingProxyType(
             cut=10,
             direction="descending",
         ),
+        "Q08": Registered(q08, scope=CORPUS_PROJECTS, steps=(("issue", "issue_link"),), max_hops=5),
+        "Q09": Registered(q09, scope=CORPUS_PROJECTS, steps=(("issue", "issue_link"),), max_hops=5),
+        "Q10": Registered(q10, scope=CORPUS_PROJECTS, steps=(("issue", "issue_link", "person"),)),
+        "Q11": Registered(q11, scope=CORPUS_PROJECTS, steps=(("issue", "time_entry"),)),
+        "Q12": Registered(q12, scope=("CLOUD", "CLOV"), steps=(("issue", "parent", "person"),)),
+        "Q13": Registered(
+            q13, scope=("CLOV",), steps=(("issue", "parent", "time_entry"),), anchor="CLOV-108"
+        ),
+        "Q14": Registered(q14, scope=("CLOV",), steps=(("issue", "parent"),), anchor="CLOV-538"),
     }
 )
