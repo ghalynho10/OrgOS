@@ -126,11 +126,15 @@ def test_a_link_to_an_outside_issue_is_dropped() -> None:
 
 
 @pytest.mark.parametrize(
-    "raw", [{"outwardIssue": {"key": "B-1"}}, link("7"), link("7", inward="X", outward="Y")]
+    "raw", [{"outwardIssue": {"key": "B-1"}}, link("7", inward="X", outward="Y")]
 )
-def test_a_link_without_an_id_or_one_other_issue_stops(raw: dict[str, object]) -> None:
+def test_a_link_without_an_id_or_naming_both_ends_stops(raw: dict[str, object]) -> None:
     with pytest.raises(EvalError, match="A-1"):
         stored_links("A-1", [raw])
+
+
+def test_a_link_naming_no_other_issue_is_left_out() -> None:
+    assert stored_links("A-1", [link("7")]) == ()
 
 
 def test_a_parent_outside_the_corpus_is_dropped() -> None:

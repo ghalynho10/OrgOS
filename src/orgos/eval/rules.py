@@ -99,7 +99,9 @@ def in_interval(moment: dt.datetime, start: dt.datetime, end: dt.datetime) -> bo
 def stored_links(issue_key: str, issuelinks: object) -> tuple[IssueLink, ...]:
     """The links stored on one issue, the issue itself filling the end it does not name.
 
-    A link without an id or without its other issue stops the run.
+    A link naming no other issue cannot reach a corpus issue and is left out,
+    as `describe` counted it dropped. A link without an id, or naming both
+    ends, stops the run.
     """
     links: list[IssueLink] = []
     for link in issuelinks if isinstance(issuelinks, list | tuple) else ():
@@ -107,8 +109,10 @@ def stored_links(issue_key: str, issuelinks: object) -> tuple[IssueLink, ...]:
         if link_id is None or link_id == "":
             raise EvalError(f"{issue_key}: an issue link has no id")
         inward, outward = _end(link, "inwardIssue"), _end(link, "outwardIssue")
-        if (inward is None) == (outward is None):
-            raise EvalError(f"{issue_key}: issue link {link_id} does not name one other issue")
+        if inward is not None and outward is not None:
+            raise EvalError(f"{issue_key}: issue link {link_id} names both of its ends")
+        if inward is None and outward is None:
+            continue
         type_name = (link.get("type") or {}).get("name")
         links.append(
             IssueLink(

@@ -90,7 +90,8 @@ def frozen_problems(root: Path, tagged: str | None) -> tuple[str, ...]:
     return problems
 
 
-def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+def git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    """Run one git command in `root`, capturing its output; failing to start is an `EvalError`."""
     try:
         return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True, check=False)
     except OSError as error:
@@ -102,7 +103,7 @@ def tagged_frozen(root: Path) -> str | None:
 
     A tag that resolves without the file gives an empty text, which then differs.
     """
-    if _git(root, "rev-parse", "--quiet", "--verify", f"refs/tags/{TAG}").returncode != 0:
+    if git(root, "rev-parse", "--quiet", "--verify", f"refs/tags/{TAG}").returncode != 0:
         return None
-    shown = _git(root, "show", f"refs/tags/{TAG}:{FROZEN}")
+    shown = git(root, "show", f"refs/tags/{TAG}:{FROZEN}")
     return shown.stdout if shown.returncode == 0 else ""
