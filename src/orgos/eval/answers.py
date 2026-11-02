@@ -45,10 +45,13 @@ from orgos.eval.rules import other_person_share
 from orgos.eval.snapshot import (
     ENTRY_ISSUES_FILTER,
     ENTRY_ISSUES_PROJECTION,
+    KEY_PROJECTION,
     Snapshot,
     build_snapshot,
+    collapse,
     corpus_filter,
     corpus_projection,
+    repeated_keys,
 )
 from orgos.eval.writer import (
     answer_triggers,
@@ -113,19 +116,32 @@ def collection_flags(
 
 
 def read_snapshot(settings: Settings, corpus: Corpus, paths: frozenset[str]) -> Snapshot:
-    """Two reader finds: every entry issue of the collection for the flags, then the corpus."""
+    """Reader finds: the flags per document over the collection, then the collapsed corpus.
+
+    The whole collection pass keeps every document (AC-21). The corpus pass
+    finds the keys on several documents, compares those full documents and
+    leaves out the dropped copies (AC-26).
+    """
     try:
         with reader_client(settings) as client:
             collection = client[DATABASE][corpus.collection]
             person_field, flagged = collection_flags(
                 collection.find(ENTRY_ISSUES_FILTER, ENTRY_ISSUES_PROJECTION)
             )
+            scope = corpus_filter(corpus.projects)
+            repeated = repeated_keys(collection.find(scope, KEY_PROJECTION))
+            collapsed = (
+                collapse(collection.find({**scope, "key": {"$in": list(repeated)}}))
+                if repeated
+                else ()
+            )
             return build_snapshot(
                 corpus.projects,
                 person_field,
                 flagged,
-                collection.find(corpus_filter(corpus.projects), corpus_projection(paths)),
+                collection.find(scope, corpus_projection(paths)),
                 paths,
+                collapsed,
             )
     except PyMongoError as error:
         raise EvalError(f"answers failed: {error_text(error, secrets(settings))}") from None
@@ -275,6 +291,7 @@ def run_record(prepared: Prepared, context: RunContext, root: Path) -> dict[str,
         "person_id_field": prepared.snapshot.person_field,
         "flagged_accounts": sorted(prepared.snapshot.flagged),
         "pushed_checks": prepared.pushed.record(),
+        "collapsed_documents": {c.key: c.record() for c in prepared.snapshot.collapsed},
         "uniqueness": {check.name: check.record() for check in prepared.uniqueness},
         "reconciliation": {check.name: check.record() for check in prepared.reconciliation},
         "verify_sha256": {
@@ -290,11 +307,17 @@ def run_record(prepared: Prepared, context: RunContext, root: Path) -> dict[str,
 
 
 def notes(prepared: Prepared) -> tuple[str, ...]:
-    """A line per uniqueness check that is a data quality note and did not hold (AC-26)."""
-    return tuple(
-        f"uniqueness note: {check.name}: {len(check.found)} found"
-        for check in prepared.uniqueness
-        if not check.stops and not check.ok
+    """A line per collapsed key and per uniqueness note that did not hold (AC-26)."""
+    return (
+        *(
+            f"uniqueness note: collapsed {c.key}: kept {c.kept}, dropped {', '.join(c.dropped)}"
+            for c in prepared.snapshot.collapsed
+        ),
+        *(
+            f"uniqueness note: {check.name}: {len(check.found)} found"
+            for check in prepared.uniqueness
+            if not check.stops and not check.ok
+        ),
     )
 
 

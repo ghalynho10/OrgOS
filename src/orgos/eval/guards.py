@@ -178,7 +178,7 @@ def _many(pairs: Iterable[tuple[str, object]]) -> list[str]:
 
 
 def uniqueness_checks(issues: Sequence[Issue]) -> tuple[Check, ...]:
-    """The five AC-26 checks; the fifth (person key to name) is a note and never stops."""
+    """The five AC-26 checks over the collapsed corpus; the fifth is a note and never stops."""
     found = (
         ("issue key on one document", _repeated(i.key for i in issues), True),
         ("project key to one project", _many((i.project_key, i.project_id) for i in issues), True),

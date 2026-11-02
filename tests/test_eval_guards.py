@@ -11,8 +11,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from bson import ObjectId
 
 from orgos.eval import EvalError
+from orgos.eval.answers import collection_flags
 from orgos.eval.frozen import AMENDMENTS, ANSWERS, FROZEN, QUESTIONS, frozen_line
 from orgos.eval.guards import (
     Targets,
@@ -23,7 +25,14 @@ from orgos.eval.guards import (
     uniqueness_checks,
 )
 from orgos.eval.rules import IssueLink, Parent
-from orgos.eval.snapshot import build_snapshot, corpus_projection, issue_from
+from orgos.eval.snapshot import (
+    Collapsed,
+    build_snapshot,
+    collapse,
+    corpus_projection,
+    issue_from,
+    repeated_keys,
+)
 
 # File guards: frozen refusal, hashes, pushed checks, in the AC-43 order
 
@@ -229,6 +238,82 @@ def test_a_person_key_with_two_names_is_a_note_only() -> None:
         False,
         ["u1"],
     )
+
+
+# The collapse of copies (AC-26)
+
+
+LOW, HIGH = ObjectId("61d5908cf4d395ee22161b0d"), ObjectId("61d5908cf4d395ee22161b0e")
+
+
+def stored(
+    object_id: ObjectId, key: str, *histories: dict[str, Any], **fields: Any
+) -> dict[str, Any]:
+    return {"_id": object_id, **doc(key, *histories, **fields)}
+
+
+def test_copies_identical_except_id_collapse_to_the_lowest_id_and_are_reported() -> None:
+    copies = (stored(HIGH, "A-1", timespent=None), stored(LOW, "A-1", timespent=None))
+    assert repeated_keys((*copies, stored(ObjectId(), "A-2"))) == ("A-1",)
+    assert collapse(copies) == (Collapsed("A-1", str(LOW), (str(HIGH),)),)
+    assert build_snapshot(("A",), "key", frozenset(), copies, (), collapse(copies)).collapsed == (
+        Collapsed("A-1", str(LOW), (str(HIGH),)),
+    )
+
+
+def test_three_copies_keep_one_and_a_key_on_one_document_is_left_alone() -> None:
+    third = ObjectId("61d5908cf4d395ee22161b0f")
+    copies = (stored(third, "A-1"), stored(HIGH, "A-1"), stored(LOW, "A-1"), stored(HIGH, "A-2"))
+    assert collapse(copies) == (Collapsed("A-1", str(LOW), (str(HIGH), str(third))),)
+
+
+@pytest.mark.parametrize(
+    "other",
+    [
+        {"timespent": 60},  # a field only one copy has
+        {"priority": {"name": "Low"}},  # a nested value
+        {"priority": {"name": "High"}, "votes": 1.0},  # the same number in another BSON type
+    ],
+)
+def test_copies_differing_in_any_other_field_stop_and_name_the_key(other: dict[str, Any]) -> None:
+    copies = (
+        stored(LOW, "A-1", priority={"name": "High"}, votes=1),
+        stored(HIGH, "A-1", **{"priority": {"name": "High"}, "votes": 1, **other}),
+    )
+    with pytest.raises(EvalError, match=r"^uniqueness: A-1 is on 2 documents that differ"):
+        collapse(copies)
+
+
+def test_a_dropped_copys_histories_and_entries_are_never_counted() -> None:
+    entry = spent("7", 60)
+    copies = (stored(LOW, "A-1", entry, timespent=60), stored(HIGH, "A-1", entry, timespent=60))
+    got = build_snapshot(("A", "B"), "key", frozenset(), copies, (), collapse(copies))
+    assert [issue.key for issue in got.issues] == ["A-1"]
+    assert [entry.history_id for entry in got.entries] == ["7"]
+    require("uniqueness", uniqueness_checks(got.issues))  # history 7 is seen once
+    checks = reconciliation_checks(got, targets())
+    assert all(check.ok for check in checks)  # 60 seconds and 1 person, not 120 and 1
+    # Without the collapse the same documents stop on the key
+    with pytest.raises(EvalError, match="issue key on one document"):
+        require("uniqueness", uniqueness_checks(snapshot(*copies).issues))
+
+
+def test_a_history_id_on_two_kept_documents_still_stops() -> None:
+    entry = spent("5", 60)
+    copies = (stored(LOW, "A-1"), stored(HIGH, "A-1"))
+    documents = (*copies, stored(ObjectId(), "A-2", entry), stored(ObjectId(), "B-1", entry))
+    got = build_snapshot(("A", "B"), "key", frozenset(), documents, (), collapse(copies))
+    with pytest.raises(EvalError, match=r"changelog history id once failed: found \['5'\]"):
+        require("uniqueness", uniqueness_checks(got.issues))
+
+
+def test_the_bot_flags_stay_per_document_over_the_whole_collection() -> None:
+    bot = {"key": "bot", "displayName": "Bot"}
+    entries = tuple(spent(str(n), 60, bot) for n in range(10))
+    copies = (stored(LOW, "A-1", *entries), stored(HIGH, "A-1", *entries))
+    # 10 entries on one document are below the 20 AC-8 needs; both copies reach it
+    assert collection_flags(iter(copies[:1])) == ("key", frozenset())
+    assert collection_flags(iter(copies)) == ("key", frozenset({"bot"}))
 
 
 # Reconciliation (AC-27, AC-21)

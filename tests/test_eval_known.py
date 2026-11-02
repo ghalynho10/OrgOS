@@ -8,6 +8,7 @@ temporary git repo for the run record's commit. No store.
 import json
 import os
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,7 @@ from orgos.eval.guards import Check, Hashes, Pushed
 from orgos.eval.known import CORPUS_PROJECTS, REGISTRY, Registered, q01
 from orgos.eval.models import Question
 from orgos.eval.rules import other_person_share
-from orgos.eval.snapshot import build_snapshot
+from orgos.eval.snapshot import Collapsed, build_snapshot
 from orgos.eval.writer import map_answer, render, step
 
 Q01_FIELDS = (
@@ -198,6 +199,16 @@ def test_only_prints_the_answer_and_its_triggers_and_writes_nothing(root: Path) 
         "in the 1 issues of its scope",
     )
     assert sorted(p.name for p in root.rglob("*") if ".git" not in p.parts) == ["eval"]
+
+
+def test_each_collapsed_key_is_reported_in_the_printed_notes_and_the_run_record(root: Path) -> None:
+    run = prepared(doc("BAM-1"))
+    collapsed = Collapsed("BAM-1", "low", ("high",))
+    run = replace(run, snapshot=replace(run.snapshot, collapsed=(collapsed,)))
+    assert only(run, "Q01")[0] == "uniqueness note: collapsed BAM-1: kept low, dropped high"
+    write_all(run, root)
+    record = json.loads((root / RUN_RECORD).read_text())
+    assert record["collapsed_documents"] == {"BAM-1": {"kept": "low", "dropped": ["high"]}}
 
 
 def test_only_needs_a_registered_question() -> None:

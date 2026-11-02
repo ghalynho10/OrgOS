@@ -20,6 +20,7 @@ from orgos.eval import EvalError
 from orgos.eval.answers import read_snapshot
 from orgos.eval.describe import Corpus
 from orgos.eval.entries import flag_bots, rebuild_entries
+from orgos.eval.snapshot import Collapsed
 from orgos.mongostore.dump import DATABASE
 from tests.integration.conftest import MONGO_ROOT_PASSWORD, MONGO_ROOT_USER
 
@@ -107,6 +108,27 @@ def test_the_snapshot_reads_the_corpus_and_flags_over_the_whole_collection(
         assert issue.values("fields.assignee.key") == ((assignee,) if assignee else ())
         assert issue.timespent == fields.get("timespent")
     assert all(link.inward_key in by_key and link.outward_key in by_key for link in snapshot.links)
+
+
+def test_copies_on_the_real_store_collapse_or_stop(
+    mongo: MongoDbContainer, loaded: MongoClient[dict[str, Any]], reader_password: str
+) -> None:
+    jira = loaded[DATABASE].Jira
+    settings = _settings(mongo, reader_password)
+    original = jira.find_one({"fields.project.key": "CWD"})
+    assert original is not None
+    copy = {name: value for name, value in original.items() if name != "_id"}
+    copy_id = jira.insert_one(copy).inserted_id
+    try:
+        before = read_snapshot(settings, CORPUS, PATHS)
+        low, high = sorted((original["_id"], copy_id))
+        assert before.collapsed == (Collapsed(original["key"], str(low), (str(high),)),)
+        assert [i.key for i in before.issues].count(original["key"]) == 1
+        jira.update_one({"_id": copy_id}, {"$set": {"fields.votes.votes": -1}})
+        with pytest.raises(EvalError, match=f"uniqueness: {original['key']} is on 2 documents"):
+            read_snapshot(settings, CORPUS, PATHS)
+    finally:
+        jira.delete_one({"_id": copy_id})
 
 
 def test_a_failed_login_is_an_eval_error_without_the_password(

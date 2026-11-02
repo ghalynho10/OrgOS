@@ -4,14 +4,19 @@ The shell reads raw Mongo through the reader login with `find`, a filter and a
 projection only (AC-18), and hands the decoded documents here. Every count is
 made in Python over this frozen snapshot: the corpus issues with only the
 fields the questions cite, their time entries, and the issue links and parent
-relations the boundary rule keeps (AC-24). Pure: documents in, snapshot out.
+relations the boundary rule keeps (AC-24). Copies of one issue collapse to one
+document first (AC-26). Pure: documents in, snapshot out.
 """
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
+
+from bson import json_util
+from bson.json_util import CANONICAL_JSON_OPTIONS
 
 from orgos.eval import EvalError
 from orgos.eval.describe import project_of
@@ -35,7 +40,6 @@ HISTORY_PROJECTION = {
 }
 # What every corpus issue needs, whatever the questions cite.
 ISSUE_PROJECTION = {
-    "_id": 0,
     "key": 1,
     "fields.project.key": 1,
     "fields.project.id": 1,
@@ -46,6 +50,8 @@ ISSUE_PROJECTION = {
     "fields.issuelinks.inwardIssue.key": 1,
     "fields.issuelinks.outwardIssue.key": 1,
 }
+# What finding the keys held by more than one corpus document needs; `_id` comes by default.
+KEY_PROJECTION = {"key": 1}
 # Every issue of the collection that holds a `timespent` item, for the bot flags (AC-21).
 ENTRY_ISSUES_FILTER = {"changelog.histories.items.field": ENTRY_FIELD}
 ENTRY_ISSUES_PROJECTION = {
@@ -81,6 +87,19 @@ class Issue:
 
 
 @dataclass(frozen=True)
+class Collapsed:
+    """One issue key held by several identical documents: the `_id` kept and those dropped."""
+
+    key: str
+    kept: str
+    dropped: tuple[str, ...]
+
+    def record(self) -> dict[str, Any]:
+        """The run record object for this key."""
+        return {"kept": self.kept, "dropped": list(self.dropped)}
+
+
+@dataclass(frozen=True)
 class Snapshot:
     """The corpus as the answers see it (the spec's in memory `Corpus`)."""
 
@@ -91,11 +110,47 @@ class Snapshot:
     entries: tuple[TimeEntry, ...]
     links: tuple[IssueLink, ...]
     parents: tuple[Parent, ...]
+    collapsed: tuple[Collapsed, ...] = ()
 
 
 def corpus_filter(projects: Iterable[str]) -> dict[str, Any]:
     """Corpus issues by current `fields.project.key` (AC-24)."""
     return {"fields.project.key": {"$in": list(projects)}}
+
+
+def repeated_keys(documents: Iterable[Mapping[str, Any]]) -> tuple[str, ...]:
+    """The issue keys held by more than one document, sorted."""
+    held = Counter(key for key in (document.get("key") for document in documents) if key)
+    return tuple(sorted(key for key, n in held.items() if n > 1))
+
+
+def _without_id(document: Mapping[str, Any]) -> str:
+    # Canonical JSON keeps BSON types apart, so 1 and 1.0 differ as they do in the dump.
+    rest = {name: value for name, value in document.items() if name != "_id"}
+    return json_util.dumps(rest, json_options=CANONICAL_JSON_OPTIONS, sort_keys=True)
+
+
+def collapse(documents: Iterable[Mapping[str, Any]]) -> tuple[Collapsed, ...]:
+    """The full documents of repeated keys, each key down to its lowest `_id` (AC-26).
+
+    Documents of one key that differ in any field besides `_id` stop the run
+    and name the key. A key on one document has nothing to collapse.
+    """
+    by_key: dict[str, list[Mapping[str, Any]]] = {}
+    for document in documents:
+        by_key.setdefault(document["key"], []).append(document)
+    collapsed: list[Collapsed] = []
+    for key in sorted(by_key):
+        copies = sorted(by_key[key], key=lambda document: document["_id"])
+        if len(copies) == 1:
+            continue
+        if len({_without_id(copy) for copy in copies}) > 1:
+            raise EvalError(
+                f"uniqueness: {key} is on {len(copies)} documents that differ besides _id"
+            )
+        kept, *dropped = (str(copy["_id"]) for copy in copies)
+        collapsed.append(Collapsed(key, kept, tuple(dropped)))
+    return tuple(collapsed)
 
 
 def corpus_projection(paths: Iterable[str]) -> dict[str, int]:
@@ -162,11 +217,18 @@ def build_snapshot(
     flagged: frozenset[str],
     documents: Iterable[Mapping[str, Any]],
     paths: Collection[str],
+    collapsed: tuple[Collapsed, ...] = (),
 ) -> Snapshot:
-    """The snapshot of the corpus documents: issues, every entry, and the kept links and parents."""
+    """The snapshot of the corpus documents: issues, every entry, and the kept links and parents.
+
+    A dropped copy is skipped before anything is read from it (AC-26).
+    """
+    dropped = frozenset(copy for each in collapsed for copy in each.dropped)
     issues: list[Issue] = []
     entries: list[TimeEntry] = []
     for document in documents:
+        if str(document.get("_id")) in dropped:
+            continue
         issues.append(issue_from(document, paths, person_field))
         entries.extend(rebuild_entries(document, person_field))
     keys = frozenset(issue.key for issue in issues)
@@ -180,4 +242,5 @@ def build_snapshot(
         parents=corpus_parents(
             (Parent(i.key, i.parent_key) for i in issues if i.parent_key is not None), keys
         ),
+        collapsed=collapsed,
     )
