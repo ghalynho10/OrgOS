@@ -1,0 +1,151 @@
+{
+  "collapsed_documents": {
+    "BAM-11750": {
+      "dropped": [
+        "61d5bb3df4d395ee2217f3b6"
+      ],
+      "kept": "61d5bb3df4d395ee2217f3b5"
+    },
+    "CWD-203": {
+      "dropped": [
+        "61d5908cf4d395ee22161b0e"
+      ],
+      "kept": "61d5908cf4d395ee22161b0d"
+    },
+    "JRASERVER-15889": {
+      "dropped": [
+        "61d5822af4d395ee22154436"
+      ],
+      "kept": "61d5822af4d395ee22154435"
+    },
+    "JRASERVER-40042": {
+      "dropped": [
+        "61d57b35f4d395ee2214faf8"
+      ],
+      "kept": "61d57b35f4d395ee2214faf7"
+    }
+  },
+  "flagged_accounts": [],
+  "git": {
+    "commit": "c914b41503a4e107a227ebf5bd4d39427937fa21",
+    "dirty": false
+  },
+  "other_person_share": {
+    "den": 93100980,
+    "num": 3325800
+  },
+  "person_id_field": "key",
+  "pushed_checks": {
+    "amendment_branches": [
+      "origin/feat/eval-set-known-answers"
+    ],
+    "amendment_commit": "c914b41503a4e107a227ebf5bd4d39427937fa21",
+    "step1_branches": [
+      "origin/feat/eval-set-known-answers"
+    ],
+    "step1_commit": "761c0bc99f2c3300a4f4e5eff48a7becab4bf397"
+  },
+  "reconciliation": {
+    "entry mismatches": {
+      "expected": [
+        "FE-4996"
+      ],
+      "found": [
+        "FE-4996"
+      ],
+      "ok": true
+    },
+    "flagged accounts": {
+      "expected": [],
+      "found": [],
+      "ok": true
+    },
+    "people per project": {
+      "expected": {
+        "BAM": 23,
+        "CLOUD": 14,
+        "CLOV": 4,
+        "CRUC": 46,
+        "CWD": 17,
+        "FE": 41,
+        "JRASERVER": 53
+      },
+      "found": {
+        "BAM": 23,
+        "CLOUD": 14,
+        "CLOV": 4,
+        "CRUC": 46,
+        "CWD": 17,
+        "FE": 41,
+        "JRASERVER": 53
+      },
+      "ok": true
+    },
+    "person id field": {
+      "expected": "key",
+      "found": "key",
+      "ok": true
+    },
+    "positive seconds per project": {
+      "expected": {
+        "BAM": 12835800,
+        "CLOUD": 7875960,
+        "CLOV": 4530660,
+        "CRUC": 30572460,
+        "CWD": 6423180,
+        "FE": 10095420,
+        "JRASERVER": 20767500
+      },
+      "found": {
+        "BAM": 12835800,
+        "CLOUD": 7875960,
+        "CLOV": 4530660,
+        "CRUC": 30572460,
+        "CWD": 6423180,
+        "FE": 10095420,
+        "JRASERVER": 20767500
+      },
+      "ok": true
+    }
+  },
+  "sha256": {
+    "amendments": "f34395e70a9688ad3d191371e96ad170a192b319fb819d8752f8b79cc2149d85",
+    "answers": "384ecd4fbda7d71cda268a6d1342fbfc2aafcbe7a0f90f69bf4250a897ece287",
+    "questions": "cd45b557637affaa7a6ff62a07abaa43b429e56185e096aed7e207303d4cf918"
+  },
+  "time": "2026-11-03T01:17:58+00:00",
+  "uniqueness": {
+    "changelog history id once": {
+      "expected": [],
+      "found": [],
+      "ok": true
+    },
+    "issue key on one document": {
+      "expected": [],
+      "found": [],
+      "ok": true
+    },
+    "issue link id to one pair": {
+      "expected": [],
+      "found": [],
+      "ok": true
+    },
+    "person key to one name": {
+      "expected": [],
+      "found": [],
+      "ok": true
+    },
+    "project key to one project": {
+      "expected": [],
+      "found": [],
+      "ok": true
+    }
+  },
+  "verify_sha256": {
+    "verify_before.txt": "aa0839aa2c41a2c7379505c1932323a5817f99ae13c3392d961ab80b069920f7"
+  },
+  "versions": {
+    "pymongo": "4.19.0",
+    "python": "3.12.12"
+  }
+}
