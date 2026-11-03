@@ -1,6 +1,6 @@
 """Unit tests for the hours, person, boundary, path and UTC rules.
 
-Spec 0005, AC-22 to AC-25 and AC-48. No store: synthetic entries and links.
+Spec 0005, AC-22 to AC-25. No store: synthetic entries and links.
 """
 
 import datetime as dt
@@ -18,9 +18,7 @@ from orgos.eval.rules import (
     logged_seconds,
     people_who_logged,
     role_person,
-    simple_paths,
     stored_links,
-    undirected,
     utc_time,
 )
 
@@ -140,24 +138,3 @@ def test_a_link_naming_no_other_issue_is_left_out() -> None:
 def test_a_parent_outside_the_corpus_is_dropped() -> None:
     parents = [Parent("A-2", "A-1"), Parent("A-3", "OUT-1")]
     assert corpus_parents(parents, {"A-1", "A-2", "A-3"}) == (Parent("A-2", "A-1"),)
-
-
-# AC-48: simple paths
-
-
-def test_link_direction_is_ignored() -> None:
-    graph = undirected([("A", "B")])
-    assert simple_paths(graph, "B", "A", 1) == (("B", "A"),)
-
-
-def test_a_cycle_never_repeats_an_entity() -> None:
-    graph = undirected([("A", "B"), ("B", "C"), ("C", "A"), ("C", "D")])
-    paths = simple_paths(graph, "A", "D", 10)
-    assert paths == (("A", "B", "C", "D"), ("A", "C", "D"))
-    assert all(len(set(path)) == len(path) for path in paths)
-
-
-def test_a_path_longer_than_max_hops_is_excluded() -> None:
-    graph = undirected([("A", "B"), ("B", "C"), ("A", "C")])
-    assert simple_paths(graph, "A", "C", 1) == (("A", "C"),)
-    assert simple_paths(graph, "A", "C", 2) == (("A", "B", "C"), ("A", "C"))

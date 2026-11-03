@@ -197,25 +197,6 @@ def undirected(edges: Iterable[tuple[str, str]]) -> Mapping[str, tuple[str, ...]
     return {entity: tuple(sorted(others)) for entity, others in neighbours.items()}
 
 
-def simple_paths(
-    graph: Mapping[str, Iterable[str]], start: str, end: str, max_hops: int
-) -> tuple[tuple[str, ...], ...]:
-    """Every path from `start` to `end` that repeats no entity and has at most `max_hops` hops."""
-
-    def walk(path: tuple[str, ...]) -> Iterator[tuple[str, ...]]:
-        here = path[-1]
-        if here == end and len(path) > 1:
-            yield path
-            return
-        if len(path) - 1 == max_hops:
-            return
-        for nxt in graph.get(here, ()):
-            if nxt not in path:
-                yield from walk((*path, nxt))
-
-    return tuple(sorted(walk((start,))))
-
-
 def complete_paths(
     successors: Mapping[str, Iterable[str]],
     predecessors: Mapping[str, Iterable[str]],

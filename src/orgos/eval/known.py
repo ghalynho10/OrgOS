@@ -635,6 +635,229 @@ def q14(snapshot: Snapshot, spec: Registered) -> Answer:
     return boolean_answer(resolved, (sources,) if resolved else ())
 
 
+# Q15: mixed, number, seconds
+
+
+def q15(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The logged seconds on the registered parent and its direct sub-tasks together.
+
+    The reading: only direct children count, by each child's `fields.parent.key`;
+    each entry counts once; an issue with no entry contributes zero. Sources: one
+    step in every case, even if the total is 0 or a list is empty, listing the
+    parent and its sub-tasks, those child keys and the counted entries (your
+    rulings of 2026-11-02).
+    """
+    parent, children = anchor_children(snapshot, spec)
+    wanted = frozenset((parent, *children))
+    entries = tuple(e for e in scope_entries(snapshot, spec) if e.issue_key in wanted)
+    sources = step(
+        {"issue": wanted, "parent": children, "time_entry": [e.history_id for e in entries]}
+    )
+    return number_answer(count(sum(e.amount for e in entries)), (sources,))
+
+
+# Q16: mixed, number, count
+
+
+def _blocked_by(link: IssueLink) -> Iterable[Hop]:
+    if link.inward_label == "is blocked by":
+        yield link.outward_key, link.inward_key
+    if link.outward_label == "depends on":
+        yield link.inward_key, link.outward_key
+
+
+def q16(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The open Highest priority bugs blocked by, or depending on, an unresolved issue.
+
+    The reading: the bug has `fields.issuetype.name` "Bug", `fields.priority.name`
+    "Highest" and no resolution; from the bug, inward "is blocked by" to its
+    `inwardIssue` or outward "depends on" to its `outwardIssue`, and that issue
+    has no resolution; both are in the scope. Each bug counts once. Sources: one
+    step listing the counted bugs, their linked issues and the links; a count of 0
+    has the empty step list.
+    """
+    issues = in_scope(snapshot, spec)
+    unresolved = frozenset(
+        issue.key for issue in issues if optional(issue, "fields.resolution.name") is None
+    )
+    bugs = frozenset(
+        issue.key
+        for issue in issues
+        if issue.key in unresolved
+        and optional(issue, "fields.issuetype.name") == "Bug"
+        and optional(issue, "fields.priority.name") == "Highest"
+    )
+    kept = tuple(
+        (bug, linked, link)
+        for link in snapshot.links
+        for bug, linked in _blocked_by(link)
+        if bug in bugs and linked in unresolved
+    )
+    sources = step(
+        {
+            "issue": {key for bug, linked, _ in kept for key in (bug, linked)},
+            "issue_link": {link.link_id for _, _, link in kept},
+        }
+    )
+    return number_answer(count(len({bug for bug, _, _ in kept})), (sources,) if kept else ())
+
+
+# Q17 and Q19: links between issues in different projects
+
+
+def projects_of(snapshot: Snapshot, spec: Registered) -> dict[str, str]:
+    """Each issue in the scope with its current project."""
+    return {issue.key: issue.project_key for issue in in_scope(snapshot, spec)}
+
+
+def cross_project_links(snapshot: Snapshot, projects: Mapping[str, str]) -> tuple[IssueLink, ...]:
+    """The links with both issues in `projects`, in different projects; any type, any direction."""
+    return tuple(
+        link
+        for link in snapshot.links
+        if link.inward_key in projects
+        and link.outward_key in projects
+        and projects[link.inward_key] != projects[link.outward_key]
+    )
+
+
+# Q17: mixed, map, seconds
+
+
+def q17(snapshot: Snapshot, spec: Registered) -> Answer:
+    """Per person, the seconds on issues in a linked pair across projects they logged on both.
+
+    The reading: two directly linked issues in different projects, with the same
+    non bot author holding a positive entry on each; that person's entries on the
+    distinct issues of their pairs are summed once each. Sources: two steps, the
+    issues and links, then the returned people and those entries; a shared person
+    hop lists person (your rulings of 2026-11-02).
+    """
+    entries = scope_entries(snapshot, spec)
+    authors: dict[str, set[str]] = {}
+    for entry in entries:
+        if entry.author_key is not None:
+            authors.setdefault(entry.issue_key, set()).add(entry.author_key)
+    qualifying: dict[str, set[str]] = {}
+    links: set[str] = set()
+    for link in cross_project_links(snapshot, projects_of(snapshot, spec)):
+        for person in authors.get(link.inward_key, set()) & authors.get(link.outward_key, set()):
+            qualifying.setdefault(person, set()).update((link.inward_key, link.outward_key))
+            links.add(link.link_id)
+    kept = tuple(
+        entry
+        for entry in entries
+        if entry.author_key is not None and entry.issue_key in qualifying.get(entry.author_key, ())
+    )
+    totals = seconds_per(kept, lambda e: str(e.author_key))
+    values: Mapping[str, Number] = {person: count(total) for person, total in totals.items()}
+    sources = (
+        step({"issue": {key for keys in qualifying.values() for key in keys}, "issue_link": links}),
+        step({"person": set(qualifying), "time_entry": [entry.history_id for entry in kept]}),
+    )
+    return map_answer("person", values, sources if kept else ())
+
+
+# Q18: mixed, map, count
+
+
+def q18(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The people who are reporter or assignee in at least two projects, and how many.
+
+    The reading: both roles are combined when collecting a person's projects; an
+    empty or flagged key is no person. Sources: one step listing the issues where
+    a returned person holds a role, those people and the projects of those issues
+    (your rulings of 2026-11-02).
+    """
+    held: dict[str, dict[str, str]] = {}
+    for issue in in_scope(snapshot, spec):
+        for path in ("fields.reporter.key", "fields.assignee.key"):
+            person = role_person(optional(issue, path), snapshot.flagged)
+            if person is not None:
+                held.setdefault(person, {})[issue.key] = issue.project_key
+    returned = {person: issues for person, issues in held.items() if len(set(issues.values())) >= 2}
+    listed = {key: project for issues in returned.values() for key, project in issues.items()}
+    values: Mapping[str, Number] = {
+        person: count(len(set(issues.values()))) for person, issues in returned.items()
+    }
+    sources = step({"issue": set(listed), "person": set(returned), "project": set(listed.values())})
+    return map_answer("person", values, (sources,) if returned else ())
+
+
+# Q19: mixed, ranking, count
+
+
+def q19(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The top projects by their issues directly linked to an issue in another corpus project.
+
+    The reading: any link type, direction ignored, by link id; each issue counts
+    once in its own project; highest first, cut at five, ties at the fifth kept.
+    Sources: one step listing the returned projects, the links touching them and
+    the issues at both ends of those links (your rulings of 2026-11-02).
+    """
+    projects = projects_of(snapshot, spec)
+    links = cross_project_links(snapshot, projects)
+    counted: dict[str, set[str]] = {}
+    for link in links:
+        for key in (link.inward_key, link.outward_key):
+            counted.setdefault(projects[key], set()).add(key)
+    groups, returned = top_groups(
+        "project", {project: len(keys) for project, keys in counted.items()}, spec
+    )
+    kept = tuple(
+        link
+        for link in links
+        if projects[link.inward_key] in returned or projects[link.outward_key] in returned
+    )
+    sources = step(
+        {
+            "issue": {key for link in kept for key in (link.inward_key, link.outward_key)},
+            "issue_link": {link.link_id for link in kept},
+            "project": returned,
+        }
+    )
+    return ranked(groups, (sources,) if returned else ())
+
+
+# Q20: mixed, ranking, seconds
+
+
+def q20(snapshot: Snapshot, spec: Registered) -> Answer:
+    """The top people by seconds logged in the window, among those in at least two projects.
+
+    The reading: a positive entry by a non bot author with `created` in
+    `[2009-07-01, 2009-10-01)` UTC; eligibility and the total both use only those
+    entries; highest first, cut at five, ties at the fifth kept. Sources: one step
+    listing the issues and entries of the returned people, those people and the
+    projects of those entries (your rulings of 2026-11-02).
+    """
+    start, end = window(spec)
+    kept = tuple(
+        entry
+        for entry in scope_entries(snapshot, spec)
+        if entry.author_key is not None and in_interval(entry.created_utc, start, end)
+    )
+    logged_in: dict[str, set[str]] = {}
+    for entry in kept:
+        logged_in.setdefault(str(entry.author_key), set()).add(str(entry.project_key))
+    eligible = {
+        person: total
+        for person, total in seconds_per(kept, lambda e: str(e.author_key)).items()
+        if len(logged_in[person]) >= 2
+    }
+    groups, returned = top_groups("person", eligible, spec)
+    contributing = tuple(entry for entry in kept if str(entry.author_key) in returned)
+    sources = step(
+        {
+            "issue": {entry.issue_key for entry in contributing},
+            "person": returned,
+            "project": {str(entry.project_key) for entry in contributing},
+            "time_entry": [entry.history_id for entry in contributing],
+        }
+    )
+    return ranked(groups, (sources,) if returned else ())
+
+
 # The registry (AC-28)
 
 CORPUS_PROJECTS = ("BAM", "CLOUD", "CLOV", "CRUC", "CWD", "FE", "JRASERVER")
@@ -689,5 +912,33 @@ REGISTRY: Mapping[str, Registered] = types.MappingProxyType(
             q13, scope=("CLOV",), steps=(("issue", "parent", "time_entry"),), anchor="CLOV-108"
         ),
         "Q14": Registered(q14, scope=("CLOV",), steps=(("issue", "parent"),), anchor="CLOV-538"),
+        "Q15": Registered(
+            q15, scope=("CLOUD",), steps=(("issue", "parent", "time_entry"),), anchor="CLOUD-643"
+        ),
+        "Q16": Registered(q16, scope=CORPUS_PROJECTS, steps=(("issue", "issue_link"),)),
+        "Q17": Registered(
+            q17,
+            scope=CORPUS_PROJECTS,
+            steps=(("issue", "issue_link"), ("person", "time_entry")),
+        ),
+        "Q18": Registered(q18, scope=CORPUS_PROJECTS, steps=(("issue", "person", "project"),)),
+        "Q19": Registered(
+            q19,
+            scope=CORPUS_PROJECTS,
+            steps=(("issue", "issue_link", "project"),),
+            cut=5,
+            direction="descending",
+        ),
+        "Q20": Registered(
+            q20,
+            scope=CORPUS_PROJECTS,
+            steps=(("issue", "person", "project", "time_entry"),),
+            window=(
+                dt.datetime(2009, 7, 1, tzinfo=dt.UTC),
+                dt.datetime(2009, 10, 1, tzinfo=dt.UTC),
+            ),
+            cut=5,
+            direction="descending",
+        ),
     }
 )
