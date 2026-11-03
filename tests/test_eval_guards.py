@@ -144,6 +144,18 @@ def test_uncommitted_pinned_files_refuse(repo: Path) -> None:
         file_guards(repo, check=False)
 
 
+@pytest.mark.parametrize("staged", [False, True])
+def test_uncommitted_changes_name_the_full_paths(repo: Path, staged: bool) -> None:
+    step1(repo)
+    write(repo, QUESTIONS, "[[question]]\nid = 1\n")
+    pin(repo, QUESTIONS)
+    if staged:
+        git(repo, "add", ".")
+    with pytest.raises(EvalError) as refused:
+        file_guards(repo, check=False)
+    assert str(refused.value) == f"pushed checks: uncommitted changes to {FROZEN}, {QUESTIONS}"
+
+
 # The snapshot
 
 

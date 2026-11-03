@@ -135,7 +135,8 @@ def check_pushed(root: Path) -> Pushed:
     """
     dirty = _git_lines(root, "status", "--porcelain", "--", QUESTIONS, AMENDMENTS, FROZEN)
     if dirty:
-        raise EvalError(f"pushed checks: uncommitted changes to {', '.join(d[3:] for d in dirty)}")
+        paths = ", ".join(d.split(maxsplit=1)[1] for d in dirty)
+        raise EvalError(f"pushed checks: uncommitted changes to {paths}")
     added = _git_lines(root, "log", "--diff-filter=A", "--format=%H", "--", QUESTIONS)
     if not added:
         raise EvalError(f"pushed checks: no commit adds {QUESTIONS}")
