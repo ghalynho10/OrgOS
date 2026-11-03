@@ -55,9 +55,27 @@ def test_ids_sort_in_code_point_order_and_the_file_is_laid_out() -> None:
     assert '\n  "answers": {\n    "Q01": {' in text
 
 
+def test_the_header_holds_each_hash_under_its_own_key() -> None:
+    questions, amendments = "1" * 64, "2" * 64
+    parsed = json.loads(render({"Q01": boolean_answer(True, ())}, questions, amendments))
+    assert parsed["questions_sha256"] == questions
+    assert parsed["amendments_sha256"] == amendments
+    assert json.loads(render({}, questions, None))["amendments_sha256"] is None
+
+
+def test_non_ascii_ids_stay_as_utf8_bytes() -> None:
+    rendered = render({"Q01": set_answer("issue", ["É-1"], ())}, SHA, None)
+    assert "issue:É-1".encode() in rendered
+
+
 def test_a_repeated_source_id_stops() -> None:
     with pytest.raises(EvalError, match="more than once"):
         step({"issue": ["A-1", "A-1"]})
+
+
+def test_a_repeated_set_id_stops_and_names_it() -> None:
+    with pytest.raises(EvalError, match=r"^a set answer lists \['issue:A-1'\] more than once$"):
+        set_answer("issue", ["A-1", "A-1"], ())
 
 
 def test_a_fraction_stays_unreduced_and_a_zero_denominator_is_a_trigger() -> None:
@@ -72,6 +90,13 @@ def test_a_fraction_stays_unreduced_and_a_zero_denominator_is_a_trigger() -> Non
         "Q03 trigger empty_answer: 1 zero denominator(s)",
     )
     assert answer_triggers("Q03", number_answer(count(0), ()), None) == ()
+
+
+def test_each_zero_denominator_in_a_map_is_counted_in_its_trigger() -> None:
+    answer = map_answer("project", {"A": ratio(0, 0), "B": ratio(1, 2), "C": ratio(0, 0)}, ())
+    assert answer_triggers("Q03", answer, None) == (
+        "Q03 trigger empty_answer: 2 zero denominator(s)",
+    )
 
 
 def test_a_tie_at_a_cut_of_3_keeps_all_four_tied_items_and_is_a_trigger() -> None:
@@ -99,6 +124,22 @@ def test_a_ranking_ending_at_the_cut_has_no_trigger_and_ascending_reverses() -> 
     answer = ranking_answer("person", values, "ascending", 2, ())
     assert [g.ids for g in answer.value] == [("person:a",), ("person:b",)]
     assert answer_triggers("Q04", answer, 2) == ()
+
+
+def test_a_cut_below_one_stops() -> None:
+    with pytest.raises(EvalError, match=r"^a ranking cut must be at least 1, not 0$"):
+        ranking_answer("person", {"a": count(1)}, "descending", 0, ())
+
+
+def test_an_item_with_a_zero_denominator_stops_instead_of_leaving_the_ranking() -> None:
+    values = {"a": count(1), "b": ratio(0, 0)}
+    with pytest.raises(EvalError, match=r"^person:b has a zero denominator and cannot be ranked$"):
+        ranking_answer("person", values, "descending", 5, ())
+
+
+def test_an_empty_ranking_is_a_trigger_and_no_tie() -> None:
+    answer = ranking_answer("person", {}, "descending", 3, ())
+    assert answer_triggers("Q04", answer, 3) == ("Q04 trigger empty_answer: the answer is empty",)
 
 
 def test_tied_values_stored_differently_stop() -> None:

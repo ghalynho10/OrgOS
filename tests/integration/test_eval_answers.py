@@ -3,9 +3,13 @@
 Three fixture projects are loaded and two of them are the corpus, so the
 whole collection pass (bot flags, person field) and the corpus pass are told
 apart. The reads go through a reader login made here and leave Mongo as it was.
+The guards that need those reads are forced to fail here too (AC-43, AC-45).
 """
 
+import json
+import os
 import secrets
+import subprocess
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -17,10 +21,13 @@ from testcontainers.community.mongodb import MongoDbContainer
 
 from orgos.config import Settings, load_settings
 from orgos.eval import EvalError
-from orgos.eval.answers import read_snapshot
+from orgos.eval.answers import answers, read_snapshot
 from orgos.eval.describe import Corpus
 from orgos.eval.entries import flag_bots, rebuild_entries
-from orgos.eval.snapshot import Collapsed
+from orgos.eval.frozen import FROZEN, QUESTIONS, frozen_line
+from orgos.eval.guards import SPIKE_RESULTS, Targets, reconciliation_checks
+from orgos.eval.known import CORPUS_PROJECTS
+from orgos.eval.snapshot import Collapsed, Snapshot
 from orgos.mongostore.dump import DATABASE
 from tests.integration.conftest import MONGO_ROOT_PASSWORD, MONGO_ROOT_USER
 
@@ -138,3 +145,126 @@ def test_a_failed_login_is_an_eval_error_without_the_password(
     with pytest.raises(EvalError, match="answers failed") as error:
         read_snapshot(_settings(mongo, wrong), CORPUS, PATHS)
     assert wrong not in str(error.value)
+
+
+# The guards after the file guards, in the AC-43 order, through the real command code
+
+
+def _git(root: Path, *args: str) -> None:
+    env = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
+    subprocess.run(["git", *args], cwd=root, env=env, check=True, capture_output=True)
+
+
+def _pushed_question_q01(tmp_path: Path) -> Path:
+    remote, root = tmp_path / "remote.git", tmp_path / "work"
+    _git(tmp_path, "init", "--quiet", "--bare", str(remote))
+    _git(tmp_path, "init", "--quiet", "--initial-branch=main", str(root))
+    for key, value in (
+        ("user.email", "test@example.invalid"),
+        ("user.name", "test"),
+        ("commit.gpgsign", "false"),
+    ):
+        _git(root, "config", key, value)
+    _git(root, "remote", "add", "origin", str(remote))
+    (root / "eval").mkdir()
+    table = {
+        "id": "Q01",
+        "text": "<placeholder>",
+        "type": "aggregate",
+        "hops": 0,
+        "hop_mode": "fixed",
+        "shape": "map",
+        "unit": "count",
+        "fields": ["fields.created", "fields.resolution.name", "fields.assignee.key"],
+        "reading": "<placeholder>",
+        "data": "real",
+    }
+    lines = "".join(f"{key} = {json.dumps(value)}\n" for key, value in table.items())
+    (root / QUESTIONS).write_text(f"[[question]]\n{lines}")
+    (root / FROZEN).write_text(frozen_line(root, QUESTIONS) + "\n")
+    _git(root, "add", ".")
+    _git(root, "commit", "--quiet", "-m", "step 1")
+    _git(root, "push", "--quiet", "origin", "main")
+    return root
+
+
+def _write_spike_results(root: Path, snapshot: Snapshot, extra_seconds: int = 0) -> None:
+    empty = Targets({}, {}, (), (), "")
+    found = {check.name: check.found for check in reconciliation_checks(snapshot, empty)}
+    results = root / SPIKE_RESULTS
+    results.mkdir(parents=True, exist_ok=True)
+    corpus = {
+        "collection": "Jira",
+        "group": list(snapshot.projects),
+        "projects": [
+            {
+                "key": project,
+                "positive_seconds": found["positive seconds per project"][project] + extra_seconds,
+                "people": found["people per project"][project],
+            }
+            for project in snapshot.projects
+        ],
+    }
+    (results / "corpus.json").write_text(json.dumps(corpus))
+    (results / "flagged_accounts.csv").write_text(
+        "collection,account\n" + "".join(f"Jira,{a}\n" for a in found["flagged accounts"])
+    )
+    project_of = {issue.key: issue.project_key for issue in snapshot.issues}
+    (results / "entry_mismatches.csv").write_text(
+        "collection,issue_key,project\n"
+        + "".join(f"Jira,{k},{project_of[k]}\n" for k in found["entry mismatches"])
+    )
+    (results / "run_record.json").write_text(
+        json.dumps({"run": {"person_id_field": {"Jira": snapshot.person_field}}})
+    )
+
+
+def _files(root: Path) -> dict[str, bytes]:
+    return {
+        str(path.relative_to(root)): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file() and ".git" not in path.parts and "remote.git" not in path.parts
+    }
+
+
+def test_uniqueness_then_reconciliation_then_the_registry_stop_in_that_order(
+    mongo: MongoDbContainer,
+    loaded: MongoClient[dict[str, Any]],
+    reader_password: str,
+    tmp_path: Path,
+) -> None:
+    settings = _settings(mongo, reader_password)
+    root = _pushed_question_q01(tmp_path)
+    everything = Corpus("Jira", CORPUS_PROJECTS)
+    right = read_snapshot(settings, everything, PATHS)
+    assert right.entries  # the duplicate below needs a history that is a time entry
+
+    # Every later guard is set to fail too, so only the order decides what stops the run.
+    _write_spike_results(root, right, extra_seconds=1)
+    jira = loaded[DATABASE].Jira
+    source = jira.find_one({"key": right.entries[0].issue_key})
+    assert source is not None
+    copy = {name: value for name, value in source.items() if name != "_id"}
+    copy_id = jira.insert_one({**copy, "key": f"{source['key']}9"}).inserted_id
+    try:
+        with pytest.raises(EvalError, match=r"^uniqueness: changelog history id once failed"):
+            answers(settings, root, check=False, only_id=None)
+    finally:
+        jira.delete_one({"_id": copy_id})
+
+    with pytest.raises(EvalError, match=r"^reconciliation: positive seconds per project failed"):
+        answers(settings, root, check=False, only_id=None)
+
+    _write_spike_results(root, right)
+    before = _files(root)
+    for check in (False, True):
+        with pytest.raises(EvalError, match=r"^registry: no function for \[\]; registered but"):
+            answers(settings, root, check=check, only_id=None)
+
+    # AC-45: --only runs every guard but the registry, and writes nothing
+    lines = answers(settings, root, check=False, only_id="Q01")
+    assert any(line.startswith('{\n  "Q01": {') for line in lines)
+    assert _files(root) == before
+
+    with pytest.raises(EvalError, match=r"^use --check or --only, not both$"):
+        answers(settings, root, check=True, only_id="Q01")

@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from orgos.eval import EvalError
 from orgos.eval.frozen import (
     AMENDMENTS,
     ANSWERS,
@@ -107,14 +108,25 @@ def test_frozen_without_a_questions_line_fails(repo: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "line",
-    ["abc  eval/questions.toml", "0" * 64 + " eval/questions.toml", "0" * 64 + "  /etc/hosts"],
+    ("line", "problem"),
+    [
+        ("abc  eval/questions.toml", "not `<sha256>  <path>`"),
+        ("0" * 64 + " eval/questions.toml", "not `<sha256>  <path>`"),
+        ("0" * 64 + "  /etc/hosts", "/etc/hosts is not relative to the repo root"),
+        ("0" * 64 + "  ../outside", "../outside is not relative to the repo root"),
+    ],
 )
-def test_a_malformed_line_fails(repo: Path, line: str) -> None:
+def test_a_malformed_line_fails(repo: Path, line: str, problem: str) -> None:
     write(repo, QUESTIONS, "[[question]]\n")
     pin(repo, QUESTIONS)
     write(repo, FROZEN, (repo / FROZEN).read_text() + line + "\n")
-    assert any(problem.startswith(f"{FROZEN} line 2") for problem in frozen_problems(repo, None))
+    assert frozen_problems(repo, None) == (f"{FROZEN} line 2: {problem}",)
+
+
+def test_a_file_listed_twice_fails(repo: Path) -> None:
+    write(repo, QUESTIONS, "[[question]]\n")
+    pin(repo, QUESTIONS, QUESTIONS)
+    assert frozen_problems(repo, None) == (f"{FROZEN} lists {QUESTIONS} more than once",)
 
 
 def test_frozen_differing_from_the_tagged_copy_fails(repo: Path) -> None:
@@ -132,8 +144,29 @@ def test_frozen_differing_from_the_tagged_copy_fails(repo: Path) -> None:
     )
 
 
+def test_a_tag_without_the_file_differs_from_any_frozen(repo: Path) -> None:
+    write(repo, "README", "before the set\n")
+    git(repo, "add", ".")
+    git(repo, "commit", "--quiet", "-m", "no eval files yet")
+    git(repo, "tag", "--annotate", "-m", "too early", "eval-frozen")
+    write(repo, QUESTIONS, "[[question]]\n")
+    pin(repo, QUESTIONS)
+    assert tagged_frozen(repo) == ""
+    assert frozen_problems(repo, tagged_frozen(repo)) == (
+        f"{FROZEN} differs from its copy at the eval-frozen tag",
+    )
+
+
 def test_no_tag_means_no_tagged_copy(repo: Path) -> None:
     assert tagged_frozen(repo) is None
+
+
+def test_git_that_cannot_start_is_an_eval_error(
+    repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PATH", "")
+    with pytest.raises(EvalError, match=r"^git could not run"):
+        tagged_frozen(repo)
 
 
 def test_both_ci_checkout_steps_fetch_tags() -> None:

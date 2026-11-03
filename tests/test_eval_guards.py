@@ -5,6 +5,7 @@ The file guards run on a temporary git repo with a bare repo as its remote;
 uniqueness and reconciliation run on synthetic documents. No store.
 """
 
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -17,9 +18,11 @@ from orgos.eval import EvalError
 from orgos.eval.answers import collection_flags
 from orgos.eval.frozen import AMENDMENTS, ANSWERS, FROZEN, QUESTIONS, frozen_line
 from orgos.eval.guards import (
+    SPIKE_RESULTS,
     Targets,
     entry_mismatches,
     file_guards,
+    read_targets,
     reconciliation_checks,
     require,
     uniqueness_checks,
@@ -33,6 +36,8 @@ from orgos.eval.snapshot import (
     issue_from,
     repeated_keys,
 )
+
+ROOT = Path(__file__).resolve().parents[1]
 
 # File guards: frozen refusal, hashes, pushed checks, in the AC-43 order
 
@@ -99,10 +104,33 @@ def test_the_frozen_refusal_comes_first_and_check_skips_it(repo: Path) -> None:
     write(repo, ANSWERS, "{}\n")
     pin(repo, QUESTIONS, ANSWERS)
     write(repo, QUESTIONS, "[[question]]\nid = 1\n")  # the hash now differs too
-    with pytest.raises(EvalError, match=r"^frozen refusal"):
+    with pytest.raises(EvalError, match=rf"^frozen refusal: {FROZEN} lists {ANSWERS}; the set is"):
         file_guards(repo, check=False)
     with pytest.raises(EvalError, match=r"^hashes"):
         file_guards(repo, check=True)
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_a_missing_frozen_file_refuses_and_names_it(repo: Path, check: bool) -> None:
+    write(repo, QUESTIONS, "[[question]]\n")
+    with pytest.raises(EvalError) as refused:
+        file_guards(repo, check=check)
+    assert str(refused.value) == f"hashes: {FROZEN} not found"
+
+
+def test_a_missing_questions_file_refuses_and_names_it(repo: Path) -> None:
+    write(repo, FROZEN, "")
+    with pytest.raises(EvalError) as refused:
+        file_guards(repo, check=False)
+    assert str(refused.value) == f"hashes: {QUESTIONS} not found"
+
+
+def test_a_malformed_frozen_file_refuses_and_names_the_line(repo: Path) -> None:
+    write(repo, QUESTIONS, "[[question]]\n")
+    write(repo, FROZEN, "not a line\n")
+    with pytest.raises(EvalError) as refused:
+        file_guards(repo, check=False)
+    assert str(refused.value) == f"hashes: {FROZEN} line 1: not `<sha256>  <path>`"
 
 
 def test_a_differing_questions_hash_refuses_before_the_pushed_checks(repo: Path) -> None:
@@ -154,6 +182,32 @@ def test_uncommitted_changes_name_the_full_paths(repo: Path, staged: bool) -> No
     with pytest.raises(EvalError) as refused:
         file_guards(repo, check=False)
     assert str(refused.value) == f"pushed checks: uncommitted changes to {FROZEN}, {QUESTIONS}"
+
+
+def test_a_folder_that_is_not_a_git_repo_refuses(tmp_path: Path) -> None:
+    (tmp_path / "eval").mkdir()
+    write(tmp_path, QUESTIONS, "[[question]]\n")
+    pin(tmp_path, QUESTIONS)
+    with pytest.raises(EvalError, match=r"^pushed checks: git status failed: .*not a git repo"):
+        file_guards(tmp_path, check=False)
+
+
+def test_the_remote_head_pointer_is_not_recorded_as_a_branch(repo: Path) -> None:
+    step1(repo)
+    git(repo, "remote", "set-head", "origin", "main")  # every clone has this
+    assert "origin/HEAD -> origin/main" in git(repo, "branch", "-r")
+    assert file_guards(repo, check=False)[1].step1_branches == ("origin/main",)
+
+
+def test_the_step1_commit_is_the_first_to_add_the_questions(repo: Path) -> None:
+    step1(repo)
+    first = git(repo, "rev-parse", "HEAD").strip()
+    (repo / QUESTIONS).unlink()
+    write(repo, FROZEN, "")
+    commit(repo, "removed", push=True)
+    step1(repo)
+    assert git(repo, "rev-parse", "HEAD").strip() != first
+    assert file_guards(repo, check=False)[1].step1_commit == first
 
 
 # The snapshot
@@ -237,6 +291,21 @@ def test_a_link_id_on_two_issue_pairs_stops() -> None:
     )
     with pytest.raises(EvalError, match=r"issue link id to one pair failed: found \['9'\]"):
         require("uniqueness", uniqueness_checks(got.issues))
+
+
+def test_a_link_stored_on_both_of_its_issues_is_one_pair() -> None:
+    got = snapshot(
+        doc("A-1", issuelinks=[{"id": "9", "outwardIssue": {"key": "B-1"}}]),
+        doc("B-1", issuelinks=[{"id": "9", "inwardIssue": {"key": "A-1"}}]),
+    )
+    require("uniqueness", uniqueness_checks(got.issues))
+
+
+def test_a_project_key_on_two_projects_stops() -> None:
+    first, second = doc("A-1"), doc("A-2")
+    second["fields"]["project"]["id"] = "other"
+    with pytest.raises(EvalError, match=r"project key to one project failed: found \['A'\]"):
+        require("uniqueness", uniqueness_checks(snapshot(first, second).issues))
 
 
 def test_a_person_key_with_two_names_is_a_note_only() -> None:
@@ -362,6 +431,14 @@ def test_a_different_person_field_or_flag_set_stops() -> None:
         require("reconciliation", reconciliation_checks(got, targets(flagged=("bot",))))
 
 
+def test_a_different_people_count_or_mismatch_list_stops() -> None:
+    got = snapshot(doc("A-1", spent("1", 60), timespent=60))
+    with pytest.raises(EvalError, match="people per project"):
+        require("reconciliation", reconciliation_checks(got, targets(people={"A": 2, "B": 0})))
+    with pytest.raises(EvalError, match="entry mismatches"):
+        require("reconciliation", reconciliation_checks(got, targets(mismatches=("A-1",))))
+
+
 def test_the_mismatch_population() -> None:
     bot = {"key": "bot", "displayName": "Bot"}
     got = snapshot(
@@ -373,3 +450,62 @@ def test_the_mismatch_population() -> None:
         flagged=frozenset({"bot"}),
     )
     assert entry_mismatches(got) == ("A-1", "A-3")
+
+
+# What the spike recorded (AC-21, AC-27)
+
+
+def spike_results(root: Path) -> Path:
+    corpus = {
+        "group": ["A"],
+        "projects": [
+            {"key": "A", "positive_seconds": 60, "people": 1},
+            {"key": "B", "positive_seconds": 90, "people": 2},
+        ],
+    }
+    (root / "corpus.json").write_text(json.dumps(corpus))
+    (root / "flagged_accounts.csv").write_text(
+        "collection,account\nJira,jira-bot\nApache,apache-bot\n"
+    )
+    (root / "entry_mismatches.csv").write_text(
+        "collection,issue_key,project\nJira,A-1,A\nJira,B-1,B\nApache,A-2,A\n"
+    )
+    (root / "run_record.json").write_text(
+        json.dumps({"run": {"person_id_field": {"Jira": "key", "Apache": "accountId"}}})
+    )
+    return root
+
+
+def test_the_targets_keep_only_the_jira_rows_of_the_corpus_projects(tmp_path: Path) -> None:
+    assert read_targets(spike_results(tmp_path)) == Targets(
+        positive_seconds={"A": 60},
+        people={"A": 1},
+        mismatches=("A-1",),
+        flagged=("jira-bot",),
+        person_field="key",
+    )
+
+
+def test_the_recorded_targets_are_the_ones_the_spec_names() -> None:
+    got = read_targets(ROOT / SPIKE_RESULTS)
+    assert sorted(got.positive_seconds) == sorted(got.people)
+    assert len(got.positive_seconds) == 7
+    assert got.mismatches == ("FE-4996",)
+    assert got.flagged == ()
+    assert got.person_field == "key"
+
+
+def test_a_missing_spike_file_stops_and_names_it(tmp_path: Path) -> None:
+    (spike_results(tmp_path) / "entry_mismatches.csv").unlink()
+    with pytest.raises(EvalError, match=r"^reconciliation: .*entry_mismatches\.csv cannot be read"):
+        read_targets(tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("name", "text"),
+    [("corpus.json", "{}"), ("corpus.json", "not json"), ("run_record.json", '{"run": {}}')],
+)
+def test_malformed_spike_results_stop(tmp_path: Path, name: str, text: str) -> None:
+    (spike_results(tmp_path) / name).write_text(text)
+    with pytest.raises(EvalError, match=r"^reconciliation: the spike results in .* are malformed"):
+        read_targets(tmp_path)

@@ -24,9 +24,10 @@ from orgos.eval.answers import (
     compute,
     first_difference,
     only,
+    read_questions,
     write_all,
 )
-from orgos.eval.frozen import ANSWERS
+from orgos.eval.frozen import AMENDMENTS, ANSWERS, QUESTIONS
 from orgos.eval.guards import Check, Hashes, Pushed
 from orgos.eval.known import CORPUS_PROJECTS, REGISTRY, Registered, q01
 from orgos.eval.models import Question
@@ -138,6 +139,29 @@ def test_the_registry_must_match_the_question_ids() -> None:
         check_registry([], ONLY_Q01)
 
 
+def test_a_full_run_and_a_check_stop_on_the_registry_and_only_does_not(root: Path) -> None:
+    run = prepared(doc("BAM-1"), questions=(question(), question("Q02")))
+    for mode in (write_all, check_written):
+        with pytest.raises(EvalError, match=r"^registry: no function for \['Q02'\]"):
+            mode(run, root, ONLY_Q01)
+    assert tree(root) == {}
+    assert json.loads(only(run, "Q01", ONLY_Q01)[1])["Q01"]["shape"] == "map"  # AC-45
+
+
+def _table(table: dict[str, Any]) -> str:
+    return "".join(f"{key} = {json.dumps(value)}\n" for key, value in table.items())
+
+
+def test_an_amended_question_is_read_from_its_after_table(root: Path) -> None:
+    table = question().model_dump(mode="json", exclude_none=True)
+    after = table | {"reading": "<the amended reading>"}
+    (root / QUESTIONS).write_text(f"[[question]]\n{_table(table)}")
+    (root / AMENDMENTS).write_text(
+        f'[[amendment]]\nquestion = "Q01"\n[amendment.after]\n{_table(after)}'
+    )
+    assert [q.reading for q in read_questions(root)] == ["<the amended reading>"]
+
+
 def test_source_steps_must_list_the_registered_kinds() -> None:
     answer = map_answer("project", {}, (step({"issue": ["A-1"], "person": ["u1"]}),))
     with pytest.raises(EvalError, match="source steps list"):
@@ -177,6 +201,14 @@ def root(tmp_path: Path) -> Path:
         subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True)
     (tmp_path / "eval").mkdir()
     return tmp_path
+
+
+def tree(root: Path) -> dict[str, bytes]:
+    return {
+        str(path.relative_to(root)): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file() and ".git" not in path.parts
+    }
 
 
 def spent(history_id: str, amount: int, author: str) -> dict[str, Any]:
@@ -248,6 +280,21 @@ def test_a_full_run_writes_the_answers_and_the_run_record_then_check_passes(root
     with pytest.raises(EvalError, match=rf"^check: Q01 differs from {ANSWERS}"):
         check_written(run, root, ONLY_Q01)
     assert (root / RUN_RECORD).read_bytes() == record_before
+
+
+def test_check_writes_nothing_when_it_passes_or_when_it_differs(root: Path) -> None:
+    run = prepared(doc("BAM-1"))
+    write_all(run, root, ONLY_Q01)
+    written = tree(root)
+    check_written(run, root, ONLY_Q01)
+    assert tree(root) == written
+
+    differing = written[ANSWERS].replace(b'"int": 1', b'"int": 9', 1)
+    assert differing != written[ANSWERS]
+    (root / ANSWERS).write_bytes(differing)
+    with pytest.raises(EvalError, match=r"^check: Q01 differs"):
+        check_written(run, root, ONLY_Q01)
+    assert tree(root) == {**written, ANSWERS: differing}
 
 
 def test_check_without_answers_stops(root: Path) -> None:

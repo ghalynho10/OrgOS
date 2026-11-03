@@ -70,6 +70,11 @@ def test_a_valid_set_passes() -> None:
         (with_change(4, colour="red"), "Q05 colour: Extra inputs are not permitted"),
         (with_change(4, text=" "), "Q05 text: Value error, must not be empty"),
         (with_change(4, type="other"), "Q05 type:"),
+        (with_change(4, hop_mode="maybe"), "Q05 hop_mode:"),
+        (
+            with_change(4, hop_mode="variable", max_hops=3),
+            "Q05 hop_mode: must be fixed when hops is 0",
+        ),
         (with_change(4, hops="1"), "Q05 hops: Input should be a valid integer"),
         (with_change(4, hops=True), "Q05 hops: Input should be a valid integer"),
         (with_change(4, hops=3), "Q05 hops:"),
@@ -102,6 +107,21 @@ def test_a_valid_set_passes() -> None:
 def test_each_rule_broken_once_is_reported(data: dict[str, Any], expected: str) -> None:
     problems = check(data, LISTS)
     assert any(problem.startswith(expected) for problem in problems), problems
+
+
+@pytest.mark.parametrize(
+    ("key", "label"),
+    [
+        ("id", "question 5"),
+        *(
+            (key, "Q05")
+            for key in ("text", "type", "hops", "hop_mode", "shape", "unit", "fields", "reading")
+        ),
+        ("data", "Q05"),
+    ],
+)
+def test_every_required_key_is_reported_when_missing(key: str, label: str) -> None:
+    assert f"{label} {key}: is missing" in check(without(4, key), LISTS)
 
 
 def test_three_broken_rules_are_all_listed_together() -> None:
@@ -231,8 +251,10 @@ def test_an_amendment_changing_id_fails() -> None:
         ({"question": "Q21"}, "amendment 1 question:"),
         ({"reason": "changed_mind"}, "amendment 1 reason:"),
         ({"code_output": 3}, "amendment 1 code_output: Input should be a valid string"),
+        ({"reading_chosen": 3}, "amendment 1 reading_chosen: Input should be a valid string"),
         ({"date": "1 Nov 2026"}, "amendment 1 date: Value error, must be an ISO date"),
         ({"before": "Q05"}, "amendment 1 before: must be the full question table"),
+        ({"before": question(6)}, "amendment 1 before.id: must be the amended question Q05"),
         ({"after": question(5) | {"fields": ["x.prose"]}}, "amendment 1 after.fields: x.prose"),
         ({"after": question(5) | {"hops": "0"}}, "amendment 1 after.hops: Input should be"),
     ],
@@ -313,6 +335,18 @@ def test_the_command_lists_every_broken_rule_and_exits_4(
     assert "check-questions FAIL: 2 broken rules" in err
     assert "Q02 hops:" in err and "Q10 data:" in err
     assert "Traceback" not in err
+
+
+def test_the_command_also_checks_the_amendments_file_when_it_exists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write_eval(tmp_path, valid())
+    (tmp_path / "eval" / "amendments.toml").write_text('[[amendment]]\nquestion = "Q21"\n')
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit) as exit_info:
+        run(["eval", "check-questions"])
+    assert exit_info.value.code == 4
+    assert "amendment 1 question:" in capsys.readouterr().err
 
 
 def test_the_command_rejects_malformed_toml(

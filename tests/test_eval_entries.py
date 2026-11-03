@@ -126,6 +126,17 @@ def test_a_time_entry_history_with_no_id_stops_and_names_the_issue() -> None:
         rebuild_entries(issue(no_id, key="P-3"), "key")
 
 
+@pytest.mark.parametrize("empty", [None, ""])
+def test_a_time_entry_history_with_an_empty_id_stops_and_names_the_issue(empty: object) -> None:
+    doc = issue({**history(spent(None, "60")), "id": empty}, key="P-3")
+    with pytest.raises(EvalError, match=r"^P-3: a time entry's changelog history has no id$"):
+        rebuild_entries(doc, "key")
+
+
+def test_an_int_id_is_read_as_its_string() -> None:
+    assert one(issue({**history(spent(None, "60")), "id": 10900})).history_id == "10900"
+
+
 def test_a_history_with_no_id_and_no_entry_is_not_an_entry() -> None:
     no_id = {k: v for k, v in history({"field": "status"}).items() if k != "id"}
     assert rebuild_entries(issue(no_id), "key") == ()
