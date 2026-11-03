@@ -62,17 +62,19 @@ def frozen_problems(root: Path, tagged: str | None) -> tuple[str, ...]:
     """Every way the eval files break the freeze rule; empty means the check passes.
 
     Passes when neither `questions.toml` nor `FROZEN` exists (and no answers or
-    amendments either), or when `FROZEN` lists `questions.toml` and every file
-    it lists exists with its listed hash. `tagged` is `FROZEN` at the
-    `eval-frozen` tag, or None while the tag does not exist.
+    amendments either) and there is no tag, or when `FROZEN` lists
+    `questions.toml` and every file it lists exists with its listed hash.
+    `tagged` is `FROZEN` at the `eval-frozen` tag, or None while the tag does
+    not exist; once it exists, a missing `FROZEN` differs from it too.
     """
     frozen = root / FROZEN
+    drifted = f"{FROZEN} differs from its copy at the {TAG} tag"
     if not frozen.exists():
         return tuple(
             f"{path} exists without {FROZEN}"
             for path in (QUESTIONS, ANSWERS, AMENDMENTS)
             if (root / path).exists()
-        )
+        ) + ((drifted,) if tagged is not None else ())
     text = frozen.read_text(encoding="utf-8")
     pins, problems = parse_frozen(text)
     found = [path for _, path in pins]
@@ -86,7 +88,7 @@ def frozen_problems(root: Path, tagged: str | None) -> tuple[str, ...]:
         elif sha256_file(root / path) != expected:
             problems += (f"{path} differs from its hash in {FROZEN}",)
     if tagged is not None and tagged != text:
-        problems += (f"{FROZEN} differs from its copy at the {TAG} tag",)
+        problems += (drifted,)
     return problems
 
 

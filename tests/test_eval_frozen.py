@@ -144,6 +144,34 @@ def test_frozen_differing_from_the_tagged_copy_fails(repo: Path) -> None:
     )
 
 
+def test_deleting_the_whole_set_after_the_tag_fails(repo: Path) -> None:
+    write(repo, QUESTIONS, "[[question]]\n")
+    write(repo, ANSWERS, "{}\n")
+    write(repo, AMENDMENTS, "[[amendment]]\n")
+    pin(repo, QUESTIONS, AMENDMENTS, ANSWERS)
+    git(repo, "add", ".")
+    git(repo, "commit", "--quiet", "-m", "freeze")
+    git(repo, "tag", "--annotate", "-m", "freeze", "eval-frozen")
+    for path in (QUESTIONS, AMENDMENTS, ANSWERS, FROZEN):
+        (repo / path).unlink()
+    assert frozen_problems(repo, tagged_frozen(repo)) == (
+        f"{FROZEN} differs from its copy at the eval-frozen tag",
+    )
+
+
+def test_deleting_frozen_alone_after_the_tag_lists_both_problems(repo: Path) -> None:
+    write(repo, QUESTIONS, "[[question]]\n")
+    pin(repo, QUESTIONS)
+    git(repo, "add", ".")
+    git(repo, "commit", "--quiet", "-m", "freeze")
+    git(repo, "tag", "--annotate", "-m", "freeze", "eval-frozen")
+    (repo / FROZEN).unlink()
+    assert frozen_problems(repo, tagged_frozen(repo)) == (
+        f"{QUESTIONS} exists without {FROZEN}",
+        f"{FROZEN} differs from its copy at the eval-frozen tag",
+    )
+
+
 def test_a_tag_without_the_file_differs_from_any_frozen(repo: Path) -> None:
     write(repo, "README", "before the set\n")
     git(repo, "add", ".")

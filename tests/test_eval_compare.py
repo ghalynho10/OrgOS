@@ -134,6 +134,29 @@ def test_a_zero_denominator_matches_only_null_or_empty(store: object, matches: b
     assert number_match({"num": 0, "den": 0}, raw) is matches
 
 
+@pytest.mark.parametrize("empty", [None, [], {}])
+def test_an_empty_store_number_goes_through_the_converter_as_null(empty: object) -> None:
+    converted = store_answer("number", empty)
+    assert converted["value"] is None
+    assert compare(known("number", {"num": 0, "den": 0}), converted).answer_match
+    assert not compare(known("number", {"int": 0}), converted).answer_match
+    assert not compare(known("number", {"num": 0, "den": 5}), converted).answer_match
+
+
+@pytest.mark.parametrize("raw", [[5], {"a": 1}, "5", ""])
+def test_a_store_number_that_is_not_a_number_or_empty_still_stops(raw: object) -> None:
+    with pytest.raises(EvalError, match=r"is not a number$"):
+        store_answer("number", raw)
+
+
+@pytest.mark.parametrize("empty", [[], {}])
+def test_only_the_number_shape_reads_empty_as_null(empty: object) -> None:
+    with pytest.raises(EvalError, match=r"is not a number$"):
+        store_answer("map", {"project:A": empty})
+    with pytest.raises(EvalError, match=r"is not a number$"):
+        store_answer("ranking", [("project:A", empty)])
+
+
 def test_a_zero_denominator_inside_a_map_matches_null() -> None:
     known_map = known("map", [{"id": "project:A", "value": {"num": 0, "den": 0}}])
     assert compare(known_map, store_answer("map", {"project:A": None})).answer_match

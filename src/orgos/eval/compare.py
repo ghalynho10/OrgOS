@@ -75,13 +75,14 @@ def store_answer(
 ) -> dict[str, Any]:
     """A store's raw answer in the same JSON form as `answers.json`, for either store.
 
-    `value` by shape: `number` a raw number; `map` a mapping or pairs of id and
+    `value` by shape: `number` a raw number, an empty value read as null
+    (AC-38); `map` a mapping or pairs of id and
     raw number; `ranking` pairs of id and raw number in the store's order (each
     becomes its own group, so the store's grouping is ignored); `set` IDs;
     `path` pairs of the path's IDs and its source steps; `boolean` the raw value.
     """
     if shape == "number":
-        converted: Any = to_number(value)
+        converted: Any = None if _empty(value) else to_number(value)
     elif shape == "map":
         pairs = value.items() if isinstance(value, Mapping) else value
         converted = sorted(
