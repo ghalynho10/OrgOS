@@ -1,0 +1,149 @@
+{
+  "draws": {
+    "Q01": {
+      "date_field": "created",
+      "date_range": "[2013-01-01, 2013-04-01)",
+      "date_unit": "quarter",
+      "project_pool": [
+        "BAM",
+        "CLOUD",
+        "CLOV",
+        "CRUC",
+        "CWD",
+        "FE",
+        "JRASERVER"
+      ],
+      "projects": [
+        "BAM",
+        "CLOUD",
+        "CLOV",
+        "CRUC",
+        "CWD",
+        "FE",
+        "JRASERVER"
+      ]
+    },
+    "Q02": {
+      "project_pool": [
+        "BAM",
+        "CLOUD",
+        "CLOV",
+        "CRUC",
+        "CWD",
+        "FE",
+        "JRASERVER"
+      ],
+      "projects": [
+        "CWD"
+      ]
+    },
+    "Q03": {
+      "date_field": "resolved",
+      "date_range": "[2012-04-01, 2012-07-01)",
+      "date_unit": "quarter",
+      "project_pool": [
+        "BAM",
+        "CLOUD",
+        "CLOV",
+        "CRUC",
+        "CWD",
+        "FE",
+        "JRASERVER"
+      ],
+      "projects": [
+        "FE"
+      ]
+    },
+    "Q06": {
+      "date_field": "entry",
+      "date_range": "[2009-10-01, 2010-01-01)",
+      "date_unit": "quarter",
+      "project_pool": [
+        "BAM",
+        "CLOUD",
+        "CLOV",
+        "CRUC",
+        "CWD",
+        "FE",
+        "JRASERVER"
+      ],
+      "projects": [
+        "BAM",
+        "CLOUD",
+        "CLOV",
+        "CRUC",
+        "CWD",
+        "FE",
+        "JRASERVER"
+      ]
+    },
+    "Q13": {
+      "issue": "CLOV-108",
+      "issue_pool": "parent_issue",
+      "issue_pool_size": 6,
+      "project_pool": [
+        "CLOUD",
+        "CLOV"
+      ],
+      "projects": [
+        "CLOUD",
+        "CLOV"
+      ]
+    },
+    "Q14": {
+      "issue": "CLOV-538",
+      "issue_pool": "parent_issue",
+      "issue_pool_size": 5,
+      "project_pool": [
+        "CLOUD",
+        "CLOV"
+      ],
+      "projects": [
+        "CLOUD",
+        "CLOV"
+      ]
+    },
+    "Q15": {
+      "issue": "CLOUD-643",
+      "issue_pool": "parent_issue",
+      "issue_pool_size": 4,
+      "project_pool": [
+        "CLOUD",
+        "CLOV"
+      ],
+      "projects": [
+        "CLOUD",
+        "CLOV"
+      ]
+    },
+    "Q20": {
+      "date_field": "entry",
+      "date_range": "[2009-07-01, 2009-10-01)",
+      "date_unit": "quarter",
+      "project_pool": [
+        "BAM",
+        "CLOUD",
+        "CLOV",
+        "CRUC",
+        "CWD",
+        "FE",
+        "JRASERVER"
+      ],
+      "projects": [
+        "BAM",
+        "CLOUD",
+        "CLOV",
+        "CRUC",
+        "CWD",
+        "FE",
+        "JRASERVER"
+      ]
+    }
+  },
+  "inputs": {
+    "spikes/0001-time-data-coverage/results/flagged_accounts.csv": "a086993f7fbf9b52ad04696080400bbe28590c97b5372c0fb636b2b5306ef2c2",
+    "spikes/0001-time-data-coverage/results/project_people.csv": "ae792995000abac3a24d2e104dcb0d3a6758a3719eb5cac9571a4c52e197d761",
+    "tests/fixtures/corpus/manifest.json": "cc5a4e66c4326e9c95ac93df3208b6be7490538caa838b52ee0ed58bdc7617f6"
+  },
+  "seed": 20261030
+}

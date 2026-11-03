@@ -1,0 +1,29 @@
+## 2026-10-30T03:12:29Z · shape
+
+```
+db.getSiblingDB("JiraReposAnon").getCollection("Jira").findOne({"fields.project.key": {"$in": ["BAM", "CLOUD", "CLOV", "CRUC", "CWD", "FE", "JRASERVER"]}})
+```
+
+## 2026-10-30T03:12:31Z · fill_rate
+
+```
+db.getSiblingDB("JiraReposAnon").getCollection("Jira").find({"fields.project.key": {"$in": ["BAM", "CLOUD", "CLOV", "CRUC", "CWD", "FE", "JRASERVER"]}}, {"_id": 0, "key": 1, "id": 1, "fields": 1, "changelog.histories.id": 1, "changelog.histories.created": 1, "changelog.histories.author.key": 1, "changelog.histories.items": 1})
+```
+
+## 2026-10-30T03:13:15Z · distinct_values
+
+```
+db.getSiblingDB("JiraReposAnon").getCollection("Jira").find({"fields.project.key": {"$in": ["BAM", "CLOUD", "CLOV", "CRUC", "CWD", "FE", "JRASERVER"]}}, {"_id": 0, "key": 1, "id": 1, "fields": 1, "changelog.histories.id": 1, "changelog.histories.created": 1, "changelog.histories.author.key": 1, "changelog.histories.items": 1})
+```
+
+## 2026-10-30T03:14:14Z · exception:links_parents
+
+```
+db.getSiblingDB("JiraReposAnon").getCollection("Jira").find({"fields.project.key": {"$in": ["BAM", "CLOUD", "CLOV", "CRUC", "CWD", "FE", "JRASERVER"]}}, {"_id": 0, "key": 1, "fields.project.key": 1, "fields.issuelinks.id": 1, "fields.issuelinks.inwardIssue.key": 1, "fields.issuelinks.outwardIssue.key": 1, "fields.parent.key": 1})
+```
+
+## 2026-10-30T03:14:18Z · exception:negative_entries
+
+```
+db.getSiblingDB("JiraReposAnon").getCollection("Jira").find({"fields.project.key": {"$in": ["BAM", "CLOUD", "CLOV", "CRUC", "CWD", "FE", "JRASERVER"]}}, {"_id": 0, "key": 1, "fields.project.key": 1, "changelog.histories.id": 1, "changelog.histories.created": 1, "changelog.histories.author.key": 1, "changelog.histories.items": 1})
+```

@@ -1,0 +1,56 @@
+[[amendment]]
+question = "Q07"
+reason = "tie_at_cut"
+code_output = "Q07 trigger tie_at_cut: 2 items tie in the last group, 11 ranked for a cut of 10"
+reading_chosen = "The fixed fix for a tie at a cut: the answer lists every tied item and the cut stays at 10. The reading note already says this, so before and after are identical."
+date = "2026-11-02"
+
+[amendment.before]
+id = "Q07"
+text = "Which issues have the largest difference between their original estimates and actual logged time, and who logged time against them?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "ranking"
+unit = "seconds"
+fields = [
+    "key",
+    "fields.timeoriginalestimate",
+    "changelog.histories[].author.key",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: issues in BAM, CLOUD, CLOV, CRUC, CWD, FE and JRASERVER whose current fields.timeoriginalestimate is greater than 0 and which have at least one positive, non-bot time entry. No date bounds apply.
+"Original estimate" means the current fields.timeoriginalestimate value in seconds. "Actual logged time" means the sum of positive, non-bot time-entry amounts, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to.
+For each issue, compute the absolute difference between its original estimate and its total qualifying logged seconds. Rank highest difference first. Return the top 10 issues and every issue tied with the tenth. If fewer than 10 issues qualify, return all qualifying issues. Identify each issue by key.
+"Who logged time" means the distinct non-bot people identified by changelog.histories[].author.key on the issue's positive time entries. List all such people for each returned issue.
+Sources, step by step: (1) select issues in the seven-project population whose fields.timeoriginalestimate is greater than 0; (2) retain positive, non-bot time entries and exclude issues with none; (3) sum retained entry amounts per issue; (4) compute each issue's absolute difference from its original estimate; (5) rank highest first and apply the tie-inclusive top-10 cut; (6) list distinct authors of the retained entries for each returned issue. For every returned issue, list its key, fields.timeoriginalestimate and every contributing entry's changelog.histories[].author.key and changelog.items[field=timespent].from/to values with its computed amount.
+Use changelog history to reconstruct time entries only. Original estimates and project membership use current dump values; no other changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[amendment.after]
+id = "Q07"
+text = "Which issues have the largest difference between their original estimates and actual logged time, and who logged time against them?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "ranking"
+unit = "seconds"
+fields = [
+    "key",
+    "fields.timeoriginalestimate",
+    "changelog.histories[].author.key",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: issues in BAM, CLOUD, CLOV, CRUC, CWD, FE and JRASERVER whose current fields.timeoriginalestimate is greater than 0 and which have at least one positive, non-bot time entry. No date bounds apply.
+"Original estimate" means the current fields.timeoriginalestimate value in seconds. "Actual logged time" means the sum of positive, non-bot time-entry amounts, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to.
+For each issue, compute the absolute difference between its original estimate and its total qualifying logged seconds. Rank highest difference first. Return the top 10 issues and every issue tied with the tenth. If fewer than 10 issues qualify, return all qualifying issues. Identify each issue by key.
+"Who logged time" means the distinct non-bot people identified by changelog.histories[].author.key on the issue's positive time entries. List all such people for each returned issue.
+Sources, step by step: (1) select issues in the seven-project population whose fields.timeoriginalestimate is greater than 0; (2) retain positive, non-bot time entries and exclude issues with none; (3) sum retained entry amounts per issue; (4) compute each issue's absolute difference from its original estimate; (5) rank highest first and apply the tie-inclusive top-10 cut; (6) list distinct authors of the retained entries for each returned issue. For every returned issue, list its key, fields.timeoriginalestimate and every contributing entry's changelog.histories[].author.key and changelog.items[field=timespent].from/to values with its computed amount.
+Use changelog history to reconstruct time entries only. Original estimates and project membership use current dump values; no other changelog history is used.
+If empty: widen along status.
+"""
+data = "real"

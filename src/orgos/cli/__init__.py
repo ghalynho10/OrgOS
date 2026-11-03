@@ -10,11 +10,17 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
+from pathlib import Path
+from typing import Annotated
 
 import typer
 
 from orgos import __version__
 from orgos.config import ConfigError, load_settings
+from orgos.eval import EvalError
+from orgos.eval.answers import answers
+from orgos.eval.checker import check_files
+from orgos.eval.describe import describe
 from orgos.mongostore import MongoStoreError
 from orgos.mongostore.restore import restore
 from orgos.mongostore.verify import verify
@@ -30,6 +36,7 @@ EXIT_CODES: tuple[tuple[type[Exception], int], ...] = (
     (ConfigError, 2),
     (SqlStoreError, 1),
     (MongoStoreError, 3),
+    (EvalError, 4),
 )
 NAMED_ERRORS = tuple(error for error, _ in EXIT_CODES)
 
@@ -103,6 +110,64 @@ def mongo_verify_command() -> None:
     """Compare the live JiraReposAnon with its restore record (changes nothing)."""
     settings = load_settings()
     verify(settings)
+
+
+eval_app = typer.Typer(
+    name="eval",
+    help="Describe the data, check the hand written questions, and compute their known answers.",
+    no_args_is_help=True,
+)
+app.add_typer(eval_app)
+
+EVAL_DIR = Path("eval")
+QUESTIONS_FILE = EVAL_DIR / "questions.toml"
+
+
+@eval_app.command("describe")
+def eval_describe_command() -> None:
+    """Describe the corpus for question writing: write eval/data-description.md.
+
+    Runs only the allowed reads through the reader login and appends each
+    query's text to eval/exploration.log. Writes nothing to Mongo.
+    """
+    settings = load_settings()
+    typer.echo(describe(settings, EVAL_DIR).summary)
+
+
+@eval_app.command("check-questions")
+def eval_check_questions_command(
+    file: Annotated[
+        Path, typer.Option("--file", help="The question file to check.")
+    ] = QUESTIONS_FILE,
+) -> None:
+    """Check the questions (and eval/amendments.toml when present) against every checker rule.
+
+    Lists every broken rule together. Reads no database.
+    """
+    typer.echo(check_files(file, EVAL_DIR / "data-description.md", EVAL_DIR / "amendments.toml"))
+
+
+@eval_app.command("answers")
+def eval_answers_command(
+    check: bool = typer.Option(
+        False, "--check", help="Recompute in memory; pass only if eval/answers.json is identical."
+    ),
+    only: Annotated[
+        str | None,
+        typer.Option(
+            "--only", help="Compute and print one answer (for example Q01); write nothing."
+        ),
+    ] = None,
+) -> None:
+    """Compute the known answers over raw Mongo through the reader login.
+
+    Runs the guards first and stops at the first that fails. A full run writes
+    eval/answers.json and results/known_answers/run_record.json, and prints
+    each amendment trigger.
+    """
+    settings = load_settings()
+    for line in answers(settings, Path.cwd(), check=check, only_id=only):
+        typer.echo(line)
 
 
 def run(args: Sequence[str] | None = None) -> None:

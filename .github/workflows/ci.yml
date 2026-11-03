@@ -22,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The FROZEN test compares eval/FROZEN with its copy at the eval-frozen tag.
+          fetch-tags: true
       - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: ${{ env.UV_VERSION }}
@@ -37,6 +40,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The FROZEN test compares eval/FROZEN with its copy at the eval-frozen tag.
+          fetch-tags: true
       - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: ${{ env.UV_VERSION }}

@@ -1,0 +1,509 @@
+[[question]]
+id = "Q01"
+text = "For each of the seven projects, how many issues created between January 1 and March 31, 2013 (UTC) are still unresolved and have no assignee?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "map"
+unit = "count"
+fields = [
+    "fields.project.key",
+    "fields.created",
+    "fields.resolution.name",
+    "fields.assignee.key",
+]
+reading = """
+Population: issues whose current fields.project.key is BAM, CLOUD, CLOV, CRUC, CWD, FE or JRASERVER. Count qualifying issues per project and list all seven projects, including zeros.
+"Created between January 1 and March 31, 2013 (UTC)" means fields.created in the half-open interval [2013-01-01T00:00:00Z, 2013-04-01T00:00:00Z).
+"Still unresolved" means fields.resolution.name is missing, null or exactly "". "Have no assignee" means fields.assignee.key is missing, null or exactly "". Missing includes a leaf unavailable because its containing object is missing or null.
+Sources, step by step: (1) select issue records by fields.project.key in the seven-project population; (2) retain those whose fields.created falls within the UTC interval; (3) retain those whose fields.resolution.name is missing, null or exactly ""; (4) retain those whose fields.assignee.key is missing, null or exactly ""; (5) count the retained issue records per project. For each project, list every qualifying issue record with its fields.project.key, fields.created, fields.resolution.name and fields.assignee.key values, identifying missing values as missing. A project with count zero has an empty qualifying-issue list.
+Use current dump values; no changelog history is used.
+If empty: widen along date range.
+"""
+data = "real"
+tracer = true
+
+[[question]]
+id = "Q02"
+text = "In CWD, how many issues are already marked Fixed in a version that has not yet been released?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "number"
+unit = "count"
+fields = [
+    "fields.project.key",
+    "fields.resolution.name",
+    "fields.fixVersions[].released",
+]
+reading = """
+Population: issues whose current fields.project.key equals "CWD". No date bounds apply.
+"Marked Fixed" means fields.resolution.name equals "Fixed". "In a version that has not yet been released" means at least one fields.fixVersions[].released value equals false.
+Sources, step by step: (1) select issue records with fields.project.key equal to "CWD"; (2) retain those with fields.resolution.name equal to "Fixed"; (3) retain those with at least one fields.fixVersions[].released value equal to false; (4) count each retained issue once. List every qualifying issue record with its fields.project.key, fields.resolution.name and fields.fixVersions[].released values. A zero answer has an empty qualifying-issue list.
+Use current dump values; no changelog history is used.
+If empty: widen along projects.
+"""
+data = "real"
+
+[[question]]
+id = "Q03"
+text = "How many issues resolved in FE between April 1 and June 30, 2012 (UTC) were closed after their due date?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "number"
+unit = "count"
+fields = [
+    "fields.project.key",
+    "fields.resolution.name",
+    "fields.resolutiondate",
+    "fields.duedate",
+]
+reading = """
+Population: issues whose current fields.project.key equals "FE".
+"Resolved" and "closed" mean fields.resolution.name exists, is not null and is not "". No status condition applies.
+"Resolved between April 1 and June 30, 2012 (UTC)" means fields.resolutiondate is in the half-open interval [2012-04-01T00:00:00Z, 2012-07-01T00:00:00Z).
+"After their due date" means fields.duedate is present and not null, and fields.resolutiondate is strictly later than the instant represented by fields.duedate, converted to UTC. A date-only due value means midnight UTC at the start of that day.
+Sources, step by step: (1) select issue records with fields.project.key equal to "FE"; (2) retain those whose fields.resolution.name exists, is not null and is not ""; (3) retain those whose fields.resolutiondate falls within the UTC interval; (4) retain those with a present, non-null fields.duedate and a fields.resolutiondate strictly later than that due instant; (5) count each retained issue once. List every qualifying issue record with its fields.project.key, fields.resolution.name, fields.resolutiondate and fields.duedate values. A zero answer has an empty qualifying-issue list.
+Use current dump values; no changelog history is used.
+If empty: widen along date range.
+"""
+data = "real"
+
+[[question]]
+id = "Q04"
+text = "For each project, how does the total time logged compare with the total original estimates for its issues?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "map"
+unit = "seconds"
+fields = [
+    "fields.project.key",
+    "fields.timeoriginalestimate",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: issues whose current fields.project.key is BAM, CLOUD, CLOV, CRUC, CWD, FE or JRASERVER. Include issues with either logged time or an original estimate; missing values contribute 0. No date bounds apply.
+"Total time logged" means the sum of positive, non-bot time-entry amounts, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to. "Total original estimates" means the sum of current fields.timeoriginalestimate values.
+For each project, return total logged seconds minus total original estimated seconds. A positive value means logged time exceeded estimates.
+Sources, step by step: (1) list every issue record in the seven-project population, including issues contributing zero, with its fields.project.key and fields.timeoriginalestimate value, identifying missing values as missing; (2) for each issue, list every contributing positive, non-bot time entry with its changelog.items[field=timespent].from/to pair and computed amount; (3) sum those entry amounts per project; (4) sum original estimates per project, treating missing estimates as 0; (5) subtract the original-estimate total from the logged-time total for each project.
+Use changelog history to reconstruct time entries only. Original estimates and project membership use current dump values; no other changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q05"
+text = "Which people have logged hours on issues assigned to someone else, and how many hours have they logged on those issues?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "map"
+unit = "seconds"
+fields = [
+    "fields.assignee.key",
+    "changelog.histories[].author.key",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: issues in the seven corpus projects: BAM, CLOUD, CLOV, CRUC, CWD, FE and JRASERVER. No date bounds apply.
+"Unassigned" means fields.assignee.key is missing, null or exactly "". Missing includes a leaf unavailable because its containing object is missing or null. Exclude unassigned issues and issues whose current assignee is a flagged bot.
+"People" means non-bot time-entry authors identified by changelog.histories[].author.key. "Assigned to someone else" means the issue's current fields.assignee.key differs from the entry author's key.
+"Logged hours" means the sum of positive, non-bot time-entry amounts, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to. Sum qualifying amounts per author, store the result in seconds and divide by 3600 only for display in hours.
+Sources, step by step: (1) select issues in the seven-project population; (2) exclude unassigned issues and issues assigned to flagged bots; (3) retain positive, non-bot time entries whose changelog.histories[].author.key differs from the issue's current fields.assignee.key; (4) sum retained entry amounts per author. For each returned author, list every contributing issue and time entry, showing fields.assignee.key, changelog.histories[].author.key, the changelog.items[field=timespent].from/to pair and its computed amount.
+Use changelog history to reconstruct time entries only. Assignee and project membership use current dump values; no other changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q06"
+text = "Between October 1 and December 31, 2009 (UTC), which five issues across all projects had the most logged hours while remaining unresolved, ranked with their projects?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "ranking"
+unit = "seconds"
+fields = [
+    "key",
+    "fields.project.key",
+    "fields.resolution.name",
+    "changelog.histories[].created",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: issues whose current fields.project.key is BAM, CLOUD, CLOV, CRUC, CWD, FE or JRASERVER, whose current fields.resolution.name is missing, null or exactly "", and which have at least one positive, non-bot time entry in the UTC interval below. Missing includes a leaf unavailable because its containing object is missing or null.
+"Remaining unresolved" means the current fields.resolution.name is missing, null or exactly ""; it does not require the issue to have been unresolved throughout the period.
+"Between October 1 and December 31, 2009 (UTC)" means the time entry's changelog.histories[].created, converted to UTC, falls in the half-open interval [2009-10-01T00:00:00Z, 2010-01-01T00:00:00Z).
+"Logged hours" means the sum of positive, non-bot time-entry amounts, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to. Store totals in seconds and divide by 3600 only for display in hours.
+Rank issues by total qualifying logged seconds, highest first. Return the top five issues and every issue tied with the fifth. If fewer than five issues qualify, return all qualifying issues. Identify each issue by key and give its current fields.project.key.
+Sources, step by step: (1) select issues in the seven-project population with a current missing, null or empty-string fields.resolution.name; (2) retain positive, non-bot time entries whose changelog.histories[].created falls within the UTC interval; (3) exclude issues with no retained entries; (4) sum retained entry amounts per issue; (5) rank highest first and apply the tie-inclusive top-five cut. For every returned issue, list its key, fields.project.key and fields.resolution.name, identifying missing values as missing, and every contributing entry's changelog.histories[].created and changelog.items[field=timespent].from/to values with its computed amount.
+Use changelog history to reconstruct and date time entries only. Resolution and project membership use current dump values; no other changelog history is used.
+If empty: widen along date range.
+"""
+data = "real"
+
+[[question]]
+id = "Q07"
+text = "Which issues have the largest difference between their original estimates and actual logged time, and who logged time against them?"
+type = "aggregate"
+hops = 0
+hop_mode = "fixed"
+shape = "ranking"
+unit = "seconds"
+fields = [
+    "key",
+    "fields.timeoriginalestimate",
+    "changelog.histories[].author.key",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: issues in BAM, CLOUD, CLOV, CRUC, CWD, FE and JRASERVER whose current fields.timeoriginalestimate is greater than 0 and which have at least one positive, non-bot time entry. No date bounds apply.
+"Original estimate" means the current fields.timeoriginalestimate value in seconds. "Actual logged time" means the sum of positive, non-bot time-entry amounts, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to.
+For each issue, compute the absolute difference between its original estimate and its total qualifying logged seconds. Rank highest difference first. Return the top 10 issues and every issue tied with the tenth. If fewer than 10 issues qualify, return all qualifying issues. Identify each issue by key.
+"Who logged time" means the distinct non-bot people identified by changelog.histories[].author.key on the issue's positive time entries. List all such people for each returned issue.
+Sources, step by step: (1) select issues in the seven-project population whose fields.timeoriginalestimate is greater than 0; (2) retain positive, non-bot time entries and exclude issues with none; (3) sum retained entry amounts per issue; (4) compute each issue's absolute difference from its original estimate; (5) rank highest first and apply the tie-inclusive top-10 cut; (6) list distinct authors of the retained entries for each returned issue. For every returned issue, list its key, fields.timeoriginalestimate and every contributing entry's changelog.histories[].author.key and changelog.items[field=timespent].from/to values with its computed amount.
+Use changelog history to reconstruct time entries only. Original estimates and project membership use current dump values; no other changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q08"
+text = "Which unresolved issues depend on other unresolved issues, and what are the complete dependency chains connecting them?"
+type = "path_connection"
+hops = 2
+hop_mode = "variable"
+max_hops = 5
+shape = "path"
+unit = "none"
+fields = [
+    "key",
+    "fields.resolution.name",
+    "fields.issuelinks[].type.outward",
+    "fields.issuelinks[].outwardIssue.key",
+]
+reading = """
+Population: issues in BAM, CLOUD, CLOV, CRUC, CWD, FE and JRASERVER. Every issue in a chain must belong to this population. No date bounds apply.
+"Unresolved" means the current fields.resolution.name is missing, null or exactly "". Missing includes a leaf unavailable because its containing object is missing or null.
+"Depends on" means fields.issuelinks[].type.outward equals "depends on". Follow that relation only from the source issue to fields.issuelinks[].outwardIssue.key. Parent relations and shared-person connections do not count.
+Identify issues by key. Paths are simple: no issue may repeat. Return only complete dependency chains that cannot be extended at either end through another qualifying dependency relation without repeating an issue. Do not return chains starting partway through an extendable chain.
+Return only complete chains of at most five hops. A five-hop chain qualifies only if it cannot be extended at either end without repeating an issue. Exclude partial sections of longer chains. Do not include a limit-related notice in the answer. An empty answer means no complete qualifying chain fits within the cap; it does not establish that no longer chain exists.
+Sources, step by step: (1) select unresolved issues in the seven-project population; (2) identify outward "depends on" links whose endpoints are both unresolved corpus issues; (3) construct simple paths following those links in their outward direction; (4) retain only complete chains of at most five hops. For every returned chain, list every supporting issue record with its key and fields.resolution.name, and every supporting link record with its fields.issuelinks[].type.outward and fields.issuelinks[].outwardIssue.key values, identifying the source issue for each link.
+Use current dump values; no changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q09"
+text = "Which chains of related issues show work passing between different assignees, and what are the people, issues, projects, and relationship types in each chain?"
+type = "path_connection"
+hops = 2
+hop_mode = "variable"
+max_hops = 5
+shape = "path"
+unit = "none"
+fields = [
+    "key",
+    "fields.project.key",
+    "fields.assignee.key",
+    "fields.issuelinks[].type.outward",
+    "fields.issuelinks[].type.inward",
+    "fields.issuelinks[].outwardIssue.key",
+    "fields.issuelinks[].inwardIssue.key",
+]
+reading = """
+Population: issues whose current fields.project.key is BAM, CLOUD, CLOV, CRUC, CWD, FE or JRASERVER. Every issue in a chain must belong to this population. No date bounds apply.
+"People" means non-bot assignees identified by current fields.assignee.key. Exclude issues whose assignee key is missing, null or exactly "", or identifies a flagged bot. Missing includes a leaf unavailable because its containing object is missing or null.
+"Work passing between different assignees" means consecutive issues have different current fields.assignee.key values. This uses current assignments and does not establish historical handoffs.
+"Related issues" means issues connected by any issue-link type. Follow links in either direction: use fields.issuelinks[].outwardIssue.key with fields.issuelinks[].type.outward, or fields.issuelinks[].inwardIssue.key with fields.issuelinks[].type.inward. Report the label corresponding to each traversal direction. Parent relations and shared-person connections do not count.
+Identify issues by key and report each issue's current fields.project.key and fields.assignee.key. Paths are simple: no issue may repeat. Return only complete chains that cannot be extended at either end through another qualifying link without repeating an issue. Do not return chains starting partway through an extendable chain.
+Return only complete chains of at most five hops. A five-hop chain qualifies only if it cannot be extended at either end without repeating an issue. Exclude partial sections of longer chains. Do not include a limit-related notice in the answer. An empty answer means no complete qualifying chain fits within the cap; it does not establish that no longer chain exists.
+Sources, step by step: (1) select issues in the seven-project population with qualifying assignees; (2) identify issue links whose endpoints both qualify and have different assignee keys; (3) construct simple paths following those links in either direction; (4) retain only complete chains of at most five hops. For every returned chain, list every supporting issue record with its key, fields.project.key and fields.assignee.key, and every supporting link record with the applicable outward or inward label and endpoint key, identifying the source issue for each step.
+Use current dump values; no changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q10"
+text = "Which people have worked on issues that block, depend on, duplicate, or supersede issues assigned to other people, and which people are connected through those relationships?"
+type = "path_connection"
+hops = 1
+hop_mode = "fixed"
+shape = "set"
+unit = "none"
+fields = [
+    "key",
+    "fields.assignee.key",
+    "fields.issuelinks[].type.outward",
+    "fields.issuelinks[].type.inward",
+    "fields.issuelinks[].outwardIssue.key",
+    "fields.issuelinks[].inwardIssue.key",
+]
+reading = """
+Population: issues in BAM, CLOUD, CLOV, CRUC, CWD, FE and JRASERVER. Both issues in each qualifying relationship must belong to this population. No date bounds apply.
+"Worked on" means the issue's current fields.assignee.key. People are non-bot assignees. Exclude issues whose assignee key is missing, null or exactly "", or identifies a flagged bot. Missing includes a leaf unavailable because its containing object is missing or null.
+"Other people" means the source and target issues have different fields.assignee.key values.
+A qualifying relationship is one issue-link hop: the source issue has fields.issuelinks[].type.outward equal to "blocks", "depends on" or "duplicates", with the target identified by fields.issuelinks[].outwardIssue.key; or it has fields.issuelinks[].type.inward equal to "supersedes", with the target identified by fields.issuelinks[].inwardIssue.key. Follow only these specified directions. Parent relations and shared-person connections do not count.
+Return the distinct people identified by the source issues' fields.assignee.key values, each as one person ID. A target assignee appears in the answer only if that person is also a source assignee in a qualifying relationship. Connections to target assignees are recorded in the sources rather than returned as pairs.
+Sources, step by step: (1) select source and target issues in the seven-project population with qualifying non-bot assignees; (2) identify links matching the specified labels and directions; (3) retain relationships whose source and target assignee keys differ; (4) return distinct source assignee person IDs. For every returned person, list every supporting source issue, target issue and qualifying link, showing each issue's key and fields.assignee.key, and the applicable fields.issuelinks[].type.outward or fields.issuelinks[].type.inward label with its corresponding endpoint key. Include every qualifying target assignee in those supporting records.
+Use current dump values; no changelog history is used.
+If empty: widen along issue type.
+"""
+data = "real"
+
+[[question]]
+id = "Q11"
+text = "Which people are connected through shared issue assignments, reporting, creation, and time logging, and which projects connect them?"
+type = "path_connection"
+hops = 1
+hop_mode = "fixed"
+shape = "set"
+unit = "none"
+fields = [
+    "fields.project.key",
+    "fields.assignee.key",
+    "fields.reporter.key",
+    "fields.creator.key",
+    "changelog.histories[].author.key",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: issues whose current fields.project.key is BAM, CLOUD, CLOV, CRUC, CWD, FE or JRASERVER, and non-bot people holding qualifying roles on those issues. No date bounds apply.
+"Assignment", "reporting" and "creation" mean the current fields.assignee.key, fields.reporter.key and fields.creator.key, respectively. A time-logging role means changelog.histories[].author.key on a positive time entry whose amount is reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to.
+For each role, exclude keys that are missing, null or exactly "", and keys identifying flagged bots. Missing includes a leaf unavailable because its containing object is missing or null.
+Two distinct people are connected when both hold at least one qualifying role on the same issue. The roles may be the same or different. This shared-issue connection is the only hop kind; issue links and parent relations do not count.
+Return one set containing every person participating in at least one qualifying connection as a person ID, and every project supporting at least one qualifying connection as a project ID identified by fields.project.key. Include each person and project once. The answer does not contain pairs; the sources establish which people are connected through which issues and projects.
+Sources, step by step: (1) select issues in the seven-project population; (2) identify qualifying assignee, reporter and creator keys from current issue fields; (3) identify qualifying time-entry authors from positive, non-bot entries; (4) identify unordered pairs of distinct people holding roles on the same issue and the projects supporting those connections; (5) return the distinct participating person IDs and supporting project IDs together in one set. For every qualifying connection, list every supporting shared issue, its fields.project.key, both people's role keys and the role-field paths establishing them, and every qualifying time entry used to establish a logging role, showing its changelog.histories[].author.key and changelog.items[field=timespent].from/to values with its computed amount.
+Use changelog history to reconstruct time entries only. Assignment, reporting, creation and project membership use current dump values; no other changelog history is used.
+If empty: widen along projects.
+"""
+data = "real"
+
+[[question]]
+id = "Q12"
+text = "In CLOUD and CLOV, which parent issues have sub-tasks assigned to multiple people, and who are those people?"
+type = "path_connection"
+hops = 1
+hop_mode = "fixed"
+shape = "set"
+unit = "none"
+fields = [
+    "key",
+    "fields.project.key",
+    "fields.parent.key",
+    "fields.assignee.key",
+]
+reading = """
+Population: parent issues and contributing sub-tasks whose current fields.project.key is "CLOUD" or "CLOV". No date bounds apply.
+"Sub-tasks" means direct children identified by each child's fields.parent.key matching the parent issue's key. Traverse from parent to direct child only. Grandchildren, issue links and shared-person connections do not count.
+"People" means non-bot assignees identified by each child's current fields.assignee.key. Exclude assignee keys that are missing, null or exactly "", or identify flagged bots. Missing includes a leaf unavailable because its containing object is missing or null.
+"Assigned to multiple people" means the parent's direct sub-tasks have at least two distinct qualifying fields.assignee.key values. Return only the qualifying parents as issue IDs identified by key, each once. Their assignees are identified in the sources, not included as person IDs in the answer set.
+Sources, step by step: (1) select parent issues in CLOUD or CLOV; (2) identify their direct sub-tasks using the children's fields.parent.key; (3) retain sub-tasks in CLOUD or CLOV with qualifying non-bot assignees; (4) collect distinct assignee keys per parent; (5) return the issue IDs of parents with at least two such keys. For every returned parent, list its issue record and every direct sub-task establishing its qualifying assignees, showing each issue's key and fields.project.key, and each contributing child's fields.parent.key and fields.assignee.key. Include every qualifying assignee in those supporting records.
+Use current dump values; no changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q13"
+text = "For CLOV-108, list its sub-tasks with each one's assignee, status, and total logged hours."
+type = "path_connection"
+hops = 1
+hop_mode = "fixed"
+shape = "set"
+unit = "none"
+fields = [
+    "key",
+    "fields.parent.key",
+    "fields.assignee.key",
+    "fields.status.name",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: the parent issue with key equal to "CLOV-108" in CLOV and every direct sub-task whose fields.parent.key equals "CLOV-108". Include sub-tasks with no assignee or no qualifying logged time. No date bounds apply.
+Traverse from CLOV-108 to its direct children only, using each child's fields.parent.key. Grandchildren, issue links and shared-person connections do not count. Identify each returned sub-task by key.
+"Assignee" means the sub-task's current fields.assignee.key. Missing, null or exactly "" means no assignee. Missing includes a leaf unavailable because its containing object is missing or null. A flagged bot is not reported as a person; retain the sub-task without a qualifying person as assignee.
+"Status" means the sub-task's current fields.status.name.
+"Total logged hours" means the sum of positive, non-bot time-entry amounts on each sub-task, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to. A sub-task with no qualifying entries has total zero. Compute totals in seconds and divide by 3600 only for display in hours.
+Sources, step by step: (1) identify the parent record with key equal to "CLOV-108"; (2) select every direct child whose fields.parent.key equals "CLOV-108"; (3) read each child's current fields.assignee.key and fields.status.name; (4) retain its positive, non-bot time entries; (5) sum retained entry amounts per child. List the parent record and every returned sub-task record with its key, fields.parent.key, fields.assignee.key and fields.status.name, identifying missing values as missing, and every contributing time entry with its changelog.items[field=timespent].from/to pair and computed amount. A sub-task with no qualifying entries has an empty contributing-entry list.
+Use changelog history to reconstruct time entries only. Assignee, status and parent relations use current dump values; no other changelog history is used.
+"""
+data = "real"
+
+[[question]]
+id = "Q14"
+text = "Is every sub-task of CLOV-538 resolved?"
+type = "path_connection"
+hops = 1
+hop_mode = "fixed"
+shape = "boolean"
+unit = "none"
+fields = ["key", "fields.parent.key", "fields.resolution.name"]
+reading = """
+Population: the parent issue with key equal to "CLOV-538" in CLOV and every direct sub-task whose fields.parent.key equals "CLOV-538". The parent must have at least one direct sub-task. No date bounds apply.
+"Resolved" means the sub-task's current fields.resolution.name exists, is not null and is not "".
+Traverse from CLOV-538 to its direct children only, using each child's fields.parent.key. Grandchildren, issue links and shared-person connections do not count.
+Return true if every direct sub-task is resolved, and false if any direct sub-task is unresolved.
+Sources, step by step: (1) identify the parent record with key equal to "CLOV-538"; (2) select every direct child whose fields.parent.key equals "CLOV-538" and establish that at least one exists; (3) check each child's current fields.resolution.name against the resolved definition; (4) return the boolean result. List the parent record and every direct child record, identifying each by key and showing each child's fields.parent.key and fields.resolution.name, identifying missing values as missing. Include all direct children, not only an example or an unresolved counterexample.
+Use current dump values; no changelog history is used.
+"""
+data = "real"
+
+[[question]]
+id = "Q15"
+text = "What is the total logged hours on CLOUD-643 and all of its sub-tasks combined?"
+type = "mixed"
+hops = 1
+hop_mode = "fixed"
+shape = "number"
+unit = "seconds"
+fields = [
+    "key",
+    "fields.parent.key",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: the parent issue with key equal to "CLOUD-643" in CLOUD and every direct sub-task whose fields.parent.key equals "CLOUD-643". Include issues contributing zero logged time. No date bounds apply.
+Traverse from CLOUD-643 to its direct children only, using each child's fields.parent.key. Grandchildren, issue links and shared-person connections do not count.
+"Logged hours" means the sum of positive, non-bot time-entry amounts, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to. Sum the qualifying amounts on CLOUD-643 and every direct sub-task together, counting each entry once. An issue with no qualifying entries contributes zero. Store the total in seconds and divide by 3600 only for display in hours.
+Sources, step by step: (1) identify the parent record with key equal to "CLOUD-643"; (2) select every direct child whose fields.parent.key equals "CLOUD-643"; (3) retain positive, non-bot time entries on the parent and those children; (4) sum all retained entry amounts. List the parent record and every direct sub-task record, identifying each by key and showing each child's fields.parent.key, and every contributing time entry with its changelog.items[field=timespent].from/to pair and computed amount. Include issues contributing zero with empty contributing-entry lists.
+Use changelog history to reconstruct time entries only. Parent relations use current dump values; no other changelog history is used.
+"""
+data = "real"
+
+[[question]]
+id = "Q16"
+text = "How many open Highest-priority bugs are blocked by, or depend on, at least one unresolved issue?"
+type = "mixed"
+hops = 1
+hop_mode = "fixed"
+shape = "number"
+unit = "count"
+fields = [
+    "key",
+    "fields.issuetype.name",
+    "fields.priority.name",
+    "fields.resolution.name",
+    "fields.issuelinks[].type.inward",
+    "fields.issuelinks[].type.outward",
+    "fields.issuelinks[].inwardIssue.key",
+    "fields.issuelinks[].outwardIssue.key",
+]
+reading = """
+Population: issues in BAM, CLOUD, CLOV, CRUC, CWD, FE and JRASERVER. Both the bug and each qualifying linked issue must belong to this population. No date bounds apply.
+"Bug" means current fields.issuetype.name equals "Bug". "Highest-priority" means current fields.priority.name equals "Highest".
+"Open" and "unresolved" mean current fields.resolution.name is missing, null or exactly "". Missing includes a leaf unavailable because its containing object is missing or null. No status condition applies.
+A qualifying connection is one issue-link hop from the bug: fields.issuelinks[].type.inward equals "is blocked by", with the linked issue identified by fields.issuelinks[].inwardIssue.key; or fields.issuelinks[].type.outward equals "depends on", with the linked issue identified by fields.issuelinks[].outwardIssue.key. The linked issue must be unresolved. Follow only these specified directions. Parent relations and shared-person connections do not count.
+Count distinct qualifying bugs by key. A bug counts once if it has at least one qualifying connection, regardless of how many qualifying links or linked issues it has.
+Sources, step by step: (1) select corpus issues whose fields.issuetype.name equals "Bug", fields.priority.name equals "Highest" and fields.resolution.name is missing, null or exactly ""; (2) identify their links matching the specified labels and directions; (3) retain links whose other endpoint is an unresolved corpus issue; (4) count distinct qualifying bug keys. List every counted bug, every qualifying linked unresolved issue and every qualifying link between them. Show issue keys, the counted bug's fields.issuetype.name and fields.priority.name, both issues' fields.resolution.name values, and each link's applicable inward or outward label and endpoint key, identifying missing values as missing.
+Use current dump values; no changelog history is used.
+If empty: widen along issue type.
+"""
+data = "real"
+
+[[question]]
+id = "Q17"
+text = "Which people logged hours on issues in different projects that are linked to each other, and which projects, issues, and hours connect them?"
+type = "mixed"
+hops = 2
+hop_mode = "fixed"
+shape = "map"
+unit = "seconds"
+fields = [
+    "key",
+    "fields.project.key",
+    "fields.issuelinks[].outwardIssue.key",
+    "fields.issuelinks[].inwardIssue.key",
+    "changelog.histories[].author.key",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: issues whose current fields.project.key is BAM, CLOUD, CLOV, CRUC, CWD, FE or JRASERVER, and non-bot people who logged positive time on qualifying issues. No date bounds apply.
+A qualifying issue pair consists of two directly linked corpus issues with different current fields.project.key values, where the same person has at least one positive time entry on each issue. Identify issues by key and people by changelog.histories[].author.key.
+Any issue-link type qualifies. Link direction is ignored: use fields.issuelinks[].outwardIssue.key or fields.issuelinks[].inwardIssue.key to identify the other endpoint. The connections used are the direct issue link and the person shared through time logging on both issues. Parent relations and indirect issue-link chains do not count.
+"Logged hours" means the sum of positive, non-bot time-entry amounts, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to.
+For each person, collect the distinct issues participating in at least one qualifying pair for that person. Sum that person's qualifying entry amounts on those issues, counting each entry once even when its issue participates in several qualifying pairs. Store totals in seconds and divide by 3600 only for display in hours.
+Sources, step by step: (1) identify directly linked corpus issues in different projects; (2) identify non-bot authors with positive time entries on both endpoints; (3) collect distinct qualifying issues per author; (4) sum each author's positive entry amounts on those issues once. For every returned person, list every qualifying issue pair and supporting link, both issues' key and fields.project.key values, and every contributing time entry with its changelog.histories[].author.key, changelog.items[field=timespent].from/to pair and computed amount. Show each issue's contribution to the person's total and identify entries shared across qualifying pairs without adding them more than once.
+Use changelog history to reconstruct time entries only. Project membership and issue links use current dump values; no other changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q18"
+text = "Which people appear in more than one project as reporter or assignee, and in how many projects each?"
+type = "mixed"
+hops = 1
+hop_mode = "fixed"
+shape = "map"
+unit = "count"
+fields = ["fields.project.key", "fields.reporter.key", "fields.assignee.key"]
+reading = """
+Population: issues whose current fields.project.key is BAM, CLOUD, CLOV, CRUC, CWD, FE or JRASERVER, and non-bot people holding reporter or assignee roles on those issues. No date bounds apply.
+"Reporter" means current fields.reporter.key. "Assignee" means current fields.assignee.key. For each role, exclude keys that are missing, null or exactly "", and keys identifying flagged bots. Missing includes a leaf unavailable because its containing object is missing or null.
+"More than one project" means at least two distinct current fields.project.key values across issues where the person is reporter or assignee. Combine both roles when collecting projects. Multiple issues or both roles in one project contribute only one project.
+The connection is a shared person across projects through reporter or assignee roles. Issue links and parent relations do not count.
+Return each qualifying person key with the count of their distinct qualifying projects.
+Sources, step by step: (1) select issues in the seven-project population; (2) identify qualifying reporter and assignee keys; (3) collect distinct fields.project.key values per person across both roles; (4) retain people with at least two distinct projects; (5) return each person's distinct-project count. For every returned person, list every issue establishing a qualifying role in each counted project, showing fields.project.key, fields.reporter.key and fields.assignee.key, identifying missing values as missing. List the distinct projects and their count.
+Use current dump values; no changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q19"
+text = "Which five projects have the most issues directly linked to issues in other corpus projects?"
+type = "mixed"
+hops = 1
+hop_mode = "fixed"
+shape = "ranking"
+unit = "count"
+fields = [
+    "key",
+    "fields.project.key",
+    "fields.issuelinks[].id",
+    "fields.issuelinks[].outwardIssue.key",
+    "fields.issuelinks[].inwardIssue.key",
+]
+reading = """
+Population: issues whose current fields.project.key is BAM, CLOUD, CLOV, CRUC, CWD, FE or JRASERVER. Both endpoints of every qualifying link must belong to this population. No date bounds apply.
+"Directly linked" means connected by one issue link of any type. Identify the other endpoint through fields.issuelinks[].outwardIssue.key or fields.issuelinks[].inwardIssue.key. Link direction is ignored. Identify and deduplicate links by fields.issuelinks[].id.
+"Other corpus projects" means the two endpoint issues have different current fields.project.key values. Parent relations, shared-person connections and indirect issue-link chains do not count.
+For each project, count distinct issues identified by key that have at least one qualifying cross-project link. Count each issue once in its own project, regardless of how many qualifying links, linked issues or partner projects it has.
+Only projects with at least one qualifying issue enter the ranking. Rank projects by qualifying-issue count, highest first. Return the top five projects and every project tied with the fifth. If fewer than five projects qualify, return all qualifying projects. Each ranking item is one project ID identified by fields.project.key, with its qualifying-issue count.
+Sources, step by step: (1) identify corpus issue records and their current fields.project.key values; (2) identify direct issue links whose endpoints are corpus issues in different projects, deduplicating by fields.issuelinks[].id; (3) collect distinct qualifying issue keys per project; (4) count those keys and rank projects highest first; (5) apply the tie-inclusive top-five cut. For every returned project, list its project record, every counted issue record, every qualifying cross-project link supporting those issues, and every issue record at the other endpoints. These steps list project, issue and issue_link source kinds, retaining all supporting records rather than one example.
+Use current dump values; no changelog history is used.
+If empty: widen along status.
+"""
+data = "real"
+
+[[question]]
+id = "Q20"
+text = "Who are the top 5 people by total logged hours across multiple projects between July 1 and September 30, 2009 (UTC), ranked from most to least?"
+type = "mixed"
+hops = 1
+hop_mode = "fixed"
+shape = "ranking"
+unit = "seconds"
+fields = [
+    "fields.project.key",
+    "changelog.histories[].author.key",
+    "changelog.histories[].created",
+    "changelog.items[field=timespent].from/to",
+]
+reading = """
+Population: non-bot people who logged positive time on issues in at least two distinct projects among BAM, CLOUD, CLOV, CRUC, CWD, FE and JRASERVER within the UTC interval below. Project membership uses each issue's current fields.project.key.
+"Between July 1 and September 30, 2009 (UTC)" means the time entry's changelog.histories[].created, converted to UTC, falls in the half-open interval [2009-07-01T00:00:00Z, 2009-10-01T00:00:00Z).
+"People" means non-bot authors identified by changelog.histories[].author.key. "Across multiple projects" means at least two distinct fields.project.key values with qualifying positive entries by that author within the same UTC interval.
+"Total logged hours" means the sum of the person's positive, non-bot time-entry amounts across the seven corpus projects within the interval, each reconstructed as to minus from in seconds from changelog.items[field=timespent].from/to. Count each entry once. Store totals in seconds and divide by 3600 only for display in hours.
+The connection is a shared person across projects through time logging. Issue links and parent relations do not count.
+Rank eligible people by total qualifying logged seconds, highest first. Return the top five people and every person tied with the fifth. If fewer than five people qualify, return all qualifying people.
+Sources, step by step: (1) select time entries on issues in the seven-project population whose changelog.histories[].created falls within the UTC interval; (2) retain positive entries by non-bot authors; (3) collect distinct fields.project.key values per author and retain authors with at least two projects; (4) sum qualifying entry amounts per eligible author; (5) rank highest first and apply the tie-inclusive top-five cut. For every returned person, list every issue and positive time entry supporting eligibility and the ranked total, showing fields.project.key, changelog.histories[].author.key, changelog.histories[].created, the changelog.items[field=timespent].from/to pair and its computed amount. Show the distinct qualifying projects and total logged seconds.
+Use changelog history to reconstruct and date time entries only. Project membership uses current dump values; no other changelog history is used.
+If empty: widen along date range.
+"""
+data = "real"
