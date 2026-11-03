@@ -188,15 +188,6 @@ def corpus_parents(parents: Iterable[Parent], corpus_keys: Collection[str]) -> t
 # Paths (AC-48)
 
 
-def undirected(edges: Iterable[tuple[str, str]]) -> Mapping[str, tuple[str, ...]]:
-    """Each entity's neighbours, link direction ignored, sorted."""
-    neighbours: dict[str, set[str]] = {}
-    for a, b in edges:
-        neighbours.setdefault(a, set()).add(b)
-        neighbours.setdefault(b, set()).add(a)
-    return {entity: tuple(sorted(others)) for entity, others in neighbours.items()}
-
-
 def complete_paths(
     successors: Mapping[str, Iterable[str]],
     predecessors: Mapping[str, Iterable[str]],

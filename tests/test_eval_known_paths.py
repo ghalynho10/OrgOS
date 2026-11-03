@@ -13,7 +13,7 @@ from orgos.eval import EvalError
 from orgos.eval.answers import check_sources
 from orgos.eval.known import CORPUS_PROJECTS, REGISTRY, q08
 from orgos.eval.models import PathAnswer
-from orgos.eval.rules import complete_paths, stored_links, undirected
+from orgos.eval.rules import complete_paths, stored_links
 from orgos.eval.snapshot import Snapshot, build_snapshot
 from orgos.eval.writer import answer_triggers, dumped, path_answer, step
 
@@ -137,7 +137,7 @@ def test_a_chain_of_exactly_the_cap_is_kept() -> None:
 
 
 def test_on_an_undirected_graph_each_chain_comes_in_both_directions() -> None:
-    graph = undirected([("A", "B"), ("B", "C")])
+    graph = {"A": ["B"], "B": ["A", "C"], "C": ["B"]}
     assert complete_paths(graph, graph, 5) == (("A", "B", "C"), ("C", "B", "A"))
 
 
