@@ -1,0 +1,64 @@
+version: 2
+
+# The served tables of spec 0007, with the contract enforced at folder level in
+# dbt_project.yml. Column order is the spec's order, source_doc_id and load_id
+# last. Keys have no name (AC-11); foreign keys use the ref() form so dbt
+# builds the referenced table first (AC-12). `not null` follows the AC-14 list.
+
+models:
+  - name: project
+    description: The 7 corpus projects, a copy of model_int.project.
+    columns:
+      - name: project_key
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: project_name
+        data_type: text
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: issue
+    description: One row per corpus issue, its to one relationships folded in as key columns.
+    columns:
+      - name: issue_key
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: created_at
+        data_type: timestamptz
+      - name: resolution_date
+        data_type: timestamptz
+      - name: due_at
+        data_type: timestamptz
+      - name: time_original_estimate_s
+        data_type: bigint
+      - name: resolution_name
+        data_type: text
+      - name: issue_type_name
+        data_type: text
+      - name: priority_name
+        data_type: text
+      - name: status_name
+        data_type: text
+      - name: project_key
+        data_type: text
+        constraints:
+          - type: not_null
+          - type: foreign_key
+            to: ref('project')
+            to_columns: [project_key]
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null

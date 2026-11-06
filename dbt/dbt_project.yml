@@ -22,9 +22,20 @@ models:
     model_int:
       +schema: model_int
       +materialized: table
+      +contract:
+        enforced: true
     # The served SQL tables, the only schema the agent's reader role can see.
     model:
       +schema: model
       +materialized: table
+      +contract:
+        enforced: true
       +grants:
         select: ["{{ env_var('ORGOS_PG_READER_USER', 'orgos_reader') }}"]
+
+# Every failing test leaves its rows in `test_failures` (owner only), so
+# `orgos load sql` can print the link ID, issue key or history ID (spec 0009 AC-13).
+data_tests:
+  orgos:
+    +store_failures: true
+    +schema: test_failures

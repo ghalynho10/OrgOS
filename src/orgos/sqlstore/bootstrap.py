@@ -1,6 +1,6 @@
 """Idempotent Postgres bootstrap, run as the container superuser.
 
-Creates the `orgos` database, the owner and reader roles, the four schemas,
+Creates the `orgos` database, the owner and reader roles, the five schemas,
 and the grants that keep model written queries read only on `model`. Init
 scripts only run on an empty volume, so this runs from OrgOS and is safe to
 rerun: it creates what is missing and resets passwords, grants, and limits.
@@ -20,8 +20,13 @@ from orgos.sqlstore import SqlStoreError
 
 log = logging.getLogger(__name__)
 
-SCHEMAS = ("raw", "stg", "model_int", "model")
+# `test_failures` holds the rows of failing dbt tests (spec 0009 AC-13); like
+# every schema but `model`, the reader gets no access to it.
+SCHEMAS = ("raw", "stg", "model_int", "model", "test_failures")
 SERVED_SCHEMA = "model"
+# The reader's session zone, so a date bound without an offset reads as UTC
+# (spec 0007 AC-19).
+READER_TIMEZONE = "UTC"
 
 # Resource caps on the reader role. `temp_file_limit` can only be changed by
 # a superuser, so a reader session cannot lift it.
@@ -73,6 +78,7 @@ def _bootstrap(settings: Settings) -> None:
             ("statement_timeout", timeout),
             ("work_mem", READER_WORK_MEM),
             ("temp_file_limit", READER_TEMP_FILE_LIMIT),
+            ("timezone", READER_TIMEZONE),
         ):
             cur.execute(
                 sql.SQL("ALTER ROLE {} SET {} = {}").format(

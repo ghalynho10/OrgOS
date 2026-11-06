@@ -1,0 +1,28 @@
+version: 2
+
+# Validity tests for these views live in dbt/tests: each refs its view, so a
+# failure skips every model built on it and stops the load before model_int.
+
+models:
+  - name: stg_issue_doc
+    description: >
+      The corpus collapsed to one document per issue key: the lowest mongo_id
+      wins (spec 0009 AC-7). Every model of model_int reads this view, never raw.
+    columns:
+      - name: mongo_id
+        description: The kept document's Mongo `_id`; becomes `source_doc_id` downstream.
+      - name: load_id
+        description: The dlt load ID of the raw row, carried to every model_int row.
+
+  - name: stg_issue_doc_dropped
+    description: Each dropped copy with the kept copy of its key (spec 0009 AC-7).
+
+  - name: stg_time_history
+    description: >
+      One row per timespent item of fieldtype jira in a changelog history, raw
+      text values kept (spec 0004 AC-7); logged_time sums the items per history.
+
+  - name: stg_link_entry
+    description: >
+      One row per issuelinks entry per holding issue, with src_id and dst_id
+      read by the Link direction rule of spec 0006.

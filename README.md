@@ -119,6 +119,12 @@ uv run orgos mongo verify                       # live counts against the restor
 - **Reruns** are on purpose: with a passing marker, `restore` skips (no zip needed); with data but no valid marker, it stops and names `--reset`; `--reset` drops `JiraReposAnon` only after every check passed. `verify` changes nothing.
 - **Exit codes**: 0 PASS or skipped, 2 configuration, 3 any check, restore or verify failure. The report is plain text on stdout; mongorestore's own output and the check lines go to stderr.
 
+### Load the SQL store
+
+```sh
+uv run orgos load sql   # Mongo to raw (dlt), dbt build with every test, figure gate; writes results/sql_load/run_record.json
+```
+
 ## Pinned versions
 
 Image tags and package versions confirmed on 2026-10-25. Python packages are locked exactly in `uv.lock`.

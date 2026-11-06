@@ -21,11 +21,13 @@ from orgos.eval import EvalError
 from orgos.eval.answers import answers
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
+from orgos.ingest import IngestError
 from orgos.mongostore import MongoStoreError
 from orgos.mongostore.restore import restore
 from orgos.mongostore.verify import verify
 from orgos.sqlstore import SqlStoreError
 from orgos.sqlstore.bootstrap import bootstrap
+from orgos.sqlstore.load import load_sql
 
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = "%(levelname)s %(message)s"
@@ -37,6 +39,7 @@ EXIT_CODES: tuple[tuple[type[Exception], int], ...] = (
     (SqlStoreError, 1),
     (MongoStoreError, 3),
     (EvalError, 4),
+    (IngestError, 5),
 )
 NAMED_ERRORS = tuple(error for error, _ in EXIT_CODES)
 
@@ -168,6 +171,26 @@ def eval_answers_command(
     settings = load_settings()
     for line in answers(settings, Path.cwd(), check=check, only_id=only):
         typer.echo(line)
+
+
+load_app = typer.Typer(
+    name="load",
+    help="Load the corpus from the Mongo staging store into the stores.",
+    no_args_is_help=True,
+)
+app.add_typer(load_app)
+
+
+@load_app.command("sql")
+def load_sql_command() -> None:
+    """Load the 7 corpus projects into Postgres and build model_int and model.
+
+    Runs dlt into raw, `dbt build` with every test, the load consistency check
+    and the figure gate, then writes results/sql_load/run_record.json, pass or
+    fail. Reads Mongo through the reader login only; never writes to Mongo.
+    """
+    settings = load_settings()
+    typer.echo(load_sql(settings, Path.cwd()))
 
 
 def run(args: Sequence[str] | None = None) -> None:
