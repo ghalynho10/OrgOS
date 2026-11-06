@@ -2,11 +2,11 @@
 
 `run_dbt` starts dbt from the running interpreter with the merged environment
 of `orgos.config` (the owner login and `PGTZ`), after deleting the last
-`target/run_results.json`, so a missing file afterwards means dbt failed before
-running anything. The pure functions read that file: the failed nodes, and a
-summary of every status. `failure_report` adds up to 20 stored rows of each
-failing test, read as the owner, so the message names the link ID, issue key or
-history ID.
+`target/run_results.json`, so a missing file afterwards means dbt stopped before
+finishing, possibly after building some tables. The pure functions read that
+file: the failed nodes, and a summary of every status. `failure_report` adds up
+to 20 stored rows of each failing test, read as the owner, so the message names
+the link ID, issue key or history ID.
 """
 
 from __future__ import annotations
@@ -25,6 +25,8 @@ import psycopg
 from psycopg import sql
 
 from orgos.config import Settings, dbt_subprocess_env
+from orgos.sqlstore import SqlStoreError
+from orgos.sqlstore.record import RUN_RECORD
 
 log = logging.getLogger(__name__)
 
@@ -45,8 +47,8 @@ class Failure:
     relation_name: str | None
 
 
-def run_dbt(settings: Settings, dbt_dir: Path) -> bool:
-    """Run `dbt build` (models, tests and unit tests); True when it passed.
+def run_dbt(settings: Settings, dbt_dir: Path) -> int:
+    """Run `dbt build` (models, tests and unit tests); return dbt's exit code, 0 when it passed.
 
     dbt's own output goes to stderr with the other progress lines.
     """
@@ -66,15 +68,23 @@ def run_dbt(settings: Settings, dbt_dir: Path) -> bool:
     completed = subprocess.run(
         command, env=dbt_subprocess_env(settings), stdout=sys.stderr, check=False
     )
-    return completed.returncode == 0
+    return completed.returncode
 
 
 def read_run_results(dbt_dir: Path) -> Mapping[str, Any] | None:
-    """The parsed `target/run_results.json`, or None when dbt wrote none."""
+    """The parsed `target/run_results.json`, or None when dbt wrote none.
+
+    Raises `SqlStoreError` when the file exists but cannot be read or parsed.
+    """
     path = dbt_dir / RUN_RESULTS
     if not path.exists():
         return None
-    parsed: Mapping[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        parsed: Mapping[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise SqlStoreError(f"Cannot read {path}: {error.strerror}") from None
+    except json.JSONDecodeError as error:
+        raise SqlStoreError(f"{path} is not valid JSON: {error}") from None
     return parsed
 
 
@@ -142,10 +152,15 @@ def stored_rows(
     return columns, cursor.fetchall()
 
 
-def failure_report(run_results: Mapping[str, Any] | None, conn: psycopg.Connection) -> str:
+def failure_report(
+    run_results: Mapping[str, Any] | None, exit_code: int, conn: psycopg.Connection
+) -> str:
     """What failed in a dbt build, with the stored rows of each failing test."""
     if run_results is None:
-        return "dbt failed before running (no target/run_results.json)"
+        return (
+            f"dbt stopped before finishing (exit code {exit_code}, no {RUN_RESULTS}) and may"
+            f" have built some tables; see load_consistency.problems in {RUN_RECORD}"
+        )
     found = failures(run_results)
     rows = {}
     for failure in found:

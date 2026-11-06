@@ -434,6 +434,51 @@ def consistency_problems(latest: str | None, tables: Sequence[TableLoad]) -> tup
     return tuple(problems)
 
 
+# The 12 model_int tables (spec 0006 AC-1) and the 7 model tables (spec 0007 AC-1),
+# the same names as the dbt tests model_int_has_the_12_tables and model_has_the_7_tables.
+EXPECTED_TABLES: tuple[tuple[str, str], ...] = (
+    *(
+        ("model_int", table)
+        for table in (
+            "issue",
+            "project",
+            "person",
+            "fix_version",
+            "in_project",
+            "assigned_to",
+            "reported_by",
+            "created_by",
+            "has_parent",
+            "issue_link",
+            "fixed_in",
+            "logged_time",
+        )
+    ),
+    *(
+        ("model", table)
+        for table in (
+            "issue",
+            "project",
+            "person",
+            "fix_version",
+            "fixed_in",
+            "issue_link",
+            "logged_time",
+        )
+    ),
+)
+
+
+def missing_tables(built: Iterable[tuple[str, str]]) -> tuple[str, ...]:
+    """Each expected model_int or model table that is not among `built`, as a problem (AC-17)."""
+    found = set(built)
+    return tuple(
+        f"{schema}.{table} does not exist"
+        for schema, table in EXPECTED_TABLES
+        if (schema, table) not in found
+    )
+
+
 # The newest completed dlt load: status 0 rows of raw._dlt_loads.
 _LATEST_LOAD_SQL = """
     SELECT load_id FROM raw._dlt_loads WHERE status = 0
@@ -463,13 +508,15 @@ def _table_load(conn: psycopg.Connection, schema: str, table: str, column: str) 
 def load_consistency(conn: psycopg.Connection) -> Consistency:
     """Check that raw and every model_int and model table hold exactly the latest dlt load ID.
 
-    A table with no `load_id` column is named as a problem, not skipped.
+    A table with no `load_id` column is named as a problem, not skipped, and so
+    is each of the 19 expected tables that does not exist.
     """
     latest_row = conn.execute(_LATEST_LOAD_SQL).fetchone()
     latest = str(latest_row[0]) if latest_row else None
     tables = [_table_load(conn, "raw", "jira_issue", "_dlt_load_id")]
     missing_column = []
-    for schema, table in conn.execute(_BUILT_TABLES_SQL).fetchall():
+    built = conn.execute(_BUILT_TABLES_SQL).fetchall()
+    for schema, table in built:
         try:
             tables.append(_table_load(conn, schema, table, "load_id"))
         except psycopg.errors.UndefinedColumn:
@@ -478,5 +525,9 @@ def load_consistency(conn: psycopg.Connection) -> Consistency:
     return Consistency(
         latest_load_id=latest,
         tables=tuple(tables),
-        problems=(*consistency_problems(latest, tables), *missing_column),
+        problems=(
+            *consistency_problems(latest, tables),
+            *missing_column,
+            *missing_tables((schema, table) for schema, table in built),
+        ),
     )

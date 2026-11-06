@@ -5,19 +5,32 @@ corpus (the gate) and in the fixture tests.
 """
 
 import json
+import secrets
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, cast
 
 import psycopg
 import pytest
 
 from orgos.cli import EXIT_CODES, run
-from orgos.config import Settings
+from orgos.config import Settings, load_settings
 from orgos.ingest import IngestError
 from orgos.sqlstore import SqlStoreError
-from orgos.sqlstore.dbt import Failure, failures, format_failures, results_summary
+from orgos.sqlstore.dbt import RUN_RESULTS as RESULTS_FILE
+from orgos.sqlstore.dbt import (
+    Failure,
+    failure_report,
+    failures,
+    format_failures,
+    read_run_results,
+    results_summary,
+    run_dbt,
+)
 from orgos.sqlstore.figures import (
     CORPUS_FILE,
+    EXPECTED_TABLES,
     KNOWN_ANSWERS_RECORD,
     NET_CHECK_SET,
     Consistency,
@@ -28,6 +41,7 @@ from orgos.sqlstore.figures import (
     consistency_problems,
     expected_figures,
     gate_message,
+    missing_tables,
 )
 from orgos.sqlstore.load import _read_json, _StepFailed, summary
 from orgos.sqlstore.record import RunState, build_record
@@ -111,6 +125,40 @@ def test_consistency_fails_with_no_completed_load() -> None:
     assert consistency_problems(None, []) == ("raw._dlt_loads has no completed load",)
 
 
+# covers: AC-17 (a table dbt never built is named, not silently skipped)
+def test_expected_tables_are_the_12_model_int_and_7_model_tables() -> None:
+    schemas = [schema for schema, _ in EXPECTED_TABLES]
+    assert (schemas.count("model_int"), schemas.count("model")) == (12, 7)
+    assert len(set(EXPECTED_TABLES)) == 19
+
+
+def test_missing_tables_is_empty_when_every_table_was_built() -> None:
+    assert missing_tables(EXPECTED_TABLES) == ()
+
+
+def test_missing_tables_names_each_absent_table_in_order() -> None:
+    absent = {("model_int", "has_parent"), ("model", "issue")}
+    built = [table for table in EXPECTED_TABLES if table not in absent]
+    assert missing_tables(built) == (
+        "model_int.has_parent does not exist",
+        "model.issue does not exist",
+    )
+
+
+def test_missing_tables_names_all_19_on_an_empty_database() -> None:
+    problems = missing_tables([])
+    assert len(problems) == 19
+    assert problems[0] == "model_int.issue does not exist"
+    assert problems[-1] == "model.logged_time does not exist"
+
+
+def test_missing_tables_ignores_extra_tables_and_tells_schemas_apart() -> None:
+    # model.has_parent is not model_int.has_parent; an unexpected table is no problem.
+    built = [t for t in EXPECTED_TABLES if t != ("model_int", "has_parent")]
+    built += [("model", "has_parent"), ("model", "scratch")]
+    assert missing_tables(built) == ("model_int.has_parent does not exist",)
+
+
 RUN_RESULTS = {
     "results": [
         {"unique_id": "model.orgos.int_issue", "status": "success", "message": "INSERT 0 3"},
@@ -173,6 +221,91 @@ def test_results_summary_counts_status_per_resource_type() -> None:
         "unit_test": {"pass": 1},
     }
     assert results_summary(None) == {}
+
+
+# covers: AC-13 (a missing results file means dbt wrote none)
+def test_read_run_results_is_none_when_dbt_wrote_no_file(tmp_path: Path) -> None:
+    assert read_run_results(tmp_path) is None
+
+
+def test_read_run_results_parses_the_file(tmp_path: Path) -> None:
+    (tmp_path / RESULTS_FILE).parent.mkdir()
+    (tmp_path / RESULTS_FILE).write_text(json.dumps(RUN_RESULTS), encoding="utf-8")
+    assert read_run_results(tmp_path) == RUN_RESULTS
+
+
+def test_read_run_results_names_a_truncated_file(tmp_path: Path) -> None:
+    (tmp_path / RESULTS_FILE).parent.mkdir()
+    (tmp_path / RESULTS_FILE).write_text('{"results": [', encoding="utf-8")
+    with pytest.raises(SqlStoreError, match=r"run_results\.json is not valid JSON"):
+        read_run_results(tmp_path)
+
+
+def test_read_run_results_names_an_unreadable_file(tmp_path: Path) -> None:
+    # A directory where the file should be: it exists but cannot be read as text.
+    (tmp_path / RESULTS_FILE).mkdir(parents=True)
+    with pytest.raises(SqlStoreError, match=r"Cannot read .*run_results\.json"):
+        read_run_results(tmp_path)
+
+
+# covers: AC-13 as amended (no results file: dbt's exit code, and where to look next)
+@pytest.mark.parametrize("exit_code", [2, -2, 137])
+def test_failure_report_without_results_carries_the_exit_code(exit_code: int) -> None:
+    # The no results branch reads no stored rows, so it needs no connection.
+    report = failure_report(None, exit_code, cast("psycopg.Connection[Any]", None))
+    assert f"exit code {exit_code}," in report
+    assert "dbt stopped before finishing" in report
+    assert "no target/run_results.json" in report
+    assert "may have built some tables" in report
+    assert "load_consistency.problems in results/sql_load/run_record.json" in report
+    assert "before running" not in report
+
+
+@pytest.fixture
+def settings(monkeypatch: pytest.MonkeyPatch) -> Settings:
+    for field in Settings.model_fields.values():
+        monkeypatch.delenv(str(field.validation_alias), raising=False)
+    return load_settings(
+        _env_file=None,
+        POSTGRES_PASSWORD=secrets.token_hex(8),
+        ORGOS_PG_OWNER_PASSWORD=secrets.token_hex(8),
+        ORGOS_PG_READER_PASSWORD=secrets.token_hex(8),
+        MONGO_INITDB_ROOT_PASSWORD=secrets.token_hex(8),
+        ORGOS_MONGO_READER_PASSWORD=secrets.token_hex(8),
+        NEO4J_AUTH=f"neo4j/{secrets.token_hex(8)}",
+    )
+
+
+# covers: AC-13 (an earlier run's file is deleted before dbt starts; the exit code comes back)
+def test_run_dbt_deletes_the_old_results_before_dbt_starts(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old = tmp_path / RESULTS_FILE
+    old.parent.mkdir()
+    old.write_text(json.dumps(RUN_RESULTS), encoding="utf-8")
+    seen: list[bool] = []
+
+    def fake_run(command: list[str], **_: Any) -> subprocess.CompletedProcess[bytes]:
+        seen.append(old.exists())
+        return subprocess.CompletedProcess(command, returncode=137)
+
+    monkeypatch.setattr("orgos.sqlstore.dbt.subprocess.run", fake_run)
+
+    exit_code = run_dbt(settings, tmp_path)
+
+    assert seen == [False]
+    assert exit_code == 137
+    assert read_run_results(tmp_path) is None
+
+
+def test_run_dbt_starts_with_no_old_results(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "orgos.sqlstore.dbt.subprocess.run",
+        lambda command, **_: subprocess.CompletedProcess(command, returncode=0),
+    )
+    assert run_dbt(settings, tmp_path) == 0
 
 
 GIT = {"commit": "abc123", "dirty": False}

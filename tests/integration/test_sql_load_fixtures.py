@@ -37,6 +37,7 @@ from orgos.config import Settings, dbt_subprocess_env
 from orgos.ingest import CORPUS_PROJECTS, IngestError, to_raw_row
 from orgos.ingest.load import COLLECTION, load_raw
 from orgos.mongostore.dump import DATABASE
+from orgos.sqlstore import SqlStoreError
 from orgos.sqlstore.bootstrap import bootstrap
 from orgos.sqlstore.dbt import DBT_ENTRY, failure_report, read_run_results, run_dbt
 from orgos.sqlstore.figures import CORPUS_FILE, KNOWN_ANSWERS_RECORD, load_consistency
@@ -124,12 +125,12 @@ class Build:
 
 def _build(settings: Settings, docs: list[dict[str, Any]], pipelines: Path) -> Build:
     load_id = load_raw(settings.pg_owner_url, (to_raw_row(doc) for doc in docs), pipelines)
-    passed = run_dbt(settings, DBT_DIR)
+    exit_code = run_dbt(settings, DBT_DIR)
     report = ""
-    if not passed:
+    if exit_code != 0:
         with psycopg.connect(settings.pg_conninfo("owner")) as conn:
-            report = failure_report(read_run_results(DBT_DIR), conn)
-    return Build(passed=passed, report=report, load_id=load_id)
+            report = failure_report(read_run_results(DBT_DIR), exit_code, conn)
+    return Build(passed=exit_code == 0, report=report, load_id=load_id)
 
 
 def _dbt(settings: Settings, *args: str) -> subprocess.CompletedProcess[str]:
@@ -204,6 +205,20 @@ def test_a_rerun_leaves_one_load_id_everywhere(fx: Settings, good: tuple[Build, 
     assert consistency.problems == ()
     assert consistency.latest_load_id == second.load_id
     assert len(consistency.tables) == 1 + 12 + 7
+
+
+# covers: spec 0009 AC-17 (a table that does not exist is named, not skipped)
+def test_load_consistency_names_a_table_that_does_not_exist(
+    fx: Settings, good: tuple[Build, Build]
+) -> None:
+    # The drop is rolled back, so the later tests see the good build unchanged.
+    with psycopg.connect(fx.pg_conninfo("owner")) as conn:
+        conn.execute("DROP TABLE model.fix_version CASCADE")
+        consistency = load_consistency(conn)
+        conn.rollback()
+    assert consistency.problems == ("model.fix_version does not exist",)
+    assert len(consistency.tables) == 1 + 12 + 6
+    assert _scalar(fx, "SELECT count(*) FROM model.fix_version") > 0
 
 
 # covers: spec 0009 AC-10, AC-11 (the good fixtures produce the expected rows)
@@ -617,4 +632,93 @@ def test_a_failed_dlt_load_stops_the_command_before_dbt(
             LOAD_IDS_BUILT,
         )
         == before
+    )
+
+
+# The command reaches dbt: clean CLOV documents replace the broken ones above.
+
+
+def _clean_mongo(fx: Settings, mongo: MongoDbContainer) -> Settings:
+    settings = _mongo_settings(fx, mongo)
+    docs = [doc for doc in _fixture_docs() if doc["fields"]["project"]["key"] == "CLOV"]
+    with MongoClient(settings.mongo_uri) as root_client:
+        root_client[DATABASE][COLLECTION].drop()
+        root_client[DATABASE][COLLECTION].insert_many(docs)
+        # The dlt failure test above created the reader with an earlier password.
+        if root_client.admin.command("usersInfo", settings.mongo_reader_user)["users"]:
+            root_client.admin.command("dropUser", settings.mongo_reader_user)
+        root_client.admin.command(
+            "createUser",
+            settings.mongo_reader_user,
+            pwd=settings.mongo_reader_password.get_secret_value(),
+            roles=[{"role": "read", "db": DATABASE}],
+        )
+    return settings
+
+
+def _old_ok_record(root: Path) -> None:
+    # An earlier passing run's record, which a failed run must replace (AC-18).
+    (root / RUN_RECORD).parent.mkdir(parents=True, exist_ok=True)
+    (root / RUN_RECORD).write_text(json.dumps({"status": "ok"}), encoding="utf-8")
+
+
+def _record(root: Path) -> dict[str, Any]:
+    record: dict[str, Any] = json.loads((root / RUN_RECORD).read_text(encoding="utf-8"))
+    return record
+
+
+# covers: spec 0009 AC-18 (a Ctrl+C after preflight writes a fail record, then is raised again)
+def test_a_ctrl_c_during_dbt_writes_a_fail_record_and_is_raised_again(
+    fx: Settings, own_mongo: MongoDbContainer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = _clean_mongo(fx, own_mongo)
+    root = _load_root(tmp_path)
+    _old_ok_record(root)
+
+    # subprocess.run stops dbt on Ctrl+C, then raises KeyboardInterrupt.
+    def interrupted(settings: Settings, dbt_dir: Path) -> int:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr("orgos.sqlstore.load.run_dbt", interrupted)
+
+    with pytest.raises(KeyboardInterrupt):
+        load_sql(settings, root)
+
+    record = _record(root)
+    assert (record["status"], record["failed_step"]) == ("fail", "dbt")
+    assert record["dlt_load_id"] == _scalar(fx, "SELECT DISTINCT _dlt_load_id FROM raw.jira_issue")
+    assert record["load_consistency"] is None
+
+
+# covers: spec 0009 AC-17, AC-18 (the consistency result is recorded before the results are read)
+def test_an_unreadable_results_file_still_records_the_load_consistency(
+    fx: Settings, own_mongo: MongoDbContainer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = _clean_mongo(fx, own_mongo)
+    root = _load_root(tmp_path)
+    # Its own dbt folder, so the truncated file never lands in the repo's dbt/target.
+    (root / "dbt").unlink()
+    _old_ok_record(root)
+
+    def truncated(settings: Settings, dbt_dir: Path) -> int:
+        (dbt_dir / "target").mkdir(parents=True)
+        (dbt_dir / "target" / "run_results.json").write_text('{"results": [', encoding="utf-8")
+        return 0
+
+    monkeypatch.setattr("orgos.sqlstore.load.run_dbt", truncated)
+
+    with pytest.raises(SqlStoreError, match=r"run_results\.json is not valid JSON"):
+        load_sql(settings, root)
+
+    record = _record(root)
+    assert (record["status"], record["failed_step"]) == ("fail", "dbt")
+    assert record["dbt_tests"] == {}
+    consistency = record["load_consistency"]
+    assert consistency["latest_load_id"] == record["dlt_load_id"]
+    assert consistency["tables_checked"] == 1 + 12 + 7
+    # dbt did not run, so every model_int and model table still holds an older load.
+    assert consistency["ok"] is False
+    assert len(consistency["problems"]) == 12 + 7
+    assert record["row_counts"]["raw.jira_issue"] == sum(
+        1 for doc in _fixture_docs() if doc["fields"]["project"]["key"] == "CLOV"
     )

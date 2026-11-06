@@ -129,8 +129,8 @@ def _write(root: Path, state: RunState, failed_step: str | None) -> dict[str, An
 
 
 class _StepFailed(Exception):
-    # A step's error with the step and what the run had learned before it.
-    def __init__(self, step: str, state: RunState, error: Exception) -> None:
+    # A step's error (or Ctrl+C) with the step and what the run had learned before it.
+    def __init__(self, step: str, state: RunState, error: BaseException) -> None:
         super().__init__(str(error))
         self.step = step
         self.state = state
@@ -159,19 +159,22 @@ def _run(settings: Settings, root: Path, inputs: Inputs) -> RunState:
         log.info("raw.jira_issue holds all %s documents", f"{read.count:,}")
 
         step = "dbt"
-        passed = run_dbt(settings, root / DBT_DIR)
-        run_results = read_run_results(root / DBT_DIR)
+        exit_code = run_dbt(settings, root / DBT_DIR)
         with psycopg.connect(owner) as conn:
-            # Checked whether dbt passed or not (AC-17), so the record shows it.
+            # Checked whether dbt passed or not (AC-17), and before the run
+            # results are read, so the record shows it even when they are unreadable.
             consistency = load_consistency(conn)
             state = replace(
                 state,
-                dbt_summary=results_summary(run_results),
                 consistency=consistency,
                 row_counts={table.table: table.rows for table in consistency.tables},
             )
-            if not passed:
-                raise SqlStoreError("dbt build failed:\n" + failure_report(run_results, conn))
+            run_results = read_run_results(root / DBT_DIR)
+            state = replace(state, dbt_summary=results_summary(run_results))
+            if exit_code != 0:
+                raise SqlStoreError(
+                    "dbt build failed:\n" + failure_report(run_results, exit_code, conn)
+                )
 
             step = "load_consistency"
             if not consistency.ok:
@@ -196,7 +199,7 @@ def _run(settings: Settings, root: Path, inputs: Inputs) -> RunState:
         message = gate_message(results)
         if message is not None:
             raise SqlStoreError(message)
-    except (IngestError, SqlStoreError, psycopg.Error) as error:
+    except (IngestError, SqlStoreError, psycopg.Error, KeyboardInterrupt) as error:
         raise _StepFailed(step, state, error) from error
     log.info("figure gate passed: %s figures match", len(results))
     return state
@@ -208,13 +211,15 @@ def load_sql(settings: Settings, root: Path) -> str:
     Raises `IngestError` for the Mongo read, the raw shape, the dlt load and
     the raw count, and `SqlStoreError` for preflight, dbt, the load
     consistency check and the figure gate. After preflight the run record is
-    written either way.
+    written either way, and a Ctrl+C is raised again once the record says `fail`.
     """
     inputs = preflight(settings, root)
     try:
         state = _run(settings, root, inputs)
     except _StepFailed as failed:
         _write(root, failed.state, failed.step)
+        if isinstance(failed.error, KeyboardInterrupt):
+            raise failed.error from None
         raise failed.named() from None
     return summary(_write(root, state, None))
 
