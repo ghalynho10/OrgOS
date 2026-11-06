@@ -25,11 +25,14 @@ models:
       +contract:
         enforced: true
     # The served SQL tables, the only schema the agent's reader role can see.
+    # The hook runs after the table swap, so every build leaves fresh planner
+    # statistics before any query (spec 0007 AC-17).
     model:
       +schema: model
       +materialized: table
       +contract:
         enforced: true
+      +post-hook: "analyze {{ this }}"
       +grants:
         select: ["{{ env_var('ORGOS_PG_READER_USER', 'orgos_reader') }}"]
 
