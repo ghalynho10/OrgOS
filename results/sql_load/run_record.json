@@ -1,12 +1,12 @@
 {
-  "time": "2026-11-06T01:32:32Z",
+  "time": "2026-11-06T05:38:39Z",
   "status": "ok",
   "failed_step": null,
   "git": {
-    "commit": "0a78bbf69cc2a8338646b9de6cf646f6a5d03a53",
+    "commit": "dac484c5396aff34760b8647554acb11b088c516",
     "dirty": false
   },
-  "dlt_load_id": "1793928422.009851",
+  "dlt_load_id": "1793943182.9991832",
   "versions": {
     "python": "3.12.12",
     "dlt": "1.31.0",
@@ -17,7 +17,12 @@
   },
   "row_counts": {
     "raw.jira_issue": 87839,
+    "model.fix_version": 1846,
+    "model.fixed_in": 40833,
     "model.issue": 87835,
+    "model.issue_link": 21721,
+    "model.logged_time": 7995,
+    "model.person": 16942,
     "model.project": 7,
     "model_int.assigned_to": 24659,
     "model_int.created_by": 87501,
@@ -325,16 +330,16 @@
   ],
   "load_consistency": {
     "ok": true,
-    "latest_load_id": "1793928422.009851",
-    "tables_checked": 15,
+    "latest_load_id": "1793943182.9991832",
+    "tables_checked": 20,
     "problems": []
   },
   "dbt_tests": {
     "model": {
-      "success": 18
+      "success": 23
     },
     "test": {
-      "pass": 52
+      "pass": 73
     },
     "unit_test": {
       "pass": 3
