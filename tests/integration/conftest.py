@@ -7,6 +7,7 @@ Image tags match `docker-compose.yml`.
 
 import os
 from collections.abc import Iterator
+from contextlib import contextmanager
 
 # Docker Desktop's host socket (~/.docker/run/docker.sock) cannot be mounted
 # into the cleanup container; the path inside the Docker VM can. Set before
@@ -89,7 +90,21 @@ def neo4j_read_only() -> Iterator[Neo4jContainer]:
 
 @pytest.fixture(scope="session")
 def mongo() -> Iterator[MongoDbContainer]:
-    """Mongo with root auth on, like the compose service.
+    """Mongo with root auth on, like the compose service, shared by the session."""
+    with mongo_container() as container:
+        yield container
+
+
+@pytest.fixture(scope="module")
+def own_mongo() -> Iterator[MongoDbContainer]:
+    """A Mongo for one module, so its writes cannot meet the restore tests' state."""
+    with mongo_container() as container:
+        yield container
+
+
+@contextmanager
+def mongo_container() -> Iterator[MongoDbContainer]:
+    """Start Mongo with root auth on and wait until the root login works.
 
     The image's init step logs "waiting for connections" for a local only
     server first, so wait until the root login works from the host.
