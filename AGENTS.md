@@ -76,6 +76,7 @@ If the same problem persists after one corrective prompt, stop and run /recover 
 
 ## Context files
 
+- [dbt/AGENTS.md](dbt/AGENTS.md): the dbt project, the 12 `model_int` and 7 `model` table names, and its build gotchas
 <!-- Nested AGENTS.md files are listed here as they are created -->
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._
