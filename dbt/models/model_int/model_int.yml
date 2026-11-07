@@ -1,0 +1,462 @@
+version: 2
+
+# The 12 tables of model_int (spec 0006), with the contract enforced at folder
+# level in dbt_project.yml. Every column and type is declared here; spec 0008
+# reads this file. Models are named int_<table> because model has tables of the
+# same names; each alias is the exact table name of spec 0006. `not null` is on
+# every primary key, edge column, source_doc_id, load_id and the columns of
+# spec 0009 AC-10; every other column stays nullable. Primary keys have no
+# name (spec 0007 AC-11).
+
+models:
+  - name: int_issue
+    description: One row per issue key of the corpus after the collapse (spec 0006 AC-20, AC-26).
+    config:
+      alias: issue
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: issue_key
+    columns:
+      - name: issue_key
+        data_type: text
+        constraints:
+          - type: primary_key
+        data_tests:
+          - unique
+      - name: created_at
+        data_type: timestamptz
+        constraints:
+          - type: not_null
+      - name: resolution_date
+        data_type: timestamptz
+      - name: due_at
+        data_type: timestamptz
+      - name: time_original_estimate_s
+        data_type: bigint
+      - name: resolution_name
+        data_type: text
+      - name: issue_type_name
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: priority_name
+        data_type: text
+      - name: status_name
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: int_project
+    description: The 7 corpus projects (spec 0006 AC-26).
+    config:
+      alias: project
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: project_key
+    columns:
+      - name: project_key
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: project_name
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: int_person
+    description: >
+      Every person in a role object and every time entry author (spec 0006
+      AC-30); login_name and is_active are null for a history only author.
+    config:
+      alias: person
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: person_key
+    columns:
+      - name: person_key
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: login_name
+        data_type: text
+      - name: is_active
+        data_type: boolean
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: int_in_project
+    description: Issue to its current project; exactly one per issue (spec 0006 AC-6, AC-7).
+    config:
+      alias: in_project
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: edge_id
+      - edge_type_equals:
+          arguments:
+            expected: "'in_project'"
+      - unique:
+          column_name: src_id
+      - relationships:
+          column_name: src_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+      - relationships:
+          column_name: dst_id
+          arguments:
+            to: ref('int_project')
+            field: project_key
+    columns: &edge_columns
+      - name: edge_id
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: src_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: dst_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: edge_type
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: int_assigned_to
+    description: Issue to its assignee, at most one (spec 0006 AC-6, AC-8).
+    config:
+      alias: assigned_to
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: edge_id
+      - edge_type_equals:
+          arguments:
+            expected: "'assigned_to'"
+      - unique:
+          column_name: src_id
+      - relationships:
+          column_name: src_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+      - relationships:
+          column_name: dst_id
+          arguments:
+            to: ref('int_person')
+            field: person_key
+    columns: *edge_columns
+
+  - name: int_reported_by
+    description: Issue to its reporter, at most one (spec 0006 AC-6, AC-8).
+    config:
+      alias: reported_by
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: edge_id
+      - edge_type_equals:
+          arguments:
+            expected: "'reported_by'"
+      - unique:
+          column_name: src_id
+      - relationships:
+          column_name: src_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+      - relationships:
+          column_name: dst_id
+          arguments:
+            to: ref('int_person')
+            field: person_key
+    columns: *edge_columns
+
+  - name: int_created_by
+    description: Issue to its creator, at most one (spec 0006 AC-6, AC-8).
+    config:
+      alias: created_by
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: edge_id
+      - edge_type_equals:
+          arguments:
+            expected: "'created_by'"
+      - unique:
+          column_name: src_id
+      - relationships:
+          column_name: src_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+      - relationships:
+          column_name: dst_id
+          arguments:
+            to: ref('int_person')
+            field: person_key
+    columns: *edge_columns
+
+  - name: int_has_parent
+    description: Child issue to parent issue, both rows of issue (spec 0006 AC-12, AC-13).
+    config:
+      alias: has_parent
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: edge_id
+      - edge_type_equals:
+          arguments:
+            expected: "'has_parent'"
+      - unique:
+          column_name: src_id
+      - relationships:
+          column_name: src_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+      - relationships:
+          column_name: dst_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+    columns: *edge_columns
+
+  - name: int_fix_version
+    description: Every fix version found on corpus issues (spec 0006).
+    config:
+      alias: fix_version
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: version_id
+    columns:
+      - name: version_id
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: version_name
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: is_released
+        data_type: boolean
+        constraints:
+          - type: not_null
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: int_fixed_in
+    description: Issue to each of its fix versions (spec 0006).
+    config:
+      alias: fixed_in
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: edge_id
+      - edge_type_equals:
+          arguments:
+            expected: "'fixed_in'"
+      - relationships:
+          column_name: src_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+      - relationships:
+          column_name: dst_id
+          arguments:
+            to: ref('int_fix_version')
+            field: version_id
+    columns: *edge_columns
+
+  - name: int_issue_link
+    description: >
+      One row per link ID with both ends in issue, src_id on the outward side
+      (spec 0006 AC-9 to AC-13); edge_type is the link type (AC-11).
+    config:
+      alias: issue_link
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: edge_id
+      - edge_type_equals:
+          arguments:
+            expected: link_type_name
+      - relationships:
+          column_name: src_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+      - relationships:
+          column_name: dst_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+    columns:
+      - name: edge_id
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: src_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: dst_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: edge_type
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: link_id
+        data_type: text
+        constraints:
+          - type: not_null
+        data_tests:
+          - unique
+      - name: link_type_name
+        data_type: text
+        constraints:
+          - type: not_null
+        data_tests:
+          # The 17 link types of spec 0006 AC-11; an 18th fails the build.
+          - accepted_values:
+              arguments:
+                values:
+                  - Blocker
+                  - Bonfire Testing
+                  - Cause
+                  - Cloners
+                  - Depends
+                  - Derived
+                  - Detail
+                  - Duplicate
+                  - Follows
+                  - Part
+                  - Reference
+                  - Regression
+                  - Relate
+                  - Related
+                  - Resolve
+                  - Split
+                  - Supersession
+      - name: outward_label
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: inward_label
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: int_logged_time
+    description: >
+      One row per time entry, person to issue, the signed amount in seconds
+      (spec 0006 AC-14 to AC-16).
+    config:
+      alias: logged_time
+    data_tests:
+      - no_empty_strings:
+          arguments:
+            key_column: edge_id
+      - edge_type_equals:
+          arguments:
+            expected: "'logged_time'"
+      - relationships:
+          column_name: src_id
+          arguments:
+            to: ref('int_person')
+            field: person_key
+      - relationships:
+          column_name: dst_id
+          arguments:
+            to: ref('int_issue')
+            field: issue_key
+    columns:
+      - name: edge_id
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: src_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: dst_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: edge_type
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: history_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: seconds
+        data_type: bigint
+        constraints:
+          - type: not_null
+      - name: logged_at
+        data_type: timestamptz
+        constraints:
+          - type: not_null
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null

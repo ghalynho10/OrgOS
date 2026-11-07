@@ -1,0 +1,393 @@
+version: 2
+
+# The 7 served tables of spec 0007, with the contract enforced at folder level
+# in dbt_project.yml. Column order is the spec's order, source_doc_id and
+# load_id last (AC-4). Keys have no name (AC-11); foreign keys use the ref()
+# form so dbt builds the referenced table first (AC-12). `not null` follows
+# the AC-14 list exactly, even where model_int is stricter. The 10 indexes are
+# the AC-16 list. Each table is compared row by row with its model_int source
+# (AC-20), and model.issue with each folded edge table (AC-21).
+
+models:
+  - name: project
+    description: The 7 corpus projects, a copy of model_int.project.
+    data_tests:
+      - matches_model_int:
+          name: project_matches_model_int
+          arguments:
+            int_model: ref('int_project')
+            columns:
+              project_key: project_key
+              project_name: project_name
+              source_doc_id: source_doc_id
+              load_id: load_id
+    columns:
+      - name: project_key
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: project_name
+        data_type: text
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: person
+    description: Every person in a role or as a time entry author, a copy of model_int.person.
+    data_tests:
+      - matches_model_int:
+          name: person_matches_model_int
+          arguments:
+            int_model: ref('int_person')
+            columns:
+              person_key: person_key
+              login_name: login_name
+              is_active: is_active
+              source_doc_id: source_doc_id
+              load_id: load_id
+    columns:
+      - name: person_key
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: login_name
+        data_type: text
+      - name: is_active
+        data_type: boolean
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: fix_version
+    description: Every fix version found on corpus issues, a copy of model_int.fix_version.
+    data_tests:
+      - matches_model_int:
+          name: fix_version_matches_model_int
+          arguments:
+            int_model: ref('int_fix_version')
+            columns:
+              version_id: version_id
+              version_name: version_name
+              is_released: is_released
+              source_doc_id: source_doc_id
+              load_id: load_id
+    columns:
+      - name: version_id
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: version_name
+        data_type: text
+      - name: is_released
+        data_type: boolean
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: issue
+    description: One row per corpus issue, its five to one relationships folded in as key columns.
+    config:
+      indexes:
+        - columns: [project_key]
+        - columns: [assignee_key]
+        - columns: [reporter_key]
+        - columns: [creator_key]
+        - columns: [parent_key]
+    data_tests:
+      - matches_model_int:
+          name: issue_matches_model_int
+          arguments:
+            int_model: ref('int_issue')
+            columns:
+              issue_key: issue_key
+              created_at: created_at
+              resolution_date: resolution_date
+              due_at: due_at
+              time_original_estimate_s: time_original_estimate_s
+              resolution_name: resolution_name
+              issue_type_name: issue_type_name
+              priority_name: priority_name
+              status_name: status_name
+              source_doc_id: source_doc_id
+              load_id: load_id
+      - matches_model_int:
+          name: issue_project_key_matches_in_project
+          arguments:
+            int_model: ref('int_in_project')
+            served_where: project_key is not null
+            columns:
+              "'in_project:' || issue_key": edge_id
+              issue_key: src_id
+              project_key: dst_id
+      - matches_model_int:
+          name: issue_assignee_key_matches_assigned_to
+          arguments:
+            int_model: ref('int_assigned_to')
+            served_where: assignee_key is not null
+            columns:
+              "'assigned_to:' || issue_key": edge_id
+              issue_key: src_id
+              assignee_key: dst_id
+      - matches_model_int:
+          name: issue_reporter_key_matches_reported_by
+          arguments:
+            int_model: ref('int_reported_by')
+            served_where: reporter_key is not null
+            columns:
+              "'reported_by:' || issue_key": edge_id
+              issue_key: src_id
+              reporter_key: dst_id
+      - matches_model_int:
+          name: issue_creator_key_matches_created_by
+          arguments:
+            int_model: ref('int_created_by')
+            served_where: creator_key is not null
+            columns:
+              "'created_by:' || issue_key": edge_id
+              issue_key: src_id
+              creator_key: dst_id
+      - matches_model_int:
+          name: issue_parent_key_matches_has_parent
+          arguments:
+            int_model: ref('int_has_parent')
+            served_where: parent_key is not null
+            columns:
+              "'has_parent:' || issue_key": edge_id
+              issue_key: src_id
+              parent_key: dst_id
+    columns:
+      - name: issue_key
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: created_at
+        data_type: timestamptz
+      - name: resolution_date
+        data_type: timestamptz
+      - name: due_at
+        data_type: timestamptz
+      - name: time_original_estimate_s
+        data_type: bigint
+      - name: resolution_name
+        data_type: text
+      - name: issue_type_name
+        data_type: text
+      - name: priority_name
+        data_type: text
+      - name: status_name
+        data_type: text
+      - name: project_key
+        data_type: text
+        constraints:
+          - type: not_null
+          - type: foreign_key
+            to: ref('project')
+            to_columns: [project_key]
+      - name: assignee_key
+        data_type: text
+        constraints:
+          - type: foreign_key
+            to: ref('person')
+            to_columns: [person_key]
+      - name: reporter_key
+        data_type: text
+        constraints:
+          - type: foreign_key
+            to: ref('person')
+            to_columns: [person_key]
+      - name: creator_key
+        data_type: text
+        constraints:
+          - type: foreign_key
+            to: ref('person')
+            to_columns: [person_key]
+      # No declared foreign key: a self reference breaks dbt's build and swap
+      # (AC-13), so a test checks it instead.
+      - name: parent_key
+        data_type: text
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('issue')
+                field: issue_key
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: fixed_in
+    description: Issue to each of its fix versions, model_int.fixed_in with plain names.
+    config:
+      indexes:
+        - columns: [version_id]
+    constraints:
+      - type: primary_key
+        columns: [issue_key, version_id]
+    data_tests:
+      - matches_model_int:
+          name: fixed_in_matches_model_int
+          arguments:
+            int_model: ref('int_fixed_in')
+            columns:
+              "'fixed_in:' || issue_key || ':' || version_id": edge_id
+              issue_key: src_id
+              version_id: dst_id
+              source_doc_id: source_doc_id
+              load_id: load_id
+    columns:
+      - name: issue_key
+        data_type: text
+        constraints:
+          - type: not_null
+          - type: foreign_key
+            to: ref('issue')
+            to_columns: [issue_key]
+      - name: version_id
+        data_type: text
+        constraints:
+          - type: not_null
+          - type: foreign_key
+            to: ref('fix_version')
+            to_columns: [version_id]
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: issue_link
+    description: >
+      One row per link with both ends in the corpus. A row reads
+      "from_issue_key outward_label to_issue_key" (spec 0007 AC-6).
+    config:
+      indexes:
+        - columns: [from_issue_key]
+        - columns: [to_issue_key]
+    data_tests:
+      - matches_model_int:
+          name: issue_link_matches_model_int
+          arguments:
+            int_model: ref('int_issue_link')
+            columns:
+              "'issue_link:' || link_id": edge_id
+              link_id: link_id
+              from_issue_key: src_id
+              to_issue_key: dst_id
+              link_type_name: link_type_name
+              outward_label: outward_label
+              inward_label: inward_label
+              source_doc_id: source_doc_id
+              load_id: load_id
+    columns:
+      - name: link_id
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: from_issue_key
+        data_type: text
+        constraints:
+          - type: not_null
+          - type: foreign_key
+            to: ref('issue')
+            to_columns: [issue_key]
+      - name: to_issue_key
+        data_type: text
+        constraints:
+          - type: not_null
+          - type: foreign_key
+            to: ref('issue')
+            to_columns: [issue_key]
+      - name: link_type_name
+        data_type: text
+      - name: outward_label
+        data_type: text
+      - name: inward_label
+        data_type: text
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null
+
+  - name: logged_time
+    description: >
+      One row per time entry with its signed seconds; hours count only
+      seconds > 0, applied at query time (spec 0005 AC-22).
+    config:
+      indexes:
+        - columns: [person_key]
+        - columns: [issue_key]
+    data_tests:
+      - matches_model_int:
+          name: logged_time_matches_model_int
+          arguments:
+            int_model: ref('int_logged_time')
+            columns:
+              "'logged_time:' || history_id": edge_id
+              history_id: history_id
+              person_key: src_id
+              issue_key: dst_id
+              seconds: seconds
+              logged_at: logged_at
+              source_doc_id: source_doc_id
+              load_id: load_id
+    columns:
+      - name: history_id
+        data_type: text
+        constraints:
+          - type: primary_key
+      - name: person_key
+        data_type: text
+        constraints:
+          - type: not_null
+          - type: foreign_key
+            to: ref('person')
+            to_columns: [person_key]
+      - name: issue_key
+        data_type: text
+        constraints:
+          - type: not_null
+          - type: foreign_key
+            to: ref('issue')
+            to_columns: [issue_key]
+      - name: seconds
+        data_type: bigint
+        constraints:
+          - type: not_null
+      - name: logged_at
+        data_type: timestamptz
+        constraints:
+          - type: not_null
+      - name: source_doc_id
+        data_type: text
+        constraints:
+          - type: not_null
+      - name: load_id
+        data_type: text
+        constraints:
+          - type: not_null

@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: >
+      The faithful copy of the 7 corpus projects that `orgos load sql` writes
+      with dlt (spec 0009 AC-3). Every Mongo document is one row, duplicate
+      copies included; dbt never edits it.
+    tables:
+      - name: jira_issue
+        description: One row per Mongo document of the corpus, `fields` and `changelog` kept whole.
+        columns:
+          - name: mongo_id
+            description: The Mongo `_id` as 24 character hex text.
+          - name: _dlt_load_id
+            description: The dlt load that wrote the row; one value after every replace.

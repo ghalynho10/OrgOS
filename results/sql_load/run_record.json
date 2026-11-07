@@ -1,0 +1,348 @@
+{
+  "time": "2026-11-06T22:05:01Z",
+  "status": "ok",
+  "failed_step": null,
+  "git": {
+    "commit": "2ec13c60aa5e93976d596a9859c7ed95539a15c1",
+    "dirty": false
+  },
+  "dlt_load_id": "1794002355.703372",
+  "versions": {
+    "python": "3.12.12",
+    "dlt": "1.31.0",
+    "dbt-core": "1.12.6",
+    "dbt-postgres": "1.11.0",
+    "psycopg": "3.3.6",
+    "pymongo": "4.19.0"
+  },
+  "row_counts": {
+    "raw.jira_issue": 87839,
+    "model.fix_version": 1846,
+    "model.fixed_in": 40833,
+    "model.issue": 87835,
+    "model.issue_link": 21721,
+    "model.logged_time": 7995,
+    "model.person": 16942,
+    "model.project": 7,
+    "model_int.assigned_to": 24659,
+    "model_int.created_by": 87501,
+    "model_int.fix_version": 1846,
+    "model_int.fixed_in": 40833,
+    "model_int.has_parent": 1181,
+    "model_int.in_project": 87835,
+    "model_int.issue": 87835,
+    "model_int.issue_link": 21721,
+    "model_int.logged_time": 7995,
+    "model_int.person": 16942,
+    "model_int.project": 7,
+    "model_int.reported_by": 86895
+  },
+  "figures": [
+    {
+      "name": "documents in raw",
+      "expected": 87839,
+      "found": 87839,
+      "ok": true,
+      "source": "spec 0006 line 190; Mongo count (AC-5)"
+    },
+    {
+      "name": "issue rows",
+      "expected": 87835,
+      "found": 87835,
+      "ok": true,
+      "source": "spec 0006 AC-26 and line 190"
+    },
+    {
+      "name": "project rows",
+      "expected": 7,
+      "found": 7,
+      "ok": true,
+      "source": "spec 0006 AC-26"
+    },
+    {
+      "name": "staged links by link ID",
+      "expected": 43462,
+      "found": 43462,
+      "ok": true,
+      "source": "spec 0006 AC-13 and line 190"
+    },
+    {
+      "name": "kept links",
+      "expected": 21721,
+      "found": 21721,
+      "ok": true,
+      "source": "spec 0006 AC-13 and line 190"
+    },
+    {
+      "name": "dropped links",
+      "expected": 21741,
+      "found": 21741,
+      "ok": true,
+      "source": "spec 0006 AC-13 and line 190"
+    },
+    {
+      "name": "links pointing at a corpus prefix key with no issue",
+      "expected": 1121,
+      "found": 1121,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "positive time entries",
+      "expected": 7923,
+      "found": 7923,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "entries below 0",
+      "expected": 70,
+      "found": 70,
+      "ok": true,
+      "source": "spec 0006 AC-15; eval/data-description.md"
+    },
+    {
+      "name": "seconds of entries below 0",
+      "expected": -1356720,
+      "found": -1356720,
+      "ok": true,
+      "source": "spec 0006 AC-15; eval/data-description.md"
+    },
+    {
+      "name": "entries with no author",
+      "expected": 0,
+      "found": 0,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "empty strings in used columns",
+      "expected": 0,
+      "found": 0,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "kept links on one document only",
+      "expected": 0,
+      "found": 0,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "self links",
+      "expected": 0,
+      "found": 0,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "link entries with neither side",
+      "expected": 0,
+      "found": 0,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "persons with two values",
+      "expected": 0,
+      "found": 0,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "projects with two values",
+      "expected": 0,
+      "found": 0,
+      "ok": true,
+      "source": "spec 0006 line 190"
+    },
+    {
+      "name": "positive seconds per project",
+      "expected": {
+        "CRUC": 30572460,
+        "JRASERVER": 20767500,
+        "BAM": 12835800,
+        "FE": 10095420,
+        "CLOUD": 7875960,
+        "CWD": 6423180,
+        "CLOV": 4530660
+      },
+      "found": {
+        "BAM": 12835800,
+        "CLOUD": 7875960,
+        "CLOV": 4530660,
+        "CRUC": 30572460,
+        "CWD": 6423180,
+        "FE": 10095420,
+        "JRASERVER": 20767500
+      },
+      "ok": true,
+      "source": "file: spikes/0001-time-data-coverage/results/corpus.json"
+    },
+    {
+      "name": "distinct persons per project",
+      "expected": {
+        "CRUC": 46,
+        "JRASERVER": 53,
+        "BAM": 23,
+        "FE": 41,
+        "CLOUD": 14,
+        "CWD": 17,
+        "CLOV": 4
+      },
+      "found": {
+        "BAM": 23,
+        "CLOUD": 14,
+        "CLOV": 4,
+        "CRUC": 46,
+        "CWD": 17,
+        "FE": 41,
+        "JRASERVER": 53
+      },
+      "ok": true,
+      "source": "file: spikes/0001-time-data-coverage/results/corpus.json"
+    },
+    {
+      "name": "flagged accounts",
+      "expected": [],
+      "found": [],
+      "ok": true,
+      "source": "spec 0006 AC-17; compared with the known answers record"
+    },
+    {
+      "name": "collapsed keys",
+      "expected": {
+        "BAM-11750": {
+          "kept": "61d5bb3df4d395ee2217f3b5",
+          "dropped": [
+            "61d5bb3df4d395ee2217f3b6"
+          ]
+        },
+        "CWD-203": {
+          "kept": "61d5908cf4d395ee22161b0d",
+          "dropped": [
+            "61d5908cf4d395ee22161b0e"
+          ]
+        },
+        "JRASERVER-15889": {
+          "kept": "61d5822af4d395ee22154435",
+          "dropped": [
+            "61d5822af4d395ee22154436"
+          ]
+        },
+        "JRASERVER-40042": {
+          "kept": "61d57b35f4d395ee2214faf7",
+          "dropped": [
+            "61d57b35f4d395ee2214faf8"
+          ]
+        }
+      },
+      "found": {
+        "BAM-11750": {
+          "kept": "61d5bb3df4d395ee2217f3b5",
+          "dropped": [
+            "61d5bb3df4d395ee2217f3b6"
+          ]
+        },
+        "CWD-203": {
+          "kept": "61d5908cf4d395ee22161b0d",
+          "dropped": [
+            "61d5908cf4d395ee22161b0e"
+          ]
+        },
+        "JRASERVER-15889": {
+          "kept": "61d5822af4d395ee22154435",
+          "dropped": [
+            "61d5822af4d395ee22154436"
+          ]
+        },
+        "JRASERVER-40042": {
+          "kept": "61d57b35f4d395ee2214faf7",
+          "dropped": [
+            "61d57b35f4d395ee2214faf8"
+          ]
+        }
+      },
+      "ok": true,
+      "source": "file: results/known_answers/run_record.json, collapsed_documents"
+    },
+    {
+      "name": "net check set",
+      "expected": [
+        "FE-4996"
+      ],
+      "found": [
+        "FE-4996"
+      ],
+      "ok": true,
+      "source": "spec 0005 AC-27, spec 0006 AC-33"
+    },
+    {
+      "name": "net check set of the known answers",
+      "expected": [
+        "FE-4996"
+      ],
+      "found": [
+        "FE-4996"
+      ],
+      "ok": true,
+      "source": "spec 0005 AC-27; compared with results/known_answers/run_record.json reconciliation"
+    }
+  ],
+  "collapsed_keys": {
+    "BAM-11750": {
+      "kept": "61d5bb3df4d395ee2217f3b5",
+      "dropped": [
+        "61d5bb3df4d395ee2217f3b6"
+      ]
+    },
+    "CWD-203": {
+      "kept": "61d5908cf4d395ee22161b0d",
+      "dropped": [
+        "61d5908cf4d395ee22161b0e"
+      ]
+    },
+    "JRASERVER-15889": {
+      "kept": "61d5822af4d395ee22154435",
+      "dropped": [
+        "61d5822af4d395ee22154436"
+      ]
+    },
+    "JRASERVER-40042": {
+      "kept": "61d57b35f4d395ee2214faf7",
+      "dropped": [
+        "61d57b35f4d395ee2214faf8"
+      ]
+    }
+  },
+  "dropped_links_per_project": {
+    "BAM": 127,
+    "CLOUD": 390,
+    "CLOV": 3,
+    "CRUC": 39,
+    "CWD": 373,
+    "FE": 119,
+    "JRASERVER": 20690
+  },
+  "net_check_set": [
+    "FE-4996"
+  ],
+  "load_consistency": {
+    "ok": true,
+    "latest_load_id": "1794002355.703372",
+    "tables_checked": 20,
+    "problems": []
+  },
+  "dbt_tests": {
+    "model": {
+      "success": 23
+    },
+    "test": {
+      "pass": 73
+    },
+    "unit_test": {
+      "pass": 3
+    }
+  }
+}

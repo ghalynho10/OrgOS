@@ -8,14 +8,20 @@ is never written twice.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
-from urllib.parse import quote_plus
+from urllib.parse import quote, quote_plus
 
 from psycopg.conninfo import make_conninfo
 from pydantic import Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_FILE = Path(".env")
+
+# The session time zone of every dbt build (spec 0009 AC-14). Deliberately not
+# UTC, with a half hour offset, so a timestamp that silently takes the session
+# zone shows up in the tests. A singular dbt test fails under any other zone.
+DBT_TIMEZONE = "America/St_Johns"
 
 
 class ConfigError(Exception):
@@ -125,6 +131,16 @@ class Settings(BaseSettings):
             password=password.get_secret_value(),
         )
 
+    @property
+    def pg_owner_url(self) -> str:
+        """The owner connection URL dlt receives as credentials, user and password quoted."""
+        user = quote(self.pg_owner_user, safe="")
+        password = quote(self.pg_owner_password.get_secret_value(), safe="")
+        return (
+            f"postgresql://{user}:{password}@{self.pg_host}:{self.pg_port}/"
+            f"{quote(self.pg_database, safe='')}"
+        )
+
     def dbt_env(self) -> dict[str, str]:
         """Environment variables `dbt/profiles.yml` reads."""
         return {
@@ -135,6 +151,15 @@ class Settings(BaseSettings):
             "ORGOS_PG_OWNER_PASSWORD": self.pg_owner_password.get_secret_value(),
             "ORGOS_PG_READER_USER": self.pg_reader_user,
         }
+
+
+def dbt_subprocess_env(settings: Settings) -> dict[str, str]:
+    """The environment for a dbt subprocess: ours, then `settings.dbt_env()`, then `PGTZ`.
+
+    `PGTZ` is set last, over any inherited value, so every dbt session runs in
+    `DBT_TIMEZONE` (spec 0009 AC-14 and AC-21).
+    """
+    return {**os.environ, **settings.dbt_env(), "PGTZ": DBT_TIMEZONE}
 
 
 def _absent_env_folder(env_file: object) -> Path | None:

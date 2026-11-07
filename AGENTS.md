@@ -24,7 +24,8 @@ uv run orgos mongo verify                            # live Mongo counts against
 uv run orgos eval describe                           # rewrite eval/data-description.md, append to eval/exploration.log; writes nothing to Mongo
 uv run orgos eval check-questions [--file <path>]    # check the questions and amendments against every checker rule; reads no database
 uv run orgos eval answers [--check] [--only <id>]    # known answers from raw Mongo; a full run refuses once frozen; --check and --only write nothing
-uv run --env-file .env dbt <cmd> --project-dir dbt --profiles-dir dbt
+uv run orgos load sql                                # Mongo to raw, dbt build with tests, load consistency, figure gate; writes results/sql_load/run_record.json pass or fail
+PGTZ=America/St_Johns uv run --env-file .env dbt <cmd> --project-dir dbt --profiles-dir dbt   # the build session zone (spec 0009 AC-14)
 uv run pytest -m "not integration"                   # fast tests, no Docker
 uv run pytest                                        # all; stop the compose stack first
 ```
@@ -75,6 +76,7 @@ If the same problem persists after one corrective prompt, stop and run /recover 
 
 ## Context files
 
+- [dbt/AGENTS.md](dbt/AGENTS.md): the dbt project, the 12 `model_int` and 7 `model` table names, and its build gotchas
 <!-- Nested AGENTS.md files are listed here as they are created -->
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._

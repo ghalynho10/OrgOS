@@ -1,0 +1,76 @@
+version: 2
+
+# dbt unit tests of the model_int rules a data test cannot pin down (spec 0009
+# Test forms): the amount rule (spec 0006 AC-14), the UTC conversion (AC-18)
+# and which document gives a person's source_doc_id (AC-31). They run in every
+# `dbt build`, in the America/St_Johns session zone, so a value read in the
+# session zone by mistake fails them.
+
+unit_tests:
+  - name: logged_time_amount_rule
+    description: >
+      Empty from counts as 0, the String value is used when the raw one is
+      empty, two items of one history are summed into one entry, a decrease
+      stays negative, all empty is 0, and logged_at is converted from its own
+      offset (late on 31 December at -0500 is 1 January in UTC).
+    model: int_logged_time
+    given:
+      - input: ref('stg_time_history')
+        rows:
+          - {issue_key: A-1, mongo_id: m1, load_id: L, history_id: h1, author_key: p, created: "2008-12-31T23:30:00.000-0500", item_number: 1, from_value: null, to_value: "3600"}
+          - {issue_key: A-1, mongo_id: m1, load_id: L, history_id: h2, author_key: p, created: "2009-01-02T10:00:00.000+0000", item_number: 1, from_value: "", from_string: "", to_value: "", to_string: "1800"}
+          - {issue_key: A-1, mongo_id: m1, load_id: L, history_id: h3, author_key: p, created: "2009-01-03T10:00:00.000+0000", item_number: 1, from_value: null, to_value: "600"}
+          - {issue_key: A-1, mongo_id: m1, load_id: L, history_id: h3, author_key: p, created: "2009-01-03T10:00:00.000+0000", item_number: 2, from_value: "600", to_value: "1500"}
+          - {issue_key: A-1, mongo_id: m1, load_id: L, history_id: h4, author_key: p, created: "2009-01-04T10:00:00.000+0000", item_number: 1, from_value: "7200", to_value: "3600"}
+          - {issue_key: A-1, mongo_id: m1, load_id: L, history_id: h5, author_key: p, created: "2009-01-05T10:00:00.000+0000", item_number: 1, from_value: "", from_string: "", to_value: "", to_string: ""}
+    expect:
+      rows:
+        - {edge_id: "logged_time:h1", seconds: 3600, logged_at: "2009-01-01 04:30:00+00"}
+        - {edge_id: "logged_time:h2", seconds: 1800, logged_at: "2009-01-02 10:00:00+00"}
+        - {edge_id: "logged_time:h3", seconds: 1500, logged_at: "2009-01-03 10:00:00+00"}
+        - {edge_id: "logged_time:h4", seconds: -3600, logged_at: "2009-01-04 10:00:00+00"}
+        - {edge_id: "logged_time:h5", seconds: 0, logged_at: "2009-01-05 10:00:00+00"}
+
+  - name: issue_instants_in_utc
+    description: >
+      Each instant is converted from its own offset, and a date only duedate
+      is midnight UTC at the start of that day, not midnight in the session zone.
+    model: int_issue
+    given:
+      - input: ref('stg_issue_doc')
+        rows:
+          - mongo_id: m1
+            key: A-1
+            load_id: L
+            fields: '{"created": "2008-12-31T23:30:00.000-0500", "resolutiondate": "2009-01-02T10:00:00.000+0530", "duedate": "2009-01-15", "issuetype": {"name": "Bug"}, "status": {"name": "Open"}}'
+          - mongo_id: m2
+            key: A-2
+            load_id: L
+            fields: '{"created": "2009-01-01T00:00:00.000+0000", "duedate": "2009-02-01T12:00:00.000-0330", "issuetype": {"name": "Bug"}, "status": {"name": "Open"}}'
+    expect:
+      rows:
+        - {issue_key: A-1, created_at: "2009-01-01 04:30:00+00", resolution_date: "2009-01-02 04:30:00+00", due_at: "2009-01-15 00:00:00+00"}
+        - {issue_key: A-2, created_at: "2009-01-01 00:00:00+00", resolution_date: null, due_at: "2009-02-01 15:30:00+00"}
+
+  - name: person_source_doc_prefers_role_documents
+    description: >
+      A person held in a role object takes source_doc_id from the lowest
+      mongo_id among their role documents, even when a time entry sits on a
+      lower one; a person seen only as a time entry author takes the lowest
+      mongo_id of their entries and has no login_name or is_active.
+    model: int_person
+    given:
+      - input: ref('stg_issue_doc')
+        rows:
+          - {mongo_id: "000000000000000000000003", key: A-3, load_id: L, fields: '{"reporter": {"key": "P", "name": "p-login", "active": true}}'}
+          - {mongo_id: "000000000000000000000002", key: A-2, load_id: L, fields: '{"reporter": {"key": "P", "name": "p-login", "active": true}}'}
+          - {mongo_id: "000000000000000000000001", key: A-1, load_id: L, fields: '{}'}
+      - input: ref('stg_time_history')
+        rows:
+          - {mongo_id: "000000000000000000000001", issue_key: A-1, load_id: L, history_id: h1, author_key: P}
+          - {mongo_id: "000000000000000000000005", issue_key: A-5, load_id: L, history_id: h2, author_key: Q}
+          - {mongo_id: "000000000000000000000004", issue_key: A-4, load_id: L, history_id: h3, author_key: Q}
+    expect:
+      rows:
+        - {person_key: P, login_name: p-login, is_active: true, source_doc_id: "000000000000000000000002"}
+        - {person_key: Q, login_name: null, is_active: null, source_doc_id: "000000000000000000000004"}

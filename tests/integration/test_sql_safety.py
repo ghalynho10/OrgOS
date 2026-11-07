@@ -8,7 +8,7 @@ import pytest
 from dbt.cli.main import dbtRunner
 from pydantic import SecretStr
 
-from orgos.config import Settings
+from orgos.config import DBT_TIMEZONE, Settings
 from orgos.sqlstore import SqlStoreError
 from orgos.sqlstore.bootstrap import SCHEMAS, bootstrap
 
@@ -33,12 +33,19 @@ def built(pg_settings: Settings, monkeypatch_module: pytest.MonkeyPatch) -> Sett
     for name, value in pg_settings.dbt_env().items():
         monkeypatch_module.setenv(name, value)
     probes = "{orgos_scaffold_probes: true}"
-    # Twice, so the second run rebuilds tables that already exist (grants dropped).
-    _dbt("run", "--full-refresh", "--vars", probes)
-    _dbt("run", "--full-refresh", "--vars", probes)
+    # Only the probes: the real models need a loaded `raw.jira_issue`.
+    select = ("--select", "scaffold_probe_stg", "scaffold_probe_model_int", "scaffold_probe_model")
+    # PGTZ only around dbt, as `orgos load sql` sets it: libpq sends it on every
+    # connection, so left set it would override the reader's own UTC zone.
+    with pytest.MonkeyPatch.context() as dbt_session:
+        dbt_session.setenv("PGTZ", DBT_TIMEZONE)
+        # Twice, so the second run rebuilds tables that already exist (grants dropped).
+        _dbt("run", "--full-refresh", "--vars", probes, *select)
+        _dbt("run", "--full-refresh", "--vars", probes, *select)
 
     with psycopg.connect(pg_settings.pg_conninfo("owner"), autocommit=True) as conn:
         conn.execute("CREATE TABLE IF NOT EXISTS raw.probe AS SELECT 1 AS probe_id")
+        conn.execute("CREATE TABLE IF NOT EXISTS test_failures.probe AS SELECT 1 AS probe_id")
         # A table the owner creates outside dbt still gets SELECT by default privileges.
         conn.execute("DROP TABLE IF EXISTS model.plain_probe")
         conn.execute("CREATE TABLE model.plain_probe AS SELECT 1 AS probe_id")
@@ -81,7 +88,13 @@ def test_reader_can_select_model_after_full_refresh(reader: psycopg.Connection, 
 
 
 @pytest.mark.parametrize(
-    "table", ["model_int.scaffold_probe_model_int", "stg.scaffold_probe_stg", "raw.probe"]
+    "table",
+    [
+        "model_int.scaffold_probe_model_int",
+        "stg.scaffold_probe_stg",
+        "raw.probe",
+        "test_failures.probe",
+    ],
 )
 def test_reader_cannot_read_other_schemas(reader: psycopg.Connection, table: str) -> None:
     with pytest.raises(psycopg.errors.InsufficientPrivilege):
@@ -125,6 +138,11 @@ def test_schemas_are_owned_by_the_owner_role(built: Settings) -> None:
 
 def test_reader_work_mem_is_capped_by_role(reader: psycopg.Connection) -> None:
     assert reader.execute("SHOW work_mem").fetchone() == ("16MB",)
+
+
+# covers: spec 0007 AC-19 (the reader reads date bounds in UTC)
+def test_reader_session_time_zone_is_utc(reader: psycopg.Connection) -> None:
+    assert reader.execute("SHOW timezone").fetchone() == ("UTC",)
 
 
 def test_rerun_resets_the_reader_password_and_timeout(pg_settings: Settings) -> None:
