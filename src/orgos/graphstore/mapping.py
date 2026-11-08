@@ -140,6 +140,40 @@ class GraphMapping:
         return next(node for node in self.nodes if node.label == label)
 
 
+@dataclass(frozen=True)
+class DatetimeProperty:
+    """One property the mapping declares as `datetime`, on a label or a relationship type."""
+
+    owner: str
+    key: str
+    property: str
+    relationship: bool
+
+    # A method, not a property: the field `property` hides the builtin in this class.
+    def name(self) -> str:
+        """`Label.property` or `TYPE.property`."""
+        return f"{self.owner}.{self.property}"
+
+
+def datetime_properties(mapping: GraphMapping) -> tuple[DatetimeProperty, ...]:
+    """Every `datetime` property of the mapping: what the temporal check reads (spec 0010 AC-16)."""
+    return (
+        *(
+            DatetimeProperty(node.label, node.key.property, column.property, relationship=False)
+            for node in mapping.nodes
+            for column in (node.key, *node.columns)
+            if column.type == "datetime"
+        ),
+        *(
+            DatetimeProperty(kind, EDGE_ID_PROPERTY, column.property, relationship=True)
+            for rel in mapping.relationships
+            for kind in rel.relationship_types
+            for column in rel.columns
+            if column.type == "datetime"
+        ),
+    )
+
+
 def _column(raw: Mapping[str, Any]) -> Column:
     return Column(column=str(raw["column"]), property=str(raw["property"]), type=str(raw["type"]))
 

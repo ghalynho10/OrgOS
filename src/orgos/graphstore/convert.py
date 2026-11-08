@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, TypedDict
 
 from orgos.graphstore import GraphStoreError
 from orgos.graphstore.mapping import (
@@ -71,27 +71,44 @@ def _key(value: object, table: str, column: str) -> str:
     return value
 
 
-def node_row(node: NodeMap, row: Mapping[str, Any]) -> dict[str, object]:
+class NodeRow(TypedDict):
+    """The `$rows` entry of one node."""
+
+    key: str
+    props: dict[str, object]
+
+
+class RelationshipRow(TypedDict):
+    """The `$rows` entry of one relationship."""
+
+    src: str
+    dst: str
+    edgeId: str
+    props: dict[str, object]
+
+
+def node_row(node: NodeMap, row: Mapping[str, Any]) -> NodeRow:
     """The `$rows` entry of one node: its key and its properties."""
     key = _key(row[node.key.column], node.table, node.key.column)
     return {"key": key, "props": properties(row, node.columns, node.table, key)}
 
 
-def relationship_row(relationship: RelationshipMap, row: Mapping[str, Any]) -> dict[str, object]:
+def relationship_row(relationship: RelationshipMap, row: Mapping[str, Any]) -> RelationshipRow:
     """The `$rows` entry of one relationship: both end keys, `edgeId` and its properties.
 
     A null end fails the load naming the table and `edge_id` (spec 0008 AC-16).
     """
     table = relationship.table
     edge_id = _key(row[EDGE_ID], table, EDGE_ID)
-    ends = {}
-    for name, column in (("src", SRC_ID), ("dst", DST_ID)):
+    ends = []
+    for column in (SRC_ID, DST_ID):
         value = row[column]
         if not isinstance(value, str) or value == "":
             raise GraphStoreError(f"{table} row {edge_id}: {column} is {value!r}, not a key")
-        ends[name] = value
+        ends.append(value)
     return {
-        **ends,
+        "src": ends[0],
+        "dst": ends[1],
         "edgeId": edge_id,
         "props": properties(row, relationship.columns, table, edge_id),
     }

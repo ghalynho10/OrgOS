@@ -8,8 +8,14 @@ starts with `CYPHER 25`.
 
 from __future__ import annotations
 
-from orgos.graphstore import WIPE_BATCH_ROWS, GraphStoreError
-from orgos.graphstore.mapping import EDGE_ID_PROPERTY, IDENTIFIER, End, NodeMap
+from orgos.graphstore import SHOWN, WIPE_BATCH_ROWS, GraphStoreError
+from orgos.graphstore.mapping import (
+    EDGE_ID_PROPERTY,
+    IDENTIFIER,
+    DatetimeProperty,
+    End,
+    NodeMap,
+)
 
 PREFIX = "CYPHER 25"
 
@@ -79,6 +85,40 @@ def count_label(node: NodeMap) -> str:
     )
 
 
+def bad_timezones(target: DatetimeProperty) -> str:
+    """The count and first keys of one `datetime` property not stored in the `Z` form (AC-16).
+
+    A value that is not a zoned datetime at all (a local datetime, a string)
+    counts too; `CASE` keeps `.timezone` from being read on it.
+    """
+    owner = name(target.owner)
+    pattern = f"()-[x:{owner}]->()" if target.relationship else f"(x:{owner})"
+    value = f"x.{name(target.property)}"
+    return (
+        f"{PREFIX} MATCH {pattern} WHERE {value} IS NOT NULL AND "
+        f"CASE WHEN {value} IS :: ZONED DATETIME THEN {value}.timezone <> 'Z' ELSE true END "
+        f"RETURN count(x) AS count, collect(x.{name(target.key)})[..{SHOWN}] AS keys"
+    )
+
+
+def node_properties(node: NodeMap) -> str:
+    """Every node of one label with all its properties, for the value level compare (AC-18)."""
+    return f"{PREFIX} MATCH (n:{name(node.label)}) RETURN properties(n) AS props"
+
+
+def relationship_properties(kind: str, start: End, end: End) -> str:
+    """Every relationship of one type with its properties and end keys (AC-18).
+
+    The ends are matched by no label, so a reversed relationship reads back
+    with a null end key and the compare names it.
+    """
+    return (
+        f"{PREFIX} MATCH (a)-[r:{name(kind)}]->(b) "
+        f"RETURN properties(r) AS props, a.{name(start.key)} AS src, b.{name(end.key)} AS dst"
+    )
+
+
+DEFAULT_TIMEZONE = f"{PREFIX} RETURN datetime().timezone AS timezone"
 # `count(r)` and `count(DISTINCT r.edgeId)` per relationship type (AC-15), in
 # one read: a type with no rows is simply absent (and counted 0), where a
 # query naming it would draw a warning, and a type outside the 24 shows up.

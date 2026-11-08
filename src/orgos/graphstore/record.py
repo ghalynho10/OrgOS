@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from orgos.graphstore.checks import Reconciliation
+from orgos.graphstore.compare import Comparison
 
 RUN_RECORD = Path("results/graph_load/run_record.json")
 VERSIONED_PACKAGES = ("neo4j", "psycopg")
@@ -44,6 +45,9 @@ class RunState:
     constraints: tuple[Mapping[str, Any], ...] | None = None
     indexes: tuple[Mapping[str, Any], ...] | None = None
     reconciliation: Reconciliation | None = None
+    # The problems of the temporal, graph state and load consistency checks, by name.
+    checks: Mapping[str, tuple[str, ...]] | None = None
+    comparison: Comparison | None = None
     seconds: Mapping[str, float] = field(default_factory=dict)
 
 
@@ -69,6 +73,10 @@ def build_record(
         "show_constraints": None if state.constraints is None else list(state.constraints),
         "show_indexes": None if state.indexes is None else list(state.indexes),
         "reconciliation": None if state.reconciliation is None else state.reconciliation.record(),
+        "checks": None
+        if state.checks is None
+        else {name: list(problems) for name, problems in state.checks.items()},
+        "compare": None if state.comparison is None else state.comparison.record(),
         "seconds": {step: round(seconds, 1) for step, seconds in state.seconds.items()},
     }
 

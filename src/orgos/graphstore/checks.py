@@ -1,10 +1,11 @@
 """What "the graph is in the expected state" means, written once.
 
-Spec 0010 AC-10, AC-15, AC-17 and AC-20. The load calls these, and features
-12 and 13 call the same ones in the shared preflight. `read_graph_state` and
-`read_counts` are the only functions that touch Neo4j; the others are pure and
-judge what they returned. Expected constraints, indexes, labels and types all
-come from the mapping, so no function here holds a name of its own.
+Spec 0010 AC-10, AC-15 to AC-17 and AC-20. The load calls these, and features
+12 and 13 call the same ones in the shared preflight. `read_graph_state`,
+`read_counts` and `read_temporal` are the only functions that touch Neo4j; the
+others are pure and judge what they returned. Expected constraints, indexes,
+labels, types and `datetime` properties all come from the mapping, so no
+function here holds a name of its own.
 """
 
 from __future__ import annotations
@@ -17,19 +18,24 @@ from typing import Any
 from neo4j import Driver
 
 from orgos.graphstore import DATABASE, GraphStoreError
-from orgos.graphstore.mapping import GraphMapping
+from orgos.graphstore.mapping import GraphMapping, datetime_properties
 from orgos.graphstore.statements import (
     COUNT_BY_TYPE,
     COUNT_NODES,
     COUNT_RELATIONSHIPS,
+    DEFAULT_TIMEZONE,
     PREFIX,
     SHOW_CONSTRAINTS,
     SHOW_DATABASE,
     SHOW_INDEXES,
+    bad_timezones,
     count_label,
 )
 
 UNIQUENESS = "NODE_PROPERTY_UNIQUENESS"
+READ_ONLY = "read-only"
+# The one form every stored `datetime` must have (spec 0008 AC-17).
+UTC_FORM = "Z"
 
 # (type, entityType, labelsOrTypes, properties, owned by a constraint): what
 # the schema checks compare, never the names Neo4j generates.
@@ -125,6 +131,64 @@ def graph_schema_problems(observed: GraphState, mapping: GraphMapping) -> tuple[
         *_differences("constraint", expected_constraints(mapping), observed.constraints),
         *_differences("index", expected_indexes(mapping), observed.indexes),
     )
+
+
+def _shown(value: object) -> str:
+    return "null" if value is None else str(value)
+
+
+def graph_state_problems(
+    observed: GraphState, mapping: GraphMapping, load_id: str
+) -> tuple[str, ...]:
+    """The schema problems, plus exactly one `loadId` equal to `load_id`, and `neo4j` read only.
+
+    Spec 0008 AC-14, AC-19 and AC-22. A node or relationship with no `loadId`
+    counts as a second value, and an empty graph holds none.
+    """
+    problems = list(graph_schema_problems(observed, mapping))
+    load_ids = set(observed.node_load_ids) | set(observed.relationship_load_ids)
+    if load_ids != {load_id}:
+        held = ", ".join(sorted(_shown(value) for value in load_ids)) or "none"
+        problems.append(f"the graph holds loadId {held}, expected only {load_id}")
+    if observed.access != READ_ONLY:
+        problems.append(f"the database {DATABASE} is {_shown(observed.access)}, not {READ_ONLY}")
+    return tuple(problems)
+
+
+@dataclass(frozen=True)
+class Temporal:
+    """What `read_temporal` saw: per `datetime` property the values not in the `Z` form.
+
+    `bad` maps `Label.property` to the count of such values and up to 20 keys;
+    `default_timezone` is the zone of `datetime()` created with none.
+    """
+
+    bad: Mapping[str, tuple[int, tuple[str, ...]]]
+    default_timezone: str | None
+
+
+def read_temporal(driver: Driver, mapping: GraphMapping) -> Temporal:
+    """Read each `datetime` property of the mapping for values not in the `Z` form (AC-16)."""
+    bad = {}
+    for target in datetime_properties(mapping):
+        row = driver.execute_query(bad_timezones(target), database_=DATABASE).records[0]
+        bad[target.name()] = (int(row["count"]), tuple(_shown(key) for key in row["keys"]))
+    default = driver.execute_query(DEFAULT_TIMEZONE, database_=DATABASE).records
+    return Temporal(bad=bad, default_timezone=str(default[0]["timezone"]) if default else None)
+
+
+def temporal_problems(found: Temporal) -> tuple[str, ...]:
+    """Each `datetime` property with a value not in the `Z` form, and a server default not in it."""
+    problems = [
+        f"{name}: {count:,} values not in the {UTC_FORM} form ({', '.join(keys)})"
+        for name, (count, keys) in found.bad.items()
+        if count
+    ]
+    if found.default_timezone != UTC_FORM:
+        problems.append(
+            f"datetime() with no zone is {_shown(found.default_timezone)}, not {UTC_FORM}"
+        )
+    return tuple(problems)
 
 
 def check_run_records(

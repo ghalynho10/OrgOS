@@ -16,6 +16,8 @@ WRITE_BATCH_ROWS = 5_000
 WIPE_BATCH_ROWS = 10_000
 RETRY_SECONDS = 5.0
 WAIT_SECONDS = 120
+# How many keys or `edge_id` values a problem names at most (AC-12, AC-18).
+SHOWN = 20
 
 # The Neo4j service in docker-compose.yml and the one variable a load sets.
 COMPOSE_PROFILE = "graph"

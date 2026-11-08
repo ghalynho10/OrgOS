@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import psycopg
 import pytest
 
 from orgos.cli import EXIT_CODES, run
@@ -24,8 +25,10 @@ from orgos.graphstore.checks import (
     check_run_records,
     expected_counts,
     graph_schema_problems,
+    graph_state_problems,
     reconcile,
 )
+from orgos.graphstore.compare import Comparison, comparison
 from orgos.graphstore.load import Inputs, ModelInt, _StepFailed, load_graph, summary
 from orgos.graphstore.mapping import load_mapping
 from orgos.graphstore.record import RUN_RECORD, RunState, build_record
@@ -142,6 +145,44 @@ def test_schema_names_an_index_with_the_right_shape_but_no_constraint() -> None:
         "missing constraint: NODE_PROPERTY_UNIQUENESS on NODE Issue(issueKey)",
         "missing index: RANGE on NODE Issue(issueKey) owned by a constraint",
         "unexpected index loose: RANGE on NODE Issue(issueKey)",
+    )
+
+
+# covers: AC-17 (one loadId equal to the load's, the database read only, the schema too)
+def test_state_passes_one_load_id_read_only() -> None:
+    assert graph_state_problems(_state(), MAPPING, "L1") == ()
+
+
+def test_state_names_a_second_load_id_and_a_null_one() -> None:
+    state = _state(node_load_ids=("L1", None), relationship_load_ids=("L0",))
+    assert graph_state_problems(state, MAPPING, "L1") == (
+        "the graph holds loadId L0, L1, null, expected only L1",
+    )
+
+
+def test_state_names_an_empty_graph() -> None:
+    state = _state(node_load_ids=(), relationship_load_ids=())
+    assert graph_state_problems(state, MAPPING, "L1") == (
+        "the graph holds loadId none, expected only L1",
+    )
+
+
+def test_state_names_a_load_id_other_than_the_load() -> None:
+    assert graph_state_problems(_state(), MAPPING, "L2") == (
+        "the graph holds loadId L1, expected only L2",
+    )
+
+
+def test_state_names_a_writable_database() -> None:
+    assert graph_state_problems(_state(access="read-write"), MAPPING, "L1") == (
+        "the database neo4j is read-write, not read-only",
+    )
+
+
+def test_state_includes_the_schema_problems() -> None:
+    state = _state(constraints=CONSTRAINTS[1:])
+    assert graph_state_problems(state, MAPPING, "L1") == (
+        "missing constraint: NODE_PROPERTY_UNIQUENESS on NODE Issue(issueKey)",
     )
 
 
@@ -264,6 +305,8 @@ def test_record_holds_the_spec_fields_and_no_login() -> None:
         constraints=CONSTRAINTS,
         indexes=INDEXES,
         reconciliation=reconcile(MAPPING, expected, found),
+        checks={"temporal": (), "graph_state": (), "load_consistency": ()},
+        comparison=comparison(106_630, 358_620, []),
         seconds={"nodes": 8.84, "relationships": 14.31},
     )
     record = build_record(state, failed_step=None, time=TIME, git=GIT, versions=VERSIONS)
@@ -278,8 +321,16 @@ def test_record_holds_the_spec_fields_and_no_login() -> None:
         "show_constraints",
         "show_indexes",
         "reconciliation",
+        "checks",
+        "compare",
         "seconds",
     ]
+    assert record["checks"] == {"temporal": [], "graph_state": [], "load_consistency": []}
+    assert record["compare"] == {
+        "nodes_compared": 106_630,
+        "relationships_compared": 358_620,
+        "differences": {},
+    }
     assert record["versions"]["neo4j_server"] == "2026.10.1"
     assert record["reconciliation"]["labels"]["Issue"] == {
         "expected": 87_835,
@@ -329,8 +380,11 @@ def test_load_graph_help_needs_no_config(
 def settings(monkeypatch: pytest.MonkeyPatch) -> Settings:
     for field in Settings.model_fields.values():
         monkeypatch.delenv(str(field.validation_alias), raising=False)
+    # Hosts that cannot resolve, so a store call the fakes miss fails at once.
     return load_settings(
         _env_file=None,
+        ORGOS_PG_HOST="postgres.invalid",
+        ORGOS_NEO4J_HOST="neo4j.invalid",
         POSTGRES_PASSWORD=secrets.token_hex(8),
         ORGOS_PG_OWNER_PASSWORD=secrets.token_hex(8),
         ORGOS_PG_READER_PASSWORD=secrets.token_hex(8),
@@ -348,21 +402,37 @@ class _FakeDriver:
         return None
 
 
-def _fake_run(monkeypatch: pytest.MonkeyPatch, root: Path, failing_step: str | None) -> list[str]:
+def _fake_run(
+    monkeypatch: pytest.MonkeyPatch,
+    root: Path,
+    failing_step: str | None,
+    *,
+    error: BaseException | None = None,
+    restore_error: BaseException | None = None,
+) -> list[str]:
     # Replace every store call; record the order of events and the record status at each.
+    # `failing_step` raises `error` (a GraphStoreError by default); `restore_error`
+    # is raised by the restart to read only.
     events: list[str] = []
 
     def status() -> str:
         return str(json.loads((root / RUN_RECORD).read_text())["status"])
 
+    def fail(name: str) -> None:
+        if name == failing_step:
+            raise error if error is not None else GraphStoreError(f"{name} broke")
+
     def set_access(_: Settings, __: Path, *, read_only: bool) -> None:
         events.append(f"{'read only' if read_only else 'writable'} with record {status()}")
+        if read_only and restore_error is not None:
+            raise restore_error
+        if not read_only:
+            fail("writable")
 
     def step(name: str) -> Any:
         def write(*_: object) -> None:
             events.append(name)
-            if name == failing_step:
-                raise GraphStoreError(f"{name} broke")
+            fail(name)
 
         return write
 
@@ -384,6 +454,12 @@ def _fake_run(monkeypatch: pytest.MonkeyPatch, root: Path, failing_step: str | N
         return replace(state, reconciliation=reconcile(MAPPING, expected, found)), None
 
     monkeypatch.setattr(graph_load, "_check", check)
+
+    def compare(*_: object) -> Comparison:
+        events.append(f"compare with record {status()}")
+        return comparison(106_630, 358_620, [])
+
+    monkeypatch.setattr(graph_load, "compare_graph", compare)
     return events
 
 
@@ -401,6 +477,7 @@ def test_the_record_says_fail_until_the_very_end(
         "relationships",
         "read only with record fail",
         "checks with record fail",
+        "compare with record fail",
     ]
     record = json.loads((tmp_path / RUN_RECORD).read_text())
     assert (record["status"], record["failed_step"], record["read_only_restored"]) == (
@@ -430,3 +507,84 @@ def test_a_failed_step_still_makes_neo4j_read_only(
         "nodes",
         True,
     )
+
+
+def _outcome(root: Path) -> tuple[str, str | None, bool | None]:
+    record = json.loads((root / RUN_RECORD).read_text())
+    return record["status"], record["failed_step"], record["read_only_restored"]
+
+
+# covers: AC-8 (the restore runs after Ctrl+C, after a failed writable step; a failed
+# or interrupted restore is reported), AC-6 (a failed read touches no Neo4j)
+def test_ctrl_c_during_a_write_still_makes_neo4j_read_only(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events = _fake_run(monkeypatch, tmp_path, "relationships", error=KeyboardInterrupt())
+    with pytest.raises(KeyboardInterrupt):
+        load_graph(settings, tmp_path)
+    assert events[-2:] == ["relationships", "read only with record fail"]
+    assert _outcome(tmp_path) == ("fail", "relationships", True)
+
+
+def test_a_failed_writable_step_still_restores_read_only(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events = _fake_run(monkeypatch, tmp_path, "writable")
+    with pytest.raises(GraphStoreError, match=r"^writable broke$"):
+        load_graph(settings, tmp_path)
+    assert events == ["writable with record fail", "read only with record fail"]
+    assert _outcome(tmp_path) == ("fail", "writable", True)
+
+
+def test_a_failed_restore_after_a_failed_step_names_both(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _fake_run(monkeypatch, tmp_path, "nodes", restore_error=OSError("compose broke"))
+    with pytest.raises(GraphStoreError) as raised:
+        load_graph(settings, tmp_path)
+    assert str(raised.value).splitlines() == [
+        "nodes broke",
+        "Neo4j may still be writable: the restart to read only failed"
+        f" (read_only_restored is false in {RUN_RECORD}).",
+    ]
+    assert _outcome(tmp_path) == ("fail", "nodes", False)
+
+
+def test_a_failed_restore_after_good_writes_fails_the_load(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events = _fake_run(monkeypatch, tmp_path, None, restore_error=OSError("compose broke"))
+    with pytest.raises(GraphStoreError, match="Neo4j may still be writable"):
+        load_graph(settings, tmp_path)
+    assert not any(event.startswith("checks") for event in events)
+    assert _outcome(tmp_path) == ("fail", "read_only", False)
+
+
+def test_a_second_ctrl_c_during_the_restore_is_reported(
+    settings: Settings,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _fake_run(
+        monkeypatch, tmp_path, "nodes", error=KeyboardInterrupt(), restore_error=KeyboardInterrupt()
+    )
+    with pytest.raises(KeyboardInterrupt):
+        load_graph(settings, tmp_path)
+    assert "Neo4j may still be writable" in caplog.text
+    assert _outcome(tmp_path) == ("fail", "nodes", False)
+
+
+def test_a_failed_read_before_writable_touches_no_neo4j(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events = _fake_run(monkeypatch, tmp_path, None)
+
+    def down(*_: object) -> ModelInt:
+        raise psycopg.OperationalError("server closed the connection")
+
+    monkeypatch.setattr(graph_load, "read_model_int", down)
+    with pytest.raises(GraphStoreError, match=r"^started step failed: server closed"):
+        load_graph(settings, tmp_path)
+    assert events == []
+    assert _outcome(tmp_path) == ("fail", "started", None)
