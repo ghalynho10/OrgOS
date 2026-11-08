@@ -381,9 +381,7 @@ class _StepFailed:
     error: BaseException
 
     def named(self) -> GraphStoreError:
-        """The error to raise: a `GraphStoreError` as it is, anything else named by its step."""
-        if isinstance(self.error, GraphStoreError):
-            return self.error
+        """The error to raise, named by its step (the record holds the same step)."""
         return GraphStoreError(f"{self.step} step failed: {self.error}")
 
 

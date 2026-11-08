@@ -44,7 +44,8 @@ def convert_value(value: object, column: Column, table: str, key: str) -> object
     # bool is a subclass of int, so an Integer must not accept True.
     if not isinstance(value, expected) or (column.type == "Integer" and isinstance(value, bool)):
         raise GraphStoreError(
-            f"{where} is a {type(value).__name__}, but the mapping declares {column.type}"
+            f"{where} is of Python type {type(value).__name__}, but the mapping declares"
+            f" {column.type}"
         )
     if isinstance(value, str) and value == "":
         raise GraphStoreError(f"{where} is an empty string; model_int stores a null instead")

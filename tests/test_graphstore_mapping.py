@@ -356,7 +356,8 @@ def test_a_datetime_is_converted_to_utc() -> None:
     ],
 )
 def test_a_value_of_the_wrong_type_fails(value: object, column: Column, found: str) -> None:
-    with pytest.raises(GraphStoreError, match=f"is a {found}, but the mapping declares"):
+    message = f"is of Python type {found}, but the mapping declares"
+    with pytest.raises(GraphStoreError, match=message):
         convert_value(value, column, "t", "k")
 
 

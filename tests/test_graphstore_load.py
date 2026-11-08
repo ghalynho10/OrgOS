@@ -373,11 +373,11 @@ def test_consistency_names_both_ids_and_the_tables() -> None:
     assert consistency_problems(stale, "L1") == ("model.issue holds L0",)
 
 
-# covers: AC-1 (a database or subprocess error is named by its step)
-def test_step_failure_names_other_errors_by_step() -> None:
+# covers: AC-1 (every step failure, a database or subprocess error included, names its step)
+def test_step_failure_names_the_step() -> None:
     assert str(_StepFailed("nodes", OSError("boom")).named()) == "nodes step failed: boom"
-    original = GraphStoreError("graph schema")
-    assert _StepFailed("constraints", original).named() is original
+    named = _StepFailed("constraints", GraphStoreError("graph schema")).named()
+    assert str(named) == "constraints step failed: graph schema"
 
 
 def test_exit_codes_hold_the_graph_row() -> None:
@@ -512,7 +512,7 @@ def test_a_failed_step_still_makes_neo4j_read_only(
     settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     events = _fake_run(monkeypatch, tmp_path, "nodes")
-    with pytest.raises(GraphStoreError, match=r"^nodes broke$"):
+    with pytest.raises(GraphStoreError, match=r"^nodes step failed: nodes broke$"):
         load_graph(settings, tmp_path)
     assert events == [
         "writable with record fail",
@@ -550,7 +550,7 @@ def test_a_failed_writable_step_still_restores_read_only(
     settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     events = _fake_run(monkeypatch, tmp_path, "writable")
-    with pytest.raises(GraphStoreError, match=r"^writable broke$"):
+    with pytest.raises(GraphStoreError, match=r"^writable step failed: writable broke$"):
         load_graph(settings, tmp_path)
     assert events == ["writable with record fail", "read only with record fail"]
     assert _outcome(tmp_path) == ("fail", "writable", True)
@@ -563,7 +563,7 @@ def test_a_failed_restore_after_a_failed_step_names_both(
     with pytest.raises(GraphStoreError) as raised:
         load_graph(settings, tmp_path)
     assert str(raised.value).splitlines() == [
-        "nodes broke",
+        "nodes step failed: nodes broke",
         "Neo4j may still be writable: the restart to read only failed"
         f" (read_only_restored is false in {RUN_RECORD}).",
     ]
