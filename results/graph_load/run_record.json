@@ -1,0 +1,288 @@
+{
+  "time": "2026-11-08T04:51:43Z",
+  "status": "ok",
+  "failed_step": null,
+  "git": {
+    "commit": "69244059138a6a1cb3edf83a0bc17cf247ca10bc",
+    "dirty": false
+  },
+  "dlt_load_id": "1794002355.703372",
+  "versions": {
+    "python": "3.12.12",
+    "neo4j": "6.4.1",
+    "psycopg": "3.3.6",
+    "neo4j_server": "2026.10.1"
+  },
+  "read_only_restored": true,
+  "show_constraints": [
+    {
+      "name": "fixversion_versionid_unique",
+      "type": "NODE_PROPERTY_UNIQUENESS",
+      "entityType": "NODE",
+      "labelsOrTypes": [
+        "FixVersion"
+      ],
+      "properties": [
+        "versionId"
+      ]
+    },
+    {
+      "name": "issue_issuekey_unique",
+      "type": "NODE_PROPERTY_UNIQUENESS",
+      "entityType": "NODE",
+      "labelsOrTypes": [
+        "Issue"
+      ],
+      "properties": [
+        "issueKey"
+      ]
+    },
+    {
+      "name": "person_personkey_unique",
+      "type": "NODE_PROPERTY_UNIQUENESS",
+      "entityType": "NODE",
+      "labelsOrTypes": [
+        "Person"
+      ],
+      "properties": [
+        "personKey"
+      ]
+    },
+    {
+      "name": "project_projectkey_unique",
+      "type": "NODE_PROPERTY_UNIQUENESS",
+      "entityType": "NODE",
+      "labelsOrTypes": [
+        "Project"
+      ],
+      "properties": [
+        "projectKey"
+      ]
+    }
+  ],
+  "show_indexes": [
+    {
+      "name": "fixversion_versionid_unique",
+      "type": "RANGE",
+      "entityType": "NODE",
+      "labelsOrTypes": [
+        "FixVersion"
+      ],
+      "properties": [
+        "versionId"
+      ],
+      "owningConstraint": "fixversion_versionid_unique"
+    },
+    {
+      "name": "index_1b9dcc97",
+      "type": "LOOKUP",
+      "entityType": "RELATIONSHIP",
+      "labelsOrTypes": null,
+      "properties": null,
+      "owningConstraint": null
+    },
+    {
+      "name": "index_460996c0",
+      "type": "LOOKUP",
+      "entityType": "NODE",
+      "labelsOrTypes": null,
+      "properties": null,
+      "owningConstraint": null
+    },
+    {
+      "name": "issue_issuekey_unique",
+      "type": "RANGE",
+      "entityType": "NODE",
+      "labelsOrTypes": [
+        "Issue"
+      ],
+      "properties": [
+        "issueKey"
+      ],
+      "owningConstraint": "issue_issuekey_unique"
+    },
+    {
+      "name": "person_personkey_unique",
+      "type": "RANGE",
+      "entityType": "NODE",
+      "labelsOrTypes": [
+        "Person"
+      ],
+      "properties": [
+        "personKey"
+      ],
+      "owningConstraint": "person_personkey_unique"
+    },
+    {
+      "name": "project_projectkey_unique",
+      "type": "RANGE",
+      "entityType": "NODE",
+      "labelsOrTypes": [
+        "Project"
+      ],
+      "properties": [
+        "projectKey"
+      ],
+      "owningConstraint": "project_projectkey_unique"
+    }
+  ],
+  "reconciliation": {
+    "labels": {
+      "Issue": {
+        "expected": 87835,
+        "found": 87835,
+        "distinct": 87835
+      },
+      "Project": {
+        "expected": 7,
+        "found": 7,
+        "distinct": 7
+      },
+      "Person": {
+        "expected": 16942,
+        "found": 16942,
+        "distinct": 16942
+      },
+      "FixVersion": {
+        "expected": 1846,
+        "found": 1846,
+        "distinct": 1846
+      }
+    },
+    "relationship_types": {
+      "IN_PROJECT": {
+        "expected": 87835,
+        "found": 87835,
+        "distinct": 87835
+      },
+      "ASSIGNED_TO": {
+        "expected": 24659,
+        "found": 24659,
+        "distinct": 24659
+      },
+      "REPORTED_BY": {
+        "expected": 86895,
+        "found": 86895,
+        "distinct": 86895
+      },
+      "CREATED_BY": {
+        "expected": 87501,
+        "found": 87501,
+        "distinct": 87501
+      },
+      "HAS_PARENT": {
+        "expected": 1181,
+        "found": 1181,
+        "distinct": 1181
+      },
+      "FIXED_IN": {
+        "expected": 40833,
+        "found": 40833,
+        "distinct": 40833
+      },
+      "LOGGED_TIME": {
+        "expected": 7995,
+        "found": 7995,
+        "distinct": 7995
+      },
+      "BLOCKER": {
+        "expected": 421,
+        "found": 421,
+        "distinct": 421
+      },
+      "BONFIRE_TESTING": {
+        "expected": 105,
+        "found": 105,
+        "distinct": 105
+      },
+      "CAUSE": {
+        "expected": 703,
+        "found": 703,
+        "distinct": 703
+      },
+      "CLONERS": {
+        "expected": 952,
+        "found": 952,
+        "distinct": 952
+      },
+      "DEPENDS": {
+        "expected": 14,
+        "found": 14,
+        "distinct": 14
+      },
+      "DERIVED": {
+        "expected": 221,
+        "found": 221,
+        "distinct": 221
+      },
+      "DETAIL": {
+        "expected": 1621,
+        "found": 1621,
+        "distinct": 1621
+      },
+      "DUPLICATE": {
+        "expected": 7327,
+        "found": 7327,
+        "distinct": 7327
+      },
+      "FOLLOWS": {
+        "expected": 17,
+        "found": 17,
+        "distinct": 17
+      },
+      "PART": {
+        "expected": 748,
+        "found": 748,
+        "distinct": 748
+      },
+      "REFERENCE": {
+        "expected": 8899,
+        "found": 8899,
+        "distinct": 8899
+      },
+      "REGRESSION": {
+        "expected": 129,
+        "found": 129,
+        "distinct": 129
+      },
+      "RELATE": {
+        "expected": 219,
+        "found": 219,
+        "distinct": 219
+      },
+      "RELATED": {
+        "expected": 16,
+        "found": 16,
+        "distinct": 16
+      },
+      "RESOLVE": {
+        "expected": 12,
+        "found": 12,
+        "distinct": 12
+      },
+      "SPLIT": {
+        "expected": 71,
+        "found": 71,
+        "distinct": 71
+      },
+      "SUPERSESSION": {
+        "expected": 246,
+        "found": 246,
+        "distinct": 246
+      }
+    },
+    "total_nodes": 106630,
+    "total_relationships": 358620,
+    "problems": []
+  },
+  "seconds": {
+    "started": 0.9,
+    "writable": 11.7,
+    "wipe": 0.3,
+    "constraints": 0.4,
+    "nodes": 10.0,
+    "relationships": 16.3,
+    "read_only": 11.1,
+    "checks": 1.5
+  }
+}
