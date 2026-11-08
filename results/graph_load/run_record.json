@@ -1,9 +1,9 @@
 {
-  "time": "2026-11-08T04:51:43Z",
+  "time": "2026-11-08T19:56:10Z",
   "status": "ok",
   "failed_step": null,
   "git": {
-    "commit": "69244059138a6a1cb3edf83a0bc17cf247ca10bc",
+    "commit": "98e8bc05b0f9bc52d300df35873e8b2f6779475c",
     "dirty": false
   },
   "dlt_load_id": "1794002355.703372",
@@ -275,14 +275,25 @@
     "total_relationships": 358620,
     "problems": []
   },
+  "checks": {
+    "temporal": [],
+    "graph_state": [],
+    "load_consistency": []
+  },
+  "compare": {
+    "nodes_compared": 106630,
+    "relationships_compared": 358620,
+    "differences": {}
+  },
   "seconds": {
-    "started": 0.9,
-    "writable": 11.7,
-    "wipe": 0.3,
-    "constraints": 0.4,
-    "nodes": 10.0,
-    "relationships": 16.3,
-    "read_only": 11.1,
-    "checks": 1.5
+    "started": 0.8,
+    "writable": 0.6,
+    "wipe": 2.6,
+    "constraints": 0.1,
+    "nodes": 8.4,
+    "relationships": 14.5,
+    "read_only": 11.2,
+    "checks": 2.4,
+    "compare": 19.5
   }
 }
