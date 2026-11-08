@@ -9,7 +9,7 @@ from orgos.eval import EvalError
 
 def test_exit_codes_hold_the_eval_row() -> None:
     assert (EvalError, 4) in EXIT_CODES
-    assert sorted(code for _, code in EXIT_CODES) == [1, 2, 3, 4, 5]
+    assert sorted(code for _, code in EXIT_CODES) == [1, 2, 3, 4, 5, 6]
 
 
 def test_an_eval_error_exits_4_once_without_traceback(

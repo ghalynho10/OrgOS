@@ -162,6 +162,15 @@ def dbt_subprocess_env(settings: Settings) -> dict[str, str]:
     return {**os.environ, **settings.dbt_env(), "PGTZ": DBT_TIMEZONE}
 
 
+def compose_subprocess_env(variable: str, value: str) -> dict[str, str]:
+    """The environment for a `docker compose` subprocess: ours, with exactly one variable set.
+
+    The graph load sets the Neo4j read only override this way, for the child
+    process only, over whatever the inherited environment holds (spec 0010 AC-7, AC-8).
+    """
+    return {**os.environ, variable: value}
+
+
 def _absent_env_folder(env_file: object) -> Path | None:
     # A single env file that does not exist: the folder it was looked for in.
     # `None` or a list of files gives no hint.
