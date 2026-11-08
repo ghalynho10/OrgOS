@@ -1,12 +1,12 @@
 {
-  "time": "2026-11-08T19:56:10Z",
+  "time": "2026-11-08T23:01:50Z",
   "status": "ok",
   "failed_step": null,
   "git": {
-    "commit": "98e8bc05b0f9bc52d300df35873e8b2f6779475c",
+    "commit": "ce571e9fe5aeb403d7bbd8187fc4b2369af6f72a",
     "dirty": false
   },
-  "dlt_load_id": "1794002355.703372",
+  "dlt_load_id": "1794178447.229884",
   "versions": {
     "python": "3.12.12",
     "neo4j": "6.4.1",
@@ -287,11 +287,11 @@
   },
   "seconds": {
     "started": 0.8,
-    "writable": 0.6,
-    "wipe": 2.6,
-    "constraints": 0.1,
-    "nodes": 8.4,
-    "relationships": 14.5,
+    "writable": 11.7,
+    "wipe": 7.5,
+    "constraints": 0.3,
+    "nodes": 9.3,
+    "relationships": 15.7,
     "read_only": 11.2,
     "checks": 2.4,
     "compare": 19.5
