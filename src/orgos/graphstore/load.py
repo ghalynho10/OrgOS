@@ -130,12 +130,17 @@ def _read_record(path: Path) -> Mapping[str, Any]:
 
 
 def consistency_problems(consistency: Consistency, load_id: str) -> tuple[str, ...]:
-    """The load consistency problems, plus a latest load that is not `load_id` (AC-3, AC-19)."""
+    """The load consistency problems, plus a latest load that is not `load_id` (AC-3, AC-19).
+
+    That line names both IDs and every table that does not hold `load_id`.
+    """
     if consistency.latest_load_id == load_id:
         return consistency.problems
+    tables = [table.table for table in consistency.tables if table.load_ids != (load_id,)]
     return (
         *consistency.problems,
-        f"the latest load is {consistency.latest_load_id}, the SQL record holds {load_id}",
+        f"the latest load is {consistency.latest_load_id}, the SQL record holds {load_id};"
+        f" tables not holding {load_id}: {', '.join(tables) or 'none'}",
     )
 
 

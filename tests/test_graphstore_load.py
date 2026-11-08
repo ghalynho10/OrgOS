@@ -29,9 +29,17 @@ from orgos.graphstore.checks import (
     reconcile,
 )
 from orgos.graphstore.compare import Comparison, comparison
-from orgos.graphstore.load import Inputs, ModelInt, _StepFailed, load_graph, summary
+from orgos.graphstore.load import (
+    Inputs,
+    ModelInt,
+    _StepFailed,
+    consistency_problems,
+    load_graph,
+    summary,
+)
 from orgos.graphstore.mapping import load_mapping
 from orgos.graphstore.record import RUN_RECORD, RunState, build_record
+from orgos.sqlstore.figures import Consistency, TableLoad
 
 MAPPING = load_mapping()
 SQL = "results/sql_load/run_record.json"
@@ -351,6 +359,18 @@ def test_summary_lists_each_count_and_the_totals() -> None:
     assert lines[:2] == ["orgos load graph: ok", "dlt load L1"]
     assert "Issue" in lines[2] and "87,835" in lines[2]
     assert lines[-2:] == ["106,630 nodes, 358,620 relationships", f"run record: {RUN_RECORD}"]
+
+
+# covers: AC-3, AC-19 (a latest load other than the SQL record's names both IDs and the tables)
+def test_consistency_names_both_ids_and_the_tables() -> None:
+    tables = (TableLoad("model_int.issue", 3, ("L2",)), TableLoad("model.issue", 3, ("L2",)))
+    assert consistency_problems(Consistency("L1", tables, ()), "L1") == ()
+    assert consistency_problems(Consistency("L2", tables, ()), "L1") == (
+        "the latest load is L2, the SQL record holds L1;"
+        " tables not holding L1: model_int.issue, model.issue",
+    )
+    stale = Consistency("L1", tables, ("model.issue holds L0",))
+    assert consistency_problems(stale, "L1") == ("model.issue holds L0",)
 
 
 # covers: AC-1 (a database or subprocess error is named by its step)
