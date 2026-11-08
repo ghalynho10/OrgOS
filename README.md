@@ -137,7 +137,7 @@ uv run orgos load graph   # model_int into Neo4j, restarted read only, every che
 - **Preflight** writes nothing and refuses unless `results/sql_load/run_record.json` says `ok`, a live load consistency check matches its `dlt_load_id`, the mapping passes its checks, and `docker info` and `docker compose version` both work.
 - **The steps.** The run record is written as `fail`, then: read `model_int`; recreate Neo4j writable; wipe (relationships first, then nodes); create the four uniqueness constraints; write the nodes, then the relationships; recreate Neo4j read only; check (counts, the `Z` form of every datetime, one `loadId`, the schema, load consistency); compare every node and relationship with its `model_int` row. Only then is the record written as `ok`.
 - **Read only, always.** Once Neo4j was made writable, it is made read only again after success, failure and Ctrl+C. If that restart fails, the message says Neo4j may still be writable and the record says `read_only_restored: false`. A hard kill skips it; the `fail` record still stops anything from scoring that graph.
-- **Reruns** wipe and reload, so a second run ends with the same counts. On the full corpus it takes about 75 seconds.
+- **Reruns** wipe and reload, so a second run ends with the same counts. On the full corpus it takes about 80 seconds (measured 2026-11-08), two Neo4j restarts of about 12 seconds each included.
 - **Exit codes**: 0 when every step and check passed, 2 configuration, 6 a preflight refusal, a failed step or a failed check (named in one message). Progress goes to stderr, the summary to stdout.
 
 ## Pinned versions
