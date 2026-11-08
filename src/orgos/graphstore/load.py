@@ -22,7 +22,14 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
-from neo4j import Driver, GraphDatabase, ManagedTransaction, Session, SummaryCounters
+from neo4j import (
+    Driver,
+    GraphDatabase,
+    ManagedTransaction,
+    NotificationMinimumSeverity,
+    Session,
+    SummaryCounters,
+)
 from neo4j.exceptions import DriverError, Neo4jError
 from psycopg import IsolationLevel, sql
 
@@ -227,10 +234,13 @@ def read_model_int(conninfo: str, mapping: GraphMapping) -> ModelInt:
 
 
 def _driver(settings: Settings) -> Driver:
+    # Warnings only: `CREATE CONSTRAINT ... IF NOT EXISTS` on a rerun draws an
+    # information note per constraint that would clutter the step log (AC-22).
     return GraphDatabase.driver(
         settings.neo4j_uri,
         auth=(settings.neo4j_user, settings.neo4j_password.get_secret_value()),
         max_transaction_retry_time=RETRY_SECONDS,
+        notifications_min_severity=NotificationMinimumSeverity.WARNING,
     )
 
 
