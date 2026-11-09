@@ -270,6 +270,34 @@ def test_a_name_that_is_not_an_identifier_fails_the_load_checks() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "changes",
+    [{"types": (("Blocker", "BLOCKER"),)}, {"type": None}],
+    ids=["a fixed type and a types table", "neither"],
+)
+def test_a_relationship_needs_one_fixed_type_or_a_type_column(changes: dict[str, Any]) -> None:
+    changed = replace(_relationship("in_project"), **changes)
+    assert mapping_problems(_with_relationship(MAPPING, changed)) == (
+        "in_project needs exactly one fixed type, or a type column with types",
+    )
+
+
+def test_a_split_by_a_column_other_than_edge_type_fails_the_load_checks() -> None:
+    changed = replace(_relationship("issue_link"), type_column="link_type_name")
+    assert mapping_problems(_with_relationship(MAPPING, changed)) == (
+        "issue_link splits by 'link_type_name', expected 'edge_type'",
+    )
+
+
+# covers: spec 0008 AC-11 (a structural column must be a declared column too)
+def test_coverage_names_a_structural_column_the_dbt_yaml_does_not_declare() -> None:
+    in_project = {name: kind for name, kind in DECLARED["in_project"].items() if name != "dst_id"}
+    declared = {**DECLARED, "in_project": in_project}
+    assert coverage_problems(MAPPING, declared) == (
+        "in_project.dst_id is structural but not a declared column",
+    )
+
+
 def test_parse_mapping_raises_with_every_problem() -> None:
     data = tomllib.loads(MAPPING_FILE.read_text(encoding="utf-8"))
     data["excluded"] = ["project"]
@@ -386,6 +414,20 @@ def test_relationship_row_carries_ends_edge_id_and_properties() -> None:
             "loadId": "L",
         },
     }
+
+
+@pytest.mark.parametrize("key", [None, ""])
+def test_a_node_key_that_is_null_or_empty_fails_naming_the_table(key: str | None) -> None:
+    issue = MAPPING.node("Issue")
+    row = dict.fromkeys(issue.read_columns) | {"issue_key": key}
+    with pytest.raises(GraphStoreError, match=rf"^issue has a row whose issue_key is {key!r}, not"):
+        node_row(issue, row)
+
+
+def test_a_null_edge_id_fails_naming_the_table() -> None:
+    row = {"edge_id": None, "src_id": "BAM-1", "dst_id": "BAM"}
+    with pytest.raises(GraphStoreError, match=r"^in_project has a row whose edge_id is None, not"):
+        relationship_row(_relationship("in_project"), row)
 
 
 def test_a_null_end_fails_naming_table_and_edge_id() -> None:

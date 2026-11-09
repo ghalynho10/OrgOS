@@ -396,6 +396,57 @@ def test_load_graph_help_needs_no_config(
     assert "Load model_int into Neo4j" in capsys.readouterr().out
 
 
+# covers: AC-1, AC-2 (a SQL record that is missing, failed or not a JSON object is refused
+# with exit 6 and one message, and nothing is written; preflight reads it before any store)
+@pytest.mark.parametrize(
+    ("text", "message"),
+    [
+        (None, "run `uv run orgos load sql` first"),
+        (
+            json.dumps({"status": "fail", "failed_step": "figures", "dlt_load_id": "L1"}),
+            f"The SQL load is not ready:\n  {SQL} says status 'fail', not 'ok'"
+            " (failed step figures)",
+        ),
+        ('{"status": "ok",', "is not valid JSON"),
+        ('["ok"]', "does not hold a JSON object"),
+    ],
+)
+def test_load_graph_refuses_a_sql_record_that_is_not_ok_and_writes_nothing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    text: str | None,
+    message: str,
+) -> None:
+    for field in Settings.model_fields.values():
+        monkeypatch.delenv(str(field.validation_alias), raising=False)
+    env = {
+        # Hosts that cannot resolve, so a store call made by mistake fails at once.
+        "ORGOS_PG_HOST": "postgres.invalid",
+        "ORGOS_NEO4J_HOST": "neo4j.invalid",
+        "POSTGRES_PASSWORD": secrets.token_hex(8),
+        "ORGOS_PG_OWNER_PASSWORD": secrets.token_hex(8),
+        "ORGOS_PG_READER_PASSWORD": secrets.token_hex(8),
+        "MONGO_INITDB_ROOT_PASSWORD": secrets.token_hex(8),
+        "ORGOS_MONGO_READER_PASSWORD": secrets.token_hex(8),
+        "NEO4J_AUTH": f"neo4j/{secrets.token_hex(8)}",
+    }
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.chdir(tmp_path)
+    if text is not None:
+        (tmp_path / SQL).parent.mkdir(parents=True)
+        (tmp_path / SQL).write_text(text, encoding="utf-8")
+    with pytest.raises(SystemExit) as exit_info:
+        run(["load", "graph"])
+    assert exit_info.value.code == 6
+    captured = capsys.readouterr()
+    assert message in captured.err
+    assert "Traceback" not in captured.err
+    assert captured.out == ""
+    assert not (tmp_path / GRAPH).parent.exists()
+
+
 @pytest.fixture
 def settings(monkeypatch: pytest.MonkeyPatch) -> Settings:
     for field in Settings.model_fields.values():
@@ -532,6 +583,26 @@ def test_a_failed_step_still_makes_neo4j_read_only(
 def _outcome(root: Path) -> tuple[str, str | None, bool | None]:
     record = json.loads((root / RUN_RECORD).read_text())
     return record["status"], record["failed_step"], record["read_only_restored"]
+
+
+# covers: AC-6, AC-18 (a difference found by the compare fails the load; the record keeps it)
+def test_a_compare_difference_fails_the_load(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _fake_run(monkeypatch, tmp_path, None)
+    found = comparison(106_630, 358_620, [("node property", "Issue BAM-1 statusName")])
+    monkeypatch.setattr(graph_load, "compare_graph", lambda *_: found)
+    with pytest.raises(GraphStoreError) as raised:
+        load_graph(settings, tmp_path)
+    assert str(raised.value).splitlines() == [
+        "compare step failed: The value level compare found differences:",
+        "  node property: 1 (Issue BAM-1 statusName)",
+    ]
+    assert _outcome(tmp_path) == ("fail", "compare", True)
+    record = json.loads((tmp_path / RUN_RECORD).read_text())
+    assert record["compare"]["differences"] == {
+        "node property": {"count": 1, "shown": ["Issue BAM-1 statusName"]}
+    }
 
 
 # covers: AC-8 (the restore runs after Ctrl+C, after a failed writable step; a failed
