@@ -1,9 +1,9 @@
 {
-  "time": "2026-11-08T23:01:50Z",
+  "time": "2026-11-09T00:23:02Z",
   "status": "ok",
   "failed_step": null,
   "git": {
-    "commit": "ce571e9fe5aeb403d7bbd8187fc4b2369af6f72a",
+    "commit": "98c1db1343a7078ec60a4c0167a0f7e914fa57ed",
     "dirty": false
   },
   "dlt_load_id": "1794178447.229884",
@@ -286,14 +286,14 @@
     "differences": {}
   },
   "seconds": {
-    "started": 0.8,
-    "writable": 11.7,
-    "wipe": 7.5,
+    "started": 0.7,
+    "writable": 11.1,
+    "wipe": 6.8,
     "constraints": 0.3,
-    "nodes": 9.3,
-    "relationships": 15.7,
-    "read_only": 11.2,
-    "checks": 2.4,
-    "compare": 19.5
+    "nodes": 9.4,
+    "relationships": 15.4,
+    "read_only": 11.7,
+    "checks": 2.3,
+    "compare": 19.4
   }
 }
