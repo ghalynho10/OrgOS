@@ -641,6 +641,33 @@ def test_a_failed_restore_after_a_failed_step_names_both(
     assert _outcome(tmp_path) == ("fail", "nodes", False)
 
 
+def test_a_failed_record_write_after_a_failed_step_keeps_the_step_error(
+    settings: Settings,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _fake_run(monkeypatch, tmp_path, "nodes", restore_error=OSError("compose broke"))
+    real_write = graph_load.write_run_record
+
+    def write_once(path: Path, record: dict[str, Any]) -> None:
+        # The started record lands; the record of the failed step does not.
+        if record["failed_step"] != "started":
+            raise OSError(28, "No space left on device")
+        real_write(path, record)
+
+    monkeypatch.setattr(graph_load, "write_run_record", write_once)
+    with pytest.raises(GraphStoreError) as raised:
+        load_graph(settings, tmp_path)
+    assert str(raised.value).splitlines() == [
+        "nodes step failed: nodes broke",
+        "Neo4j may still be writable: the restart to read only failed"
+        f" (read_only_restored is false in {RUN_RECORD}).",
+    ]
+    assert f"Cannot write {RUN_RECORD}: No space left on device" in caplog.text
+    assert _outcome(tmp_path) == ("fail", "started", None)
+
+
 def test_a_failed_restore_after_good_writes_fails_the_load(
     settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

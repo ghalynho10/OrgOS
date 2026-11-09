@@ -216,7 +216,7 @@ def read_model_int(conninfo: str, mapping: GraphMapping) -> ModelInt:
                 sql.SQL("SELECT count(*) FROM {}").format(sql.Identifier(SCHEMA, table))
             ).fetchone()
             table_rows[table] = int(count[0]) if count else 0
-        type_rows = {}
+        type_rows: dict[str, int] = {}
         for rel in mapping.relationships:
             if rel.type_column is not None:
                 grouped = conn.execute(
@@ -224,7 +224,7 @@ def read_model_int(conninfo: str, mapping: GraphMapping) -> ModelInt:
                         sql.Identifier(rel.type_column), sql.Identifier(SCHEMA, rel.table)
                     )
                 ).fetchall()
-                type_rows = {str(value): int(rows) for value, rows in grouped}
+                type_rows |= {str(value): int(rows) for value, rows in grouped}
     log.info(
         "read %s model_int rows from %s tables",
         f"{sum(table_rows.values()):,}",
@@ -563,7 +563,11 @@ def load_graph(settings: Settings, root: Path) -> str:
     if failure is None:
         state, failure = _compare(settings, inputs, state)
     if failure is not None:
-        _write(root, state, failure.step)
+        try:
+            _write(root, state, failure.step)
+        except GraphStoreError as write_error:
+            # The step error and the writable warning matter more than the record.
+            log.error("%s", write_error)
         writable = (
             f"Neo4j may still be writable: the restart to read only failed"
             f" (read_only_restored is false in {RUN_RECORD})."
