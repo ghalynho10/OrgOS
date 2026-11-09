@@ -65,6 +65,8 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 - integration: on
 - branch prefix: feat/
 - commit: per-milestone
+- `main` is protected: the `no-commit-to-branch` hook refuses a commit on `main`, so work lands through a PR.
+- No `Co-Authored-By` trailer: a `commit-msg` hook rejects any commit that carries one.
 
 ## Agent skills
 
@@ -74,6 +76,10 @@ Declined: a wider skills and MCP search (2026-10-25, the installed set covers th
 ## Circuit breaker
 
 If the same problem persists after one corrective prompt, stop and run /recover before trying again. It diagnoses an isolated bug (routes to /debug), a session gone wrong through repeated patching (hard reset), or a foundation resting on a wrong assumption (rethink). It pauses for confirmation before a hard reset or a rethink; a reset note goes to `docs/session-notes.md`, which /checkpoint reads and ages out.
+
+## Standing rules
+
+Read [docs/reflexes.md](docs/reflexes.md) before making changes: standing rules for how work is done here, one line each, written by /reflex. A rule that has become a plain convention belongs in this file instead; /reflex flags it and the engineer moves it.
 
 ## Context files
 

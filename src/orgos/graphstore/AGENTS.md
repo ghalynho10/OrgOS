@@ -38,6 +38,7 @@ Every node and relationship has `sourceDocId` and `loadId`; every relationship h
 | `compare.py` | The value level compare of every node and relationship with its `model_int` row |
 | `compose.py` | The read only toggle through `docker compose` and its `SHOW DATABASES` poll |
 | `load.py` | The command: preflight, steps, restore, checks, run record |
+| `record.py` | The run record, `results/graph_load/run_record.json` (spec 0010 AC-6, AC-21) |
 
 ## Conventions
 
