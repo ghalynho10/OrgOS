@@ -21,6 +21,8 @@ from orgos.eval import EvalError
 from orgos.eval.answers import answers
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
+from orgos.graphstore import GraphStoreError
+from orgos.graphstore.load import load_graph
 from orgos.ingest import IngestError
 from orgos.mongostore import MongoStoreError
 from orgos.mongostore.restore import restore
@@ -40,6 +42,7 @@ EXIT_CODES: tuple[tuple[type[Exception], int], ...] = (
     (MongoStoreError, 3),
     (EvalError, 4),
     (IngestError, 5),
+    (GraphStoreError, 6),
 )
 NAMED_ERRORS = tuple(error for error, _ in EXIT_CODES)
 
@@ -191,6 +194,20 @@ def load_sql_command() -> None:
     """
     settings = load_settings()
     typer.echo(load_sql(settings, Path.cwd()))
+
+
+@load_app.command("graph")
+def load_graph_command() -> None:
+    """Load model_int into Neo4j, restart it read only, and check it against model_int.
+
+    Needs an `ok` SQL run record whose load ID matches the live tables. Makes
+    Neo4j writable through docker compose, wipes and reloads it, makes it read
+    only again (also after a failure or Ctrl+C), reconciles the counts, then
+    writes results/graph_load/run_record.json. Run it from the repository root.
+    Reads Postgres as the owner login only; never touches Mongo.
+    """
+    settings = load_settings()
+    typer.echo(load_graph(settings, Path.cwd()))
 
 
 def run(args: Sequence[str] | None = None) -> None:

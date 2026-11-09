@@ -1,0 +1,149 @@
+# How the 12 model_int tables become the Neo4j graph (spec 0008, layout of spec 0010).
+#
+# Four tables become node labels and eight become relationships. Every column
+# of a table is either listed here as a property or is structural: `src_id`,
+# `dst_id` and `edge_type` give a relationship its ends and type, `edge_id`
+# becomes `edgeId` on every relationship, and `link_type_name` of `issue_link`
+# equals `edge_type`. Property types: String, Boolean, Integer, datetime.
+# `orgos.graphstore.mapping` loads and checks this file; it holds no Cypher.
+
+# Tables left out of the graph on purpose (spec 0008 AC-1: none).
+excluded = []
+
+[[node]]
+table = "issue"
+label = "Issue"
+key = { column = "issue_key", property = "issueKey", type = "String", constraint = "issue_issuekey_unique" }
+columns = [
+  { column = "created_at", property = "createdAt", type = "datetime" },
+  { column = "resolution_date", property = "resolutionDate", type = "datetime" },
+  { column = "due_at", property = "dueAt", type = "datetime" },
+  { column = "time_original_estimate_s", property = "timeOriginalEstimateS", type = "Integer" },
+  { column = "resolution_name", property = "resolutionName", type = "String" },
+  { column = "issue_type_name", property = "issueTypeName", type = "String" },
+  { column = "priority_name", property = "priorityName", type = "String" },
+  { column = "status_name", property = "statusName", type = "String" },
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[node]]
+table = "project"
+label = "Project"
+key = { column = "project_key", property = "projectKey", type = "String", constraint = "project_projectkey_unique" }
+columns = [
+  { column = "project_name", property = "projectName", type = "String" },
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[node]]
+table = "person"
+label = "Person"
+key = { column = "person_key", property = "personKey", type = "String", constraint = "person_personkey_unique" }
+columns = [
+  { column = "login_name", property = "loginName", type = "String" },
+  { column = "is_active", property = "isActive", type = "Boolean" },
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[node]]
+table = "fix_version"
+label = "FixVersion"
+key = { column = "version_id", property = "versionId", type = "String", constraint = "fixversion_versionid_unique" }
+columns = [
+  { column = "version_name", property = "versionName", type = "String" },
+  { column = "is_released", property = "isReleased", type = "Boolean" },
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[relationship]]
+table = "in_project"
+type = "IN_PROJECT"
+start = { label = "Issue", key = "issueKey" }
+end = { label = "Project", key = "projectKey" }
+columns = [
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[relationship]]
+table = "assigned_to"
+type = "ASSIGNED_TO"
+start = { label = "Issue", key = "issueKey" }
+end = { label = "Person", key = "personKey" }
+columns = [
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[relationship]]
+table = "reported_by"
+type = "REPORTED_BY"
+start = { label = "Issue", key = "issueKey" }
+end = { label = "Person", key = "personKey" }
+columns = [
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[relationship]]
+table = "created_by"
+type = "CREATED_BY"
+start = { label = "Issue", key = "issueKey" }
+end = { label = "Person", key = "personKey" }
+columns = [
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[relationship]]
+table = "has_parent"
+type = "HAS_PARENT"
+start = { label = "Issue", key = "issueKey" }
+end = { label = "Issue", key = "issueKey" }
+columns = [
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[relationship]]
+table = "fixed_in"
+type = "FIXED_IN"
+start = { label = "Issue", key = "issueKey" }
+end = { label = "FixVersion", key = "versionId" }
+columns = [
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+[[relationship]]
+table = "logged_time"
+type = "LOGGED_TIME"
+start = { label = "Person", key = "personKey" }
+end = { label = "Issue", key = "issueKey" }
+columns = [
+  { column = "history_id", property = "historyId", type = "String" },
+  { column = "seconds", property = "seconds", type = "Integer" },
+  { column = "logged_at", property = "loggedAt", type = "datetime" },
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
+
+# The one table split by its type column: one relationship type per link type
+# (spec 0008 AC-7 and AC-8), from the outward side to the inward side (AC-9).
+[[relationship]]
+table = "issue_link"
+type_column = "edge_type"
+start = { label = "Issue", key = "issueKey" }
+end = { label = "Issue", key = "issueKey" }
+types = { "Blocker" = "BLOCKER", "Bonfire Testing" = "BONFIRE_TESTING", "Cause" = "CAUSE", "Cloners" = "CLONERS", "Depends" = "DEPENDS", "Derived" = "DERIVED", "Detail" = "DETAIL", "Duplicate" = "DUPLICATE", "Follows" = "FOLLOWS", "Part" = "PART", "Reference" = "REFERENCE", "Regression" = "REGRESSION", "Relate" = "RELATE", "Related" = "RELATED", "Resolve" = "RESOLVE", "Split" = "SPLIT", "Supersession" = "SUPERSESSION" }
+columns = [
+  { column = "link_id", property = "linkId", type = "String" },
+  { column = "outward_label", property = "outwardLabel", type = "String" },
+  { column = "inward_label", property = "inwardLabel", type = "String" },
+  { column = "source_doc_id", property = "sourceDocId", type = "String" },
+  { column = "load_id", property = "loadId", type = "String" },
+]
