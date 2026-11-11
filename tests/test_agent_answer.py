@@ -270,6 +270,57 @@ def test_a_path_result_without_a_path_column_is_named_not_crashed() -> None:
     assert any("needs column path" in p for p in problems)
 
 
+# covers: AC-17, AC-19, the path checks that had no test
+@pytest.mark.parametrize(
+    ("row", "words"),
+    [
+        ((None, ["L1"], ["A-2"]), "column path of r1 holds NULL"),
+        (("A-1>A-2", ["L1"], ["A-2"]), "must be a list of IDs"),
+        ((["A-1", 2.5], ["L1"], ["A-2"]), "must be a list of IDs"),
+        ((["A-1", "A-2"], "L1", ["A-2"]), "row 1 must hold a list with one ID or ID list per hop"),
+        ((["A-1", "A-2"], [["L1", None]], ["A-2"]), "row 1 must hold a list"),
+        ((["A-1", "A-2"], None, ["A-2"]), "column links of r1 holds NULL"),
+    ],
+)
+def test_each_bad_path_row_sends_the_model_back(row: tuple[Any, ...], words: str) -> None:
+    results = {"r1": _rows(("path", "links", "issues"), row)}
+    problems = answer_problems(PATH_ANSWER, results, "path")
+    assert any(words in problem for problem in problems), problems
+
+
+# covers: AC-17, a mixed kind column is for map, ranking and set only
+def test_a_path_with_a_kind_column_still_needs_id_kind() -> None:
+    results = {"r1": _rows(("path", "kind", "links"), (["A-1", "A-2"], "issue", ["L1"]))}
+    answer = _answer("path", sources=[{"issue_link": ("r1", "links")}])
+    problems = answer_problems(answer, results, "path")
+    assert any("a path answer needs id_kind" in p for p in problems), problems
+
+
+# covers: AC-17, a NULL in column kind sends the model back and is not filtered
+def test_a_null_in_the_kind_column_sends_the_model_back() -> None:
+    results = {"r1": _rows(("id", "kind"), ("u1", "person"), ("CLOUD", None))}
+    problems = answer_problems(_answer("set"), results, "set")
+    assert any("column kind of r1 holds NULL" in p for p in problems), problems
+
+
+# covers: AC-17, AC-18, a source column must hold IDs (str or int), not other values
+@pytest.mark.parametrize("cell", [2.5, Decimal("3"), True, ["CLOUD-1"]])
+def test_a_source_column_that_is_not_ids_sends_the_model_back(cell: Any) -> None:
+    results = {"r1": ISSUES, "r2": _rows(("id",), ("u1",), (cell,))}
+    answer = _answer("set", id_kind="issue", sources=[{"person": ("r2", "id")}])
+    problems = answer_problems(answer, results, "set")
+    assert any("column id of r2 must hold IDs" in p for p in problems), problems
+
+
+# covers: AC-18, sources are dropped only when the value is empty AND every source list is empty
+def test_an_empty_value_with_source_ids_keeps_its_steps() -> None:
+    results = {"r1": _rows(("id",)), "r2": ISSUES}
+    answer = _answer("set", id_kind="issue", sources=[{"issue": ("r2", "id")}])
+    value, sources = assemble(answer, results)
+    assert value == []
+    assert sources == ({"issue": ("CLOUD-1", "CLOUD-2")},)
+
+
 # --- The outcome map (AC-21) ---
 
 OK = QueryAttempt("SELECT 1", "ok", 0.1, 1)

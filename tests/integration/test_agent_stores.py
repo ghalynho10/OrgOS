@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import secrets
 from collections.abc import Callable, Iterator
+from pathlib import Path
 from typing import Any
 
 import psycopg
@@ -19,8 +20,11 @@ from neo4j import Driver
 from pydantic import SecretStr
 from testcontainers.community.neo4j import Neo4jContainer
 
+from orgos.agent import build_agent
+from orgos.agent.agent import OrgosQueryAgent
 from orgos.agent.describe_graph import read_graph_values
 from orgos.agent.describe_sql import read_sql_structure, read_sql_values
+from orgos.agent.errors import AgentError
 from orgos.agent.session import (
     GraphSession,
     check_sessions,
@@ -30,6 +34,7 @@ from orgos.agent.session import (
 )
 from orgos.config import STORE_ROW_CAP, Settings
 from orgos.eval.handoff import AgentRun, Store
+from orgos.eval.runs import load_agent
 from orgos.graphstore.mapping import load_mapping
 from orgos.graphstore.query import reader_driver, run_cypher
 from orgos.sqlstore.bootstrap import bootstrap
@@ -125,6 +130,51 @@ def graph(neo4j_read_only: Neo4jContainer, pg_settings: Settings) -> Iterator[Dr
     )
     with reader_driver(settings) as driver:
         yield driver
+
+
+@pytest.fixture(scope="module")
+def both_stores(agent_db: Settings, neo4j_read_only: Neo4jContainer) -> Settings:
+    """The agent database and the read only graph, with a model and a key no call ever uses."""
+    return agent_db.model_copy(
+        update={
+            "neo4j_host": neo4j_read_only.get_container_host_ip(),
+            "neo4j_bolt_port": int(neo4j_read_only.get_exposed_port(7687)),
+            "neo4j_auth": SecretStr(f"neo4j/{NEO4J_PASSWORD}"),
+            "model": "anthropic:claude-sonnet-5-5",
+            "anthropic_api_key": SecretStr(secrets.token_hex(8)),
+        }
+    )
+
+
+# --- build_agent on the real stores (AC-1, AC-8, AC-11, AC-24) ---
+
+
+# covers: AC-1, AC-8, AC-24, the runner loads the agent from live reads and its hash is stable
+def test_the_runner_loads_the_agent_from_the_real_stores_with_a_stable_hash(
+    both_stores: Settings, tmp_path: Path
+) -> None:
+    first = load_agent("orgos.agent:build_agent", both_stores, tmp_path)
+    second = build_agent(both_stores)
+    assert isinstance(first, OrgosQueryAgent)
+    assert first.describe().model_id == "anthropic:claude-sonnet-5-5"
+    assert first.describe().version_hash == second.describe().version_hash
+    assert first.describe().parts == second.describe().parts
+
+
+# covers: AC-11, build_agent itself refuses a session that is not the reader, naming the check.
+# The login check compares with the configured reader name, so pointing that name at the
+# owner passes it; the zone, set to UTC on the reader role only, is what refuses.
+def test_build_agent_refuses_the_owner_login_naming_the_check(both_stores: Settings) -> None:
+    as_owner = both_stores.model_copy(
+        update={
+            "pg_reader_user": both_stores.pg_owner_user,
+            "pg_reader_password": both_stores.pg_owner_password,
+        }
+    )
+    with pytest.raises(AgentError, match="store session is not as required") as raised:
+        build_agent(as_owner)
+    assert "SQL zone:" in str(raised.value)
+    assert both_stores.pg_owner_user not in str(raised.value)
 
 
 # --- The session reads (AC-11) ---

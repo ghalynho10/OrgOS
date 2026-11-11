@@ -12,6 +12,7 @@ import datetime as dt
 import inspect
 import itertools
 import logging
+import secrets
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
@@ -149,6 +150,42 @@ def test_orgos_eval_never_imports_orgos_agent() -> None:
                 assert not (node.module or "").startswith("orgos.agent"), path.name
             if isinstance(node, ast.Import):
                 assert not any(a.name.startswith("orgos.agent") for a in node.names), path.name
+
+
+def _offline_settings(**overrides: object) -> Any:
+    from orgos.config import load_settings
+
+    # Port 1 refuses at once: if a refusal below ever moved after a store read, the
+    # test would fail with a store error instead of the named one.
+    return load_settings(
+        _env_file=None,
+        POSTGRES_PASSWORD=secrets.token_hex(8),
+        ORGOS_PG_OWNER_PASSWORD=secrets.token_hex(8),
+        ORGOS_PG_READER_PASSWORD=secrets.token_hex(8),
+        MONGO_INITDB_ROOT_PASSWORD=secrets.token_hex(8),
+        ORGOS_MONGO_READER_PASSWORD=secrets.token_hex(8),
+        NEO4J_AUTH=f"neo4j/{secrets.token_hex(8)}",
+        ORGOS_PG_PORT=1,
+        ORGOS_NEO4J_BOLT_PORT=1,
+        **overrides,
+    )
+
+
+# covers: AC-20, `build_agent` raises ConfigError when ORGOS_MODEL is unset, before any store
+def test_build_agent_refuses_without_a_model_before_any_store() -> None:
+    from orgos.config import ConfigError
+
+    with pytest.raises(ConfigError, match="ORGOS_MODEL not set"):
+        orgos.agent.build_agent(_offline_settings(ORGOS_MODEL=None))
+
+
+# covers: AC-23, a model with no price entry stops `build_agent` itself, before any store
+def test_build_agent_refuses_an_unpriced_model_before_any_store() -> None:
+    settings = _offline_settings(
+        ORGOS_MODEL="anthropic:claude-not-priced", ANTHROPIC_API_KEY=secrets.token_hex(8)
+    )
+    with pytest.raises(AgentError, match="has no entry for 'anthropic:claude-not-priced'"):
+        orgos.agent.build_agent(settings)
 
 
 # --- One scripted run (AC-16, AC-18) ---
@@ -517,6 +554,14 @@ def test_a_change_in_any_part_changes_the_hash(change: dict[str, Any], part: str
     before, after = _parts(), _parts(**change)
     assert before[part] != after[part]
     assert {name for name in before if before[name] != after[name]} == {part}
+    assert version_hash(before) != version_hash(after)
+
+
+# covers: AC-20, AC-24, sampling is recorded as provider default; a set temperature changes it
+def test_a_temperature_changes_only_the_settings_part() -> None:
+    warmer = LIMITS.__class__(**{**LIMITS.__dict__, "temperature": 0.3})
+    before, after = _parts(), _parts(limits=warmer)
+    assert {name for name in before if before[name] != after[name]} == {"settings"}
     assert version_hash(before) != version_hash(after)
 
 

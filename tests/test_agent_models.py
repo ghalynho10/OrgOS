@@ -28,7 +28,7 @@ from pydantic_ai.providers.anthropic import AnthropicProvider
 
 from orgos.agent.agent import OrgosQueryAgent
 from orgos.agent.errors import AgentError
-from orgos.agent.models import CLIENT_RETRIES, build_model, provider_error
+from orgos.agent.models import CLIENT_RETRIES, build_model, model_settings, provider_error
 from orgos.config import ConfigError, load_settings
 from orgos.eval.handoff import ProviderOutage
 from tests.test_agent_run import DESCRIPTIONS, LIMITS, PRICES, QUESTION, _executor
@@ -126,6 +126,12 @@ def test_other_statuses_are_agent_errors(status: int) -> None:
 
 
 # --- The model (AC-20, AC-22) ---
+
+
+# covers: AC-20, no temperature is sent while ORGOS_AGENT_TEMPERATURE is unset
+def test_a_temperature_is_sent_only_when_one_is_set() -> None:
+    assert model_settings(16_000, None) == {"max_tokens": 16_000}
+    assert model_settings(16_000, 0.3) == {"max_tokens": 16_000, "temperature": 0.3}
 
 
 def test_the_model_has_the_client_retries_and_refuses_another_provider() -> None:

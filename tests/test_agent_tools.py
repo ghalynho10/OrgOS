@@ -13,7 +13,7 @@ from decimal import Decimal
 from typing import Any
 
 import pytest
-from neo4j.graph import Graph, Node
+from neo4j.graph import Graph, Node, Path
 from neo4j.time import DateTime, Duration
 
 from orgos.agent.tools import (
@@ -28,7 +28,12 @@ from orgos.agent.tools import (
     run_query,
 )
 from orgos.eval.handoff import QueryAttempt, Store, StoreOutage
-from orgos.graphstore.query import GraphConnectionLost, GraphQueryTimeout, GraphRowCapError
+from orgos.graphstore.query import (
+    GraphConnectionLost,
+    GraphQueryError,
+    GraphQueryTimeout,
+    GraphRowCapError,
+)
 from orgos.sqlstore.query import (
     QueryResult,
     SqlConnectionLost,
@@ -284,6 +289,31 @@ def test_a_node_value_is_refused_naming_the_plain_values_rule() -> None:
         text = run_query(trace, "MATCH (i:Issue) RETURN i")
         assert text == f"error, no handle: {PLAIN_VALUES_RULE}"
         assert trace.results == {}
+
+
+# covers: AC-14, a relationship or a path is refused like a node
+def test_a_relationship_or_path_value_is_refused_naming_the_plain_values_rule() -> None:
+    graph = Graph()
+    start = Node(graph, "e1", 1, ["Issue"], {"issueKey": "CLOUD-1"})
+    end = Node(graph, "e2", 2, ["Issue"], {"issueKey": "CLOUD-2"})
+    link = graph.relationship_type("BLOCKS")(graph, "e3", 3, {"linkId": "k1"})
+    link._start_node, link._end_node = start, end
+    for cell in (link, Path(start, link), [link]):
+        trace = _trace(_returning(_result(("x",), [(cell,)])), "graph")
+        text = run_query(trace, "MATCH p = ()-[r]->() RETURN r")
+        assert text == f"error, no handle: {PLAIN_VALUES_RULE}"
+        assert trace.attempts[0].outcome == "error"
+        assert trace.results == {}
+
+
+# covers: AC-15, a Cypher error is an `error` attempt with no handle, as a SQL error is
+def test_a_graph_query_error_is_an_error_attempt_with_no_handle() -> None:
+    error = GraphQueryError("Variable `x` not defined")
+    trace = _trace(_raising(error), "graph")
+    text = run_query(trace, "MATCH (i:Issue) RETURN x", clock=_clock())
+    assert text == "error, no handle: Variable `x` not defined"
+    assert [(a.outcome, a.rows, a.seconds) for a in trace.attempts] == [("error", 0, 0.25)]
+    assert trace.results == {}
 
 
 def test_the_same_rows_give_the_same_preview_in_both_stores() -> None:
