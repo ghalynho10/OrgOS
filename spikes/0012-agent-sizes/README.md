@@ -19,7 +19,7 @@ Rerun it with `uv run --env-file .env python spikes/0012-agent-sizes/measure.py`
 
 ## What it means for a local model
 
-- The opening context alone is above a 4,096 token window, so a local run needs the window raised and recorded.
+- The opening context at most (4,045) is just under a 4,096 token window and above it with the 25 percent margin (5,056), so a local run needs the window raised and recorded.
 - A typical run fits 16,384 tokens.
 - The worst case is about 41,000 tokens. That is above 32,768, so a worst case run needs a window of 65,536, or it will be cut off.
 - Both previews are the same size because one formatter renders both stores.
