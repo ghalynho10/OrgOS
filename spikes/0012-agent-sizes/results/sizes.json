@@ -1,0 +1,33 @@
+{
+  "measured_at": "2026-11-11T07:11:57Z",
+  "encoding": "o200k_base",
+  "max_rows": 50,
+  "largest_question_block_id": "Q20",
+  "question_blocks": 20,
+  "stores": {
+    "sql": {
+      "instructions": 908,
+      "description": 2086,
+      "tools": 525,
+      "opening_context": 3519,
+      "largest_question_block": 526,
+      "opening_context_at_most": 4045,
+      "with_tokenizer_margin": 5056,
+      "full_preview": 2156,
+      "end_context_typical": 12045,
+      "end_context_worst": 40885
+    },
+    "graph": {
+      "instructions": 898,
+      "description": 2045,
+      "tools": 525,
+      "opening_context": 3468,
+      "largest_question_block": 526,
+      "opening_context_at_most": 3994,
+      "with_tokenizer_margin": 4992,
+      "full_preview": 2156,
+      "end_context_typical": 11994,
+      "end_context_worst": 40834
+    }
+  }
+}
