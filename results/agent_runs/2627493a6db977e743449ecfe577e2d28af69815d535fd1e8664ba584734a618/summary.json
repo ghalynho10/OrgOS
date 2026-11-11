@@ -1,0 +1,434 @@
+[
+  {
+    "attempts_at_row_cap": 0,
+    "attempts_timed_out": 0,
+    "by_data": {
+      "real": {
+        "correct": 3,
+        "total": 60
+      },
+      "synthetic": {
+        "correct": 0,
+        "total": 0
+      }
+    },
+    "by_type": {
+      "aggregate": {
+        "correct": 3,
+        "total": 21
+      },
+      "mixed": {
+        "correct": 0,
+        "total": 18
+      },
+      "path_connection": {
+        "correct": 0,
+        "total": 21
+      }
+    },
+    "correct_not_reviewed": 0,
+    "discrepancies": 0,
+    "headline": {
+      "correct": 3,
+      "total": 60
+    },
+    "layer": "agent",
+    "limit_hit": {
+      "requests": 0,
+      "tokens": 0,
+      "tool_calls": 0
+    },
+    "missing": [
+      "Q02-graph-1",
+      "Q02-graph-2",
+      "Q02-graph-3",
+      "Q03-graph-1",
+      "Q03-graph-2",
+      "Q03-graph-3",
+      "Q04-graph-1",
+      "Q04-graph-2",
+      "Q04-graph-3",
+      "Q05-graph-1",
+      "Q05-graph-2",
+      "Q05-graph-3",
+      "Q06-graph-1",
+      "Q06-graph-2",
+      "Q06-graph-3",
+      "Q07-graph-1",
+      "Q07-graph-2",
+      "Q07-graph-3",
+      "Q08-graph-1",
+      "Q08-graph-2",
+      "Q08-graph-3",
+      "Q09-graph-1",
+      "Q09-graph-2",
+      "Q09-graph-3",
+      "Q10-graph-1",
+      "Q10-graph-2",
+      "Q10-graph-3",
+      "Q11-graph-1",
+      "Q11-graph-2",
+      "Q11-graph-3",
+      "Q12-graph-1",
+      "Q12-graph-2",
+      "Q12-graph-3",
+      "Q13-graph-1",
+      "Q13-graph-2",
+      "Q13-graph-3",
+      "Q14-graph-1",
+      "Q14-graph-2",
+      "Q14-graph-3",
+      "Q15-graph-1",
+      "Q15-graph-2",
+      "Q15-graph-3",
+      "Q16-graph-1",
+      "Q16-graph-2",
+      "Q16-graph-3",
+      "Q17-graph-1",
+      "Q17-graph-2",
+      "Q17-graph-3",
+      "Q18-graph-1",
+      "Q18-graph-2",
+      "Q18-graph-3",
+      "Q19-graph-1",
+      "Q19-graph-2",
+      "Q19-graph-3",
+      "Q20-graph-1",
+      "Q20-graph-2",
+      "Q20-graph-3"
+    ],
+    "outcomes": {
+      "correct": 3,
+      "not_tried": 57
+    },
+    "partial": true,
+    "per_question": {
+      "Q01": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q02": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q03": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q04": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q05": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q06": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q07": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q08": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q09": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q10": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q11": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q12": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q13": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q14": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q15": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q16": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q17": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q18": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q19": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q20": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      }
+    },
+    "store": "graph",
+    "version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+    "without_zero_guarded": {
+      "correct": 3,
+      "total": 54
+    },
+    "zero_guarded": [
+      "Q03",
+      "Q16"
+    ]
+  },
+  {
+    "attempts_at_row_cap": 0,
+    "attempts_timed_out": 0,
+    "by_data": {
+      "real": {
+        "correct": 3,
+        "total": 60
+      },
+      "synthetic": {
+        "correct": 0,
+        "total": 0
+      }
+    },
+    "by_type": {
+      "aggregate": {
+        "correct": 3,
+        "total": 21
+      },
+      "mixed": {
+        "correct": 0,
+        "total": 18
+      },
+      "path_connection": {
+        "correct": 0,
+        "total": 21
+      }
+    },
+    "correct_not_reviewed": 0,
+    "discrepancies": 0,
+    "headline": {
+      "correct": 3,
+      "total": 60
+    },
+    "layer": "agent",
+    "limit_hit": {
+      "requests": 0,
+      "tokens": 0,
+      "tool_calls": 0
+    },
+    "missing": [
+      "Q02-sql-1",
+      "Q02-sql-2",
+      "Q02-sql-3",
+      "Q03-sql-1",
+      "Q03-sql-2",
+      "Q03-sql-3",
+      "Q04-sql-1",
+      "Q04-sql-2",
+      "Q04-sql-3",
+      "Q05-sql-1",
+      "Q05-sql-2",
+      "Q05-sql-3",
+      "Q06-sql-1",
+      "Q06-sql-2",
+      "Q06-sql-3",
+      "Q07-sql-1",
+      "Q07-sql-2",
+      "Q07-sql-3",
+      "Q08-sql-1",
+      "Q08-sql-2",
+      "Q08-sql-3",
+      "Q09-sql-1",
+      "Q09-sql-2",
+      "Q09-sql-3",
+      "Q10-sql-1",
+      "Q10-sql-2",
+      "Q10-sql-3",
+      "Q11-sql-1",
+      "Q11-sql-2",
+      "Q11-sql-3",
+      "Q12-sql-1",
+      "Q12-sql-2",
+      "Q12-sql-3",
+      "Q13-sql-1",
+      "Q13-sql-2",
+      "Q13-sql-3",
+      "Q14-sql-1",
+      "Q14-sql-2",
+      "Q14-sql-3",
+      "Q15-sql-1",
+      "Q15-sql-2",
+      "Q15-sql-3",
+      "Q16-sql-1",
+      "Q16-sql-2",
+      "Q16-sql-3",
+      "Q17-sql-1",
+      "Q17-sql-2",
+      "Q17-sql-3",
+      "Q18-sql-1",
+      "Q18-sql-2",
+      "Q18-sql-3",
+      "Q19-sql-1",
+      "Q19-sql-2",
+      "Q19-sql-3",
+      "Q20-sql-1",
+      "Q20-sql-2",
+      "Q20-sql-3"
+    ],
+    "outcomes": {
+      "correct": 3,
+      "not_tried": 57
+    },
+    "partial": true,
+    "per_question": {
+      "Q01": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q02": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q03": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q04": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q05": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q06": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q07": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q08": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q09": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q10": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q11": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q12": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q13": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q14": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q15": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q16": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q17": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q18": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q19": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q20": {
+        "attempts": 0,
+        "retries": 0,
+        "runs": 3
+      }
+    },
+    "store": "sql",
+    "version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+    "without_zero_guarded": {
+      "correct": 3,
+      "total": 54
+    },
+    "zero_guarded": [
+      "Q03",
+      "Q16"
+    ]
+  }
+]
