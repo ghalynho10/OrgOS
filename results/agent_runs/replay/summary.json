@@ -1,0 +1,126 @@
+[
+  {
+    "attempts_at_row_cap": 0,
+    "attempts_timed_out": 0,
+    "by_data": {
+      "real": {
+        "correct": 3,
+        "total": 3
+      },
+      "synthetic": {
+        "correct": 0,
+        "total": 0
+      }
+    },
+    "by_type": {
+      "aggregate": {
+        "correct": 3,
+        "total": 3
+      },
+      "mixed": {
+        "correct": 0,
+        "total": 0
+      },
+      "path_connection": {
+        "correct": 0,
+        "total": 0
+      }
+    },
+    "correct_not_reviewed": 0,
+    "discrepancies": 0,
+    "headline": {
+      "correct": 3,
+      "total": 3
+    },
+    "layer": "replay",
+    "limit_hit": {
+      "requests": 0,
+      "tokens": 0,
+      "tool_calls": 0
+    },
+    "missing": [],
+    "outcomes": {
+      "correct": 3
+    },
+    "partial": false,
+    "per_question": {
+      "Q01": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      }
+    },
+    "store": "graph",
+    "version": "replay",
+    "without_zero_guarded": {
+      "correct": 3,
+      "total": 3
+    },
+    "zero_guarded": [
+      "Q03",
+      "Q16"
+    ]
+  },
+  {
+    "attempts_at_row_cap": 0,
+    "attempts_timed_out": 0,
+    "by_data": {
+      "real": {
+        "correct": 3,
+        "total": 3
+      },
+      "synthetic": {
+        "correct": 0,
+        "total": 0
+      }
+    },
+    "by_type": {
+      "aggregate": {
+        "correct": 3,
+        "total": 3
+      },
+      "mixed": {
+        "correct": 0,
+        "total": 0
+      },
+      "path_connection": {
+        "correct": 0,
+        "total": 0
+      }
+    },
+    "correct_not_reviewed": 0,
+    "discrepancies": 0,
+    "headline": {
+      "correct": 3,
+      "total": 3
+    },
+    "layer": "replay",
+    "limit_hit": {
+      "requests": 0,
+      "tokens": 0,
+      "tool_calls": 0
+    },
+    "missing": [],
+    "outcomes": {
+      "correct": 3
+    },
+    "partial": false,
+    "per_question": {
+      "Q01": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      }
+    },
+    "store": "sql",
+    "version": "replay",
+    "without_zero_guarded": {
+      "correct": 3,
+      "total": 3
+    },
+    "zero_guarded": [
+      "Q03",
+      "Q16"
+    ]
+  }
+]
