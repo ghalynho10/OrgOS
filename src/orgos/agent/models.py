@@ -35,7 +35,7 @@ from pydantic_ai.providers.anthropic import AnthropicProvider
 from pydantic_ai.settings import CacheRetention, ModelSettings, ThinkingEffort
 from pydantic_ai.usage import RunUsage
 
-from orgos.agent.errors import AgentError
+from orgos.agent.errors import AgentError, ProviderRefusal
 from orgos.config import ConfigError, Settings
 from orgos.eval.handoff import ProviderOutage
 
@@ -103,13 +103,13 @@ def cost_usd(usage: RunUsage, prices: Prices) -> float:
     ) / PER_MILLION
 
 
-def provider_error(error: ModelAPIError) -> ProviderOutage | AgentError:
+def provider_error(error: ModelAPIError) -> ProviderOutage | ProviderRefusal:
     """A provider failure as what stops the command: an outage, or a refusal of the request.
 
     `ProviderOutage` for a connection error, an HTTP 5xx or a 429 left after the
     client's retries (AC-22), and for an error event the provider sends in a
     stream under the same categories (overloaded, server error, rate limit).
-    Any other status, a 400, 401, 403 or 404 among them, is an `AgentError`.
+    Any other status, a 400, 401, 403 or 404 among them, is a `ProviderRefusal`.
     """
     status = error.status_code if isinstance(error, ModelHTTPError) else None
     outage = isinstance(
@@ -118,7 +118,7 @@ def provider_error(error: ModelAPIError) -> ProviderOutage | AgentError:
     shown = f"HTTP {status}" if status is not None else type(error).__name__
     if outage:
         return ProviderOutage(f"the model provider failed ({shown}): {error.message}")
-    return AgentError(f"the model provider refused the request ({shown}): {error.message}")
+    return ProviderRefusal(f"the model provider refused the request ({shown}): {error.message}")
 
 
 @dataclass(frozen=True)

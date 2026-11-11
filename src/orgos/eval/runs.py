@@ -42,11 +42,10 @@ from orgos.eval.handoff import (
     STORES,
     AgentDescription,
     AgentRun,
-    ProviderOutage,
     QueryAgent,
     QueryAttempt,
+    RunStopped,
     Store,
-    StoreOutage,
     Usage,
 )
 from orgos.eval.literal import mask
@@ -656,10 +655,13 @@ def run_work(
             )
         try:
             run = agent.run(item.question, item.store)
-        except (ProviderOutage, StoreOutage) as error:
-            raise EvalError(
-                f"{type(error).__name__}: {error}. Finished run files are kept; run the same"
-                " command again to fill only the missing run numbers"
+        # An outage or a refusal: the run has no file, but its cost counts (spec 0012 AC-23).
+        except RunStopped as error:
+            spent += error.cost_usd
+            raise error.restated(
+                f"{type(error).__name__}: {error}. It cost ${error.cost_usd:.4f}; this invocation"
+                f" spent ${spent:.4f}. Finished run files are kept; run the same command again"
+                " to fill only the missing run numbers"
             ) from None
         spent += run.usage.cost_usd
         answer = known[item.question.id]

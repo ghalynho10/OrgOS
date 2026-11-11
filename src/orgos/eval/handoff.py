@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, Self
 
 from orgos.eval import EvalError
 from orgos.eval.models import Question, Shape
@@ -116,9 +116,28 @@ class QueryAgent(Protocol):
         ...
 
 
-class ProviderOutage(EvalError):
+class RunStopped(Exception):
+    """A run that stopped the command instead of ending, with what it cost (spec 0012 AC-23).
+
+    No run file is written for it, so its cost travels on the error: the runner
+    adds it to the cost spent so far and prints it, and a rerun fills the run number.
+    """
+
+    def __init__(self, message: str, *, cost_usd: float = 0.0) -> None:
+        super().__init__(message)
+        self.cost_usd = cost_usd
+
+    def restated(self, message: str | None = None, *, cost_usd: float | None = None) -> Self:
+        """The same kind of error with a new message or cost; this one is left as it is."""
+        return type(self)(
+            str(self) if message is None else message,
+            cost_usd=self.cost_usd if cost_usd is None else cost_usd,
+        )
+
+
+class ProviderOutage(RunStopped, EvalError):
     """A connection error, an HTTP 5xx or a 429 left after the client's backoff (AC-28)."""
 
 
-class StoreOutage(EvalError):
+class StoreOutage(RunStopped, EvalError):
     """A lost connection to a store during a run (AC-28, amended by spec 0012)."""

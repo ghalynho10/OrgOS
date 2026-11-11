@@ -295,6 +295,18 @@ def test_an_outage_stops_with_how_to_resume_and_keeps_finished_files(root: Path)
     assert len(read_run_files(root, "v1")) == 2
 
 
+# covers: review 2026-11-11 Minor 1, an outage's cost joins the cost spent so far
+def test_an_outage_adds_its_cost_to_the_spent_so_far_and_keeps_its_type(root: Path) -> None:
+    agent = StubAgent(script=(answered(), StoreOutage("lost the connection", cost_usd=0.03)))
+    with pytest.raises(
+        StoreOutage,
+        match=r"^StoreOutage: lost the connection\. It cost \$0\.0300; this invocation spent"
+        r" \$0\.0400\. Finished run files are kept",
+    ):
+        execute(root, agent, work(root, 1, 2))
+    assert len(read_run_files(root, "v1")) == 1
+
+
 def test_the_cap_stops_starting_runs(root: Path) -> None:
     written, spent, stopped = execute(root, StubAgent(), work(root, 1, 2, 3), cap=0.015)
     assert written == 2 and spent == pytest.approx(0.02)

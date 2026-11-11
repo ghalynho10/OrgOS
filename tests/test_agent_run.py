@@ -11,6 +11,7 @@ import ast
 import datetime as dt
 import inspect
 import itertools
+import logging
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
@@ -22,7 +23,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 import orgos.agent
 from orgos.agent.agent import Limits, OrgosQueryAgent, version_hash, version_parts
-from orgos.agent.errors import AgentError
+from orgos.agent.errors import AgentError, ProviderRefusal
 from orgos.agent.meanings import Description
 from orgos.agent.models import Prices
 from orgos.eval.handoff import ProviderOutage, Store, StoreOutage
@@ -391,6 +392,52 @@ def test_a_lost_store_connection_raises_store_outage() -> None:
     sql = _executor(SqlConnectionLost("lost the connection to Postgres"))
     with pytest.raises(StoreOutage):
         _agent(_scripted("SELECT 1"), sql=sql).run(QUESTION, "sql")
+
+
+# covers: review 2026-11-11 Minor 1, a run that raises keeps its usage
+def test_a_store_outage_after_a_model_request_carries_its_cost() -> None:
+    sql = _executor(SqlConnectionLost("lost the connection to Postgres"))
+    with pytest.raises(StoreOutage) as raised:
+        _agent(_scripted("SELECT 1"), sql=sql).run(QUESTION, "sql")
+    assert raised.value.cost_usd > 0
+    assert str(raised.value) == "lost the connection to Postgres"
+
+
+# covers: review 2026-11-11 Minor 1, a run that raises keeps its usage
+@pytest.mark.parametrize(
+    ("error", "raised"),
+    [
+        (ModelHTTPError(status_code=529, model_name="m"), ProviderOutage),
+        (ModelHTTPError(status_code=400, model_name="m"), ProviderRefusal),
+    ],
+)
+def test_a_provider_error_after_a_model_request_carries_its_cost(
+    error: Exception, raised: type[Exception]
+) -> None:
+    with pytest.raises(raised) as caught:
+        _agent(_scripted("SELECT 1", error)).run(QUESTION, "sql")
+    assert caught.value.cost_usd > 0  # type: ignore[attr-defined]
+
+
+def test_a_provider_error_on_the_first_request_costs_nothing() -> None:
+    with pytest.raises(ProviderOutage) as caught:
+        _agent(_scripted(ModelHTTPError(status_code=529, model_name="m"))).run(QUESTION, "sql")
+    assert caught.value.cost_usd == 0
+
+
+# covers: review 2026-11-11 Minor 2, own_error names its type
+def test_own_error_logs_the_type_name_and_not_the_message(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.WARNING, logger="orgos.agent.agent")
+    sql = _executor(RuntimeError("a store value"))
+    run = _agent(_scripted("SELECT 1"), sql=sql).run(QUESTION, "sql")
+    assert run.outcome == "error"
+    records = [r for r in caplog.records if r.name == "orgos.agent.agent"]
+    assert [(r.levelno, r.getMessage()) for r in records] == [
+        (logging.WARNING, "a run ended as own_error: RuntimeError")
+    ]
+    assert "a store value" not in caplog.text
 
 
 # --- Usage and cost (AC-23) ---

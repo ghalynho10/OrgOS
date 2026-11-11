@@ -24,6 +24,7 @@ from orgos.eval.answers import answers
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
 from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
+from orgos.eval.handoff import RunStopped
 from orgos.eval.preflight import preflight, summary
 from orgos.eval.runs import estimate, read_run_files, run_agent, upper_bound, version_add
 from orgos.graphstore import GraphStoreError
@@ -134,7 +135,11 @@ def ask_lines(
     if not go:
         raise AgentError("orgos ask makes paid model calls; add --go to run it")
     log.info("ask: running on %s", chosen)
-    run = agent.ask(text, chosen)
+    try:
+        run = agent.ask(text, chosen)
+    # An outage or a refusal stops the command; its cost is still printed (spec 0012 AC-23).
+    except RunStopped as error:
+        raise error.restated(f"{error}. It cost ${error.cost_usd:.4f}") from None
     log.info("ask: %s", usage_line(run))
     return render_run(run)
 

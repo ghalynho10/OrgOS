@@ -20,7 +20,7 @@ from orgos.agent.ask import render_run
 from orgos.agent.errors import AgentError
 from orgos.cli import app, ask_lines
 from orgos.config import load_settings
-from orgos.eval.handoff import AgentRun, QueryAttempt, Usage
+from orgos.eval.handoff import AgentRun, QueryAttempt, StoreOutage, Usage
 from tests.test_agent_run import SET_ANSWER, _agent, _scripted
 
 SETTINGS = load_settings(agent_token_limit=400_000)
@@ -96,6 +96,28 @@ def test_ask_prints_the_measured_mean_of_finished_runs(
             build=lambda settings: agent,
         )
     assert "measured mean cost of 2 finished runs of this version: $0.2000" in caplog.text
+
+
+# covers: review 2026-11-11 Minor 1, the stop message of `orgos ask` prints the run's cost
+def test_a_store_outage_in_ask_prints_the_cost_and_keeps_its_type(tmp_path: Path) -> None:
+    from orgos.sqlstore.query import SqlConnectionLost
+    from tests.test_agent_run import _executor
+
+    sql = _executor(SqlConnectionLost("lost the connection to Postgres"))
+    agent = _agent(_scripted("SELECT 1"), sql=sql)
+    with pytest.raises(
+        StoreOutage, match=r"^lost the connection to Postgres\. It cost \$0\.0"
+    ) as raised:
+        ask_lines(
+            SETTINGS,
+            tmp_path,
+            "x",
+            "sql",
+            go=True,
+            check=lambda settings, root: None,
+            build=lambda settings: agent,
+        )
+    assert raised.value.cost_usd > 0
 
 
 def test_a_bad_store_is_refused_before_any_check(tmp_path: Path) -> None:

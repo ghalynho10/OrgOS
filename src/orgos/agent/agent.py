@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import time
 from collections.abc import Callable, Mapping
 from contextlib import ExitStack
@@ -77,9 +78,8 @@ from orgos.eval.handoff import (
     STORES,
     AgentDescription,
     AgentRun,
-    ProviderOutage,
+    RunStopped,
     Store,
-    StoreOutage,
     Usage,
 )
 from orgos.eval.models import Question, Shape, read_toml
@@ -94,6 +94,7 @@ SAMPLING = "provider default"
 ROOT = Path(__file__).resolve().parents[3]
 # The sources whose text is part of the tool definitions in the version hash (AC-24).
 TOOL_SOURCES = (tools_module, answer_module, outcome_module)
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -344,12 +345,18 @@ class OrgosQueryAgent:
                 end = "usage_limit"
             except UnexpectedModelBehavior:
                 end = "model_failure"
-            except (AgentError, ProviderOutage, StoreOutage):
+            # AC-23: a run that stops the command keeps its usage on the error it raises.
+            except RunStopped as error:
+                raise error.restated(cost_usd=cost_usd(usage, self._prices)) from None
+            except AgentError:
                 raise
             except ModelAPIError as error:
-                raise provider_error(error) from None
+                stop = provider_error(error)
+                raise stop.restated(cost_usd=cost_usd(usage, self._prices)) from None
             # AC-21: a failure of our own code ends this run as `error`, not the command.
-            except Exception:  # noqa: BLE001
+            # Only the type is logged: the message may hold store values.
+            except Exception as error:  # noqa: BLE001
+                log.warning("a run ended as own_error: %s", type(error).__name__)
                 end = "own_error"
         seconds = self._clock() - started
         outcome = run_outcome(end, trace.attempts)
