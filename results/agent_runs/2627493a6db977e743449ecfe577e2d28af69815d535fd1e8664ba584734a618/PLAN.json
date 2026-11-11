@@ -1,0 +1,12 @@
+{
+  "estimate_usd": 480.0,
+  "model_id": "anthropic:claude-sonnet-5-5",
+  "price_table": "prices.toml@2026-11-11",
+  "query_timeout_s": 30,
+  "request_limit": 20,
+  "runs": 3,
+  "token_limit": 400000,
+  "tool_call_limit": 15,
+  "usd_per_million_input": 2.0,
+  "usd_per_million_output": 10.0
+}

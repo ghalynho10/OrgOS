@@ -69,14 +69,16 @@ class Settings(BaseSettings):
     neo4j_bolt_port: int = Field(7687, validation_alias="ORGOS_NEO4J_BOLT_PORT")
     neo4j_auth: SecretStr = Field(validation_alias="NEO4J_AUTH")
 
-    # Query agent. Values left as None are set by the query agent spec.
+    # Query agent (spec 0012 AC-20). The model has no default, so the agent
+    # refuses to build until ORGOS_MODEL is set; the temperature stays unset and
+    # the provider default applies.
     model: str | None = Field(None, validation_alias="ORGOS_MODEL")
-    agent_request_limit: int | None = Field(None, validation_alias="ORGOS_AGENT_REQUEST_LIMIT")
-    agent_token_limit: int | None = Field(None, validation_alias="ORGOS_AGENT_TOKEN_LIMIT")
-    agent_tool_call_limit: int | None = Field(None, validation_alias="ORGOS_AGENT_TOOL_CALL_LIMIT")
-    agent_max_rows: int = Field(200, gt=0, validation_alias="ORGOS_AGENT_MAX_ROWS")
+    agent_request_limit: int = Field(20, gt=0, validation_alias="ORGOS_AGENT_REQUEST_LIMIT")
+    agent_token_limit: int = Field(400_000, gt=0, validation_alias="ORGOS_AGENT_TOKEN_LIMIT")
+    agent_tool_call_limit: int = Field(15, gt=0, validation_alias="ORGOS_AGENT_TOOL_CALL_LIMIT")
+    agent_max_rows: int = Field(50, gt=0, validation_alias="ORGOS_AGENT_MAX_ROWS")
     agent_temperature: float | None = Field(None, validation_alias="ORGOS_AGENT_TEMPERATURE")
-    agent_max_tokens: int | None = Field(None, validation_alias="ORGOS_AGENT_MAX_TOKENS")
+    agent_max_tokens: int = Field(16_000, gt=0, validation_alias="ORGOS_AGENT_MAX_TOKENS")
 
     # The single source for the query timeout in both stores.
     query_timeout_s: int = Field(30, gt=0, validation_alias="ORGOS_QUERY_TIMEOUT_S")

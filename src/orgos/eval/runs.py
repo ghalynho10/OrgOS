@@ -42,11 +42,10 @@ from orgos.eval.handoff import (
     STORES,
     AgentDescription,
     AgentRun,
-    ProviderOutage,
     QueryAgent,
     QueryAttempt,
+    RunStopped,
     Store,
-    StoreOutage,
     Usage,
 )
 from orgos.eval.literal import mask
@@ -164,21 +163,13 @@ def upper_bound(runs: int, token_limit: int, prices: AgentDescription | Plan) ->
 
 def make_plan(settings: Settings, description: AgentDescription) -> Plan:
     """The plan for a version: all 20 questions, the runs per question, both stores."""
-    limits = {
-        "ORGOS_AGENT_REQUEST_LIMIT": settings.agent_request_limit,
-        "ORGOS_AGENT_TOKEN_LIMIT": settings.agent_token_limit,
-        "ORGOS_AGENT_TOOL_CALL_LIMIT": settings.agent_tool_call_limit,
-    }
-    unset = [name for name, value in limits.items() if value is None]
-    if unset:
-        raise EvalError(f"--estimate refuses: {', '.join(unset)} not set")
-    token_limit = settings.agent_token_limit or 0
+    token_limit = settings.agent_token_limit
     planned = QUESTION_COUNT * settings.eval_runs * len(STORES)
     return Plan(
         runs=settings.eval_runs,
-        request_limit=settings.agent_request_limit or 0,
+        request_limit=settings.agent_request_limit,
         token_limit=token_limit,
-        tool_call_limit=settings.agent_tool_call_limit or 0,
+        tool_call_limit=settings.agent_tool_call_limit,
         query_timeout_s=settings.query_timeout_s,
         model_id=description.model_id,
         price_table=description.price_table,
@@ -460,6 +451,7 @@ def fallback_record(
         "type": item.question.type,
         "data": item.question.data,
         "fallback": True,
+        "response_model": run.response_model,
         "run_outcome": run.outcome,
         "answer_match": False,
         "source_match": False,
@@ -663,10 +655,13 @@ def run_work(
             )
         try:
             run = agent.run(item.question, item.store)
-        except (ProviderOutage, StoreOutage) as error:
-            raise EvalError(
-                f"{type(error).__name__}: {error}. Finished run files are kept; run the same"
-                " command again to fill only the missing run numbers"
+        # An outage or a refusal: the run has no file, but its cost counts (spec 0012 AC-23).
+        except RunStopped as error:
+            spent += error.cost_usd
+            raise error.restated(
+                f"{type(error).__name__}: {error}. It cost ${error.cost_usd:.4f}; this invocation"
+                f" spent ${spent:.4f}. Finished run files are kept; run the same command again"
+                " to fill only the missing run numbers"
             ) from None
         spent += run.usage.cost_usd
         answer = known[item.question.id]

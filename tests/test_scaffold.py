@@ -84,7 +84,13 @@ def test_empty_values_count_as_unset(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_spec_defaults_apply_when_unset() -> None:
     settings = load_settings(_env_file=None, **REQUIRED)
     assert settings.query_timeout_s == 30
-    assert settings.agent_max_rows == 200
+    assert settings.agent_max_rows == 50
+    assert settings.agent_request_limit == 20
+    assert settings.agent_tool_call_limit == 15
+    assert settings.agent_token_limit == 400_000
+    assert settings.agent_max_tokens == 16_000
+    assert settings.agent_temperature is None
+    assert settings.model is None
     assert settings.pg_database == "orgos"
     assert settings.pg_owner_user == "orgos_owner"
     assert settings.pg_reader_user == "orgos_reader"

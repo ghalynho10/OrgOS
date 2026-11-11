@@ -9,21 +9,24 @@ feature adds its command and one line there.
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 
 from orgos import __version__
-from orgos.config import ConfigError, load_settings
+from orgos.agent.ask import render_run, usage_line
+from orgos.agent.errors import AgentError
+from orgos.config import ConfigError, Settings, load_settings
 from orgos.eval import EvalError
 from orgos.eval.answers import answers
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
 from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
+from orgos.eval.handoff import RunStopped
 from orgos.eval.preflight import preflight, summary
-from orgos.eval.runs import estimate, run_agent, version_add
+from orgos.eval.runs import estimate, read_run_files, run_agent, upper_bound, version_add
 from orgos.graphstore import GraphStoreError
 from orgos.graphstore.load import load_graph
 from orgos.ingest import IngestError
@@ -34,8 +37,12 @@ from orgos.sqlstore import SqlStoreError
 from orgos.sqlstore.bootstrap import bootstrap
 from orgos.sqlstore.load import load_sql
 
+if TYPE_CHECKING:
+    from orgos.agent.agent import OrgosQueryAgent
+
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = "%(levelname)s %(message)s"
+log = logging.getLogger(__name__)
 
 # Named errors and their exit codes, checked in order. Anything else keeps its
 # traceback. Click already uses 2 for a usage error.
@@ -46,6 +53,7 @@ EXIT_CODES: tuple[tuple[type[Exception], int], ...] = (
     (EvalError, 4),
     (IngestError, 5),
     (GraphStoreError, 6),
+    (AgentError, 7),
 )
 NAMED_ERRORS = tuple(error for error, _ in EXIT_CODES)
 
@@ -77,6 +85,80 @@ def main(
     ),
 ) -> None:
     """OrgOS: query one company's work data through a SQL store and a graph store."""
+
+
+StoreOption = Annotated[str, typer.Option("--store", help="sql or graph.")]
+
+
+def _build_agent(settings: Settings) -> OrgosQueryAgent:
+    # Imported here, so `--help` and the other commands never load the model library.
+    from orgos.agent.agent import build_agent
+
+    return build_agent(settings)
+
+
+def ask_lines(
+    settings: Settings,
+    root: Path,
+    text: str,
+    store: str,
+    *,
+    go: bool,
+    check: Callable[[Settings, Path], object] = preflight,
+    build: Callable[[Settings], OrgosQueryAgent] = _build_agent,
+) -> tuple[str, ...]:
+    """`orgos ask`: preflight, build, print the cost bound, then one plain run if `--go` is given.
+
+    Progress and the cost lines go to the log (stderr); the returned lines are
+    the answer, the sources and the queries, for stdout. Writes no file.
+    """
+    chosen = parse_store(store)
+    check(settings, root)
+    log.info("ask: building the agent (session check, structure and value reads)")
+    agent = build(settings)
+    description = agent.describe()
+    price = max(description.usd_per_million_input, description.usd_per_million_output)
+    log.info(
+        "ask: upper bound for one run: $%.4f (the token limit %s times the higher price $%g"
+        " per million)",
+        upper_bound(1, settings.agent_token_limit, description),
+        f"{settings.agent_token_limit:,}",
+        price,
+    )
+    costs = [float(f["usage"]["cost_usd"]) for f in read_run_files(root, description.version_hash)]
+    if costs:
+        log.info(
+            "ask: measured mean cost of %d finished runs of this version: $%.4f",
+            len(costs),
+            sum(costs) / len(costs),
+        )
+    if not go:
+        raise AgentError("orgos ask makes paid model calls; add --go to run it")
+    log.info("ask: running on %s", chosen)
+    try:
+        run = agent.ask(text, chosen)
+    # An outage or a refusal stops the command; its cost is still printed (spec 0012 AC-23).
+    except RunStopped as error:
+        raise error.restated(f"{error}. It cost ${error.cost_usd:.4f}") from None
+    log.info("ask: %s", usage_line(run))
+    return render_run(run)
+
+
+@app.command("ask")
+def ask_command(
+    question: Annotated[str, typer.Argument(help="The question, in plain words.")],
+    store: StoreOption,
+    go: Annotated[bool, typer.Option("--go", help="Allow the paid model calls.")] = False,
+) -> None:
+    """Ask the agent one plain question of one store; not scored, writes no file.
+
+    Runs the preflight first, prints the upper bound for one run (and the mean of
+    finished runs of this version), and refuses without --go. Prints the answer,
+    the sources and each query to stdout; progress goes to stderr.
+    """
+    settings = load_settings()
+    for line in ask_lines(settings, Path.cwd(), question, store, go=go):
+        typer.echo(line)
 
 
 @app.command("bootstrap")
@@ -197,8 +279,6 @@ gold_app = typer.Typer(
     no_args_is_help=True,
 )
 eval_app.add_typer(gold_app)
-
-StoreOption = Annotated[str, typer.Option("--store", help="sql or graph.")]
 
 
 @gold_app.command("try")

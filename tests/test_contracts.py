@@ -99,7 +99,7 @@ def test_env_example_loads_once_passwords_are_filled(
     env_file = tmp_path / ".env"
     env_file.write_text("\n".join(lines) + "\n")
     settings = load_settings(_env_file=env_file)
-    assert settings.model is None
+    assert settings.model == "anthropic:claude-sonnet-5-5"
     assert settings.query_timeout_s == 30
 
 

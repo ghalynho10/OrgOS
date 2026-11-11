@@ -39,7 +39,6 @@ from orgos.eval.runs import (
     limit_reached,
     load_agent,
     load_id_problems,
-    make_plan,
     planned_work,
     read_run_files,
     retries,
@@ -296,6 +295,35 @@ def test_an_outage_stops_with_how_to_resume_and_keeps_finished_files(root: Path)
     assert len(read_run_files(root, "v1")) == 2
 
 
+# covers: review 2026-11-11 Minor 1, an outage's cost joins the cost spent so far
+def test_an_outage_adds_its_cost_to_the_spent_so_far_and_keeps_its_type(root: Path) -> None:
+    agent = StubAgent(script=(answered(), StoreOutage("lost the connection", cost_usd=0.03)))
+    with pytest.raises(
+        StoreOutage,
+        match=r"^StoreOutage: lost the connection\. It cost \$0\.0300; this invocation spent"
+        r" \$0\.0400\. Finished run files are kept",
+    ):
+        execute(root, agent, work(root, 1, 2))
+    assert len(read_run_files(root, "v1")) == 1
+
+
+# covers: review 2026-11-11 Minor 1, a provider refusal mid run keeps its cost and exit code 7
+def test_a_provider_refusal_adds_its_cost_and_keeps_its_type(root: Path) -> None:
+    from orgos.agent.errors import AgentError, ProviderRefusal
+    from orgos.cli import EXIT_CODES
+
+    refusal = ProviderRefusal("the model provider refused the request (HTTP 400)", cost_usd=0.05)
+    agent = StubAgent(script=(answered(), refusal))
+    with pytest.raises(
+        ProviderRefusal, match=r"It cost \$0\.0500; this invocation spent \$0\.0600\."
+    ) as raised:
+        execute(root, agent, work(root, 1, 2))
+    assert raised.value.cost_usd == pytest.approx(0.05)
+    assert next(code for named, code in EXIT_CODES if isinstance(raised.value, named)) == 7
+    assert isinstance(raised.value, AgentError)
+    assert len(read_run_files(root, "v1")) == 1
+
+
 def test_the_cap_stops_starting_runs(root: Path) -> None:
     written, spent, stopped = execute(root, StubAgent(), work(root, 1, 2, 3), cap=0.015)
     assert written == 2 and spent == pytest.approx(0.02)
@@ -318,6 +346,8 @@ def test_a_failure_after_the_model_call_keeps_the_paid_run_in_a_fallback_file(
     (kept,) = read_run_files(root, "v1")
     assert (kept["outcome"], kept["correct"], kept["fallback"]) == ("error", False, True)
     assert kept["usage"] == asdict(USAGE) and kept["problem"].startswith("TypeError")
+    # spec 0012 AC-25: every run record holds the model name the API returned.
+    assert kept["response_model"] == "stub-model"
     assert run_entries([kept], "v1", read_questions(root), None)[0].outcome == "error"
     assert planned_work(root, "v1", read_questions(root), ("sql",), 1) == ()
 
@@ -330,13 +360,6 @@ def test_files_on_another_load_id_are_named() -> None:
 
 
 # --- The plan and the cost gate (AC-30) ---
-
-
-def test_estimate_refuses_while_a_limit_is_unset() -> None:
-    with pytest.raises(EvalError, match="ORGOS_AGENT_TOKEN_LIMIT"):
-        make_plan(
-            settings(ORGOS_AGENT_REQUEST_LIMIT=10, ORGOS_AGENT_TOOL_CALL_LIMIT=8), DESCRIPTION
-        )
 
 
 def test_estimate_writes_the_plan_once_with_its_upper_bound(root: Path) -> None:
