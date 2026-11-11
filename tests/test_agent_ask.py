@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -159,7 +160,8 @@ def test_no_answer_prints_why_and_no_sources() -> None:
 def test_help_needs_no_env_and_does_not_load_the_model_library(tmp_path: Path) -> None:
     result = CliRunner().invoke(app, ["ask", "--help"])
     assert result.exit_code == 0
-    assert "--go" in result.output
+    # Typer styles help with Rich under GITHUB_ACTIONS, which splits `--go` with ANSI codes.
+    assert "--go" in re.sub(r"\x1b\[[0-9;]*m", "", result.output)
     loaded = subprocess.run(
         [sys.executable, "-c", "import orgos.cli, sys; print('pydantic_ai' in sys.modules)"],
         capture_output=True,
