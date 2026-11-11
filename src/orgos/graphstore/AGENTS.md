@@ -39,6 +39,7 @@ Every node and relationship has `sourceDocId` and `loadId`; every relationship h
 | `compose.py` | The read only toggle through `docker compose` and its `SHOW DATABASES` poll |
 | `load.py` | The command: preflight, steps, restore, checks, run record |
 | `record.py` | The run record, `results/graph_load/run_record.json` (spec 0010 AC-6, AC-21) |
+| `query.py` | `run_cypher`, the one way an eval command or the agent runs Cypher: a read transaction with the query timeout, `STORE_ROW_CAP`, the same `QueryResult` as SQL (spec 0011 AC-9) |
 
 ## Conventions
 
@@ -59,3 +60,4 @@ Every node and relationship has `sourceDocId` and `loadId`; every relationship h
 
 - [0008 graph model](../../../docs/specs/0008-graph-model/index.md): labels, types, properties, constraints
 - [0010 graph load](../../../docs/specs/0010-graph-load/index.md): the load, its checks, tests and run record
+- [0011 eval runner](../../../docs/specs/0011-eval-runner/index.md): the Cypher executor in `query.py` and the shared preflight that calls `checks.py`
