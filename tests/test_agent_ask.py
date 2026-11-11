@@ -19,11 +19,11 @@ from typer.testing import CliRunner
 from orgos.agent.ask import render_run
 from orgos.agent.errors import AgentError
 from orgos.cli import app, ask_lines
-from orgos.config import load_settings
 from orgos.eval.handoff import AgentRun, QueryAttempt, StoreOutage, Usage
-from tests.test_agent_run import SET_ANSWER, _agent, _scripted
+from tests.test_agent_run import SET_ANSWER, _agent, _offline_settings, _scripted
 
-SETTINGS = load_settings(agent_token_limit=400_000)
+# Built without reading .env, so collection works where there is none (CI).
+SETTINGS = _offline_settings(agent_token_limit=400_000)
 
 
 def _files(root: Path) -> list[Path]:

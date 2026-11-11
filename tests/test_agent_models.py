@@ -29,9 +29,16 @@ from pydantic_ai.providers.anthropic import AnthropicProvider
 from orgos.agent.agent import OrgosQueryAgent
 from orgos.agent.errors import AgentError
 from orgos.agent.models import CLIENT_RETRIES, build_model, model_settings, provider_error
-from orgos.config import ConfigError, load_settings
+from orgos.config import ConfigError
 from orgos.eval.handoff import ProviderOutage
-from tests.test_agent_run import DESCRIPTIONS, LIMITS, PRICES, QUESTION, _executor
+from tests.test_agent_run import (
+    DESCRIPTIONS,
+    LIMITS,
+    PRICES,
+    QUESTION,
+    _executor,
+    _offline_settings,
+)
 
 MESSAGE = {
     "id": "msg_test",
@@ -136,12 +143,12 @@ def test_a_temperature_is_sent_only_when_one_is_set() -> None:
 
 def test_the_model_has_the_client_retries_and_refuses_another_provider() -> None:
     key = secrets.token_hex(8)
-    settings = load_settings(model="anthropic:claude-sonnet-5-5", anthropic_api_key=key)
+    settings = _offline_settings(model="anthropic:claude-sonnet-5-5", anthropic_api_key=key)
     model = build_model(settings)
     assert isinstance(model, AnthropicModel)
     assert model.model_name == "claude-sonnet-5-5"
     assert model.client.max_retries == CLIENT_RETRIES
     with pytest.raises(ConfigError, match="ORGOS_MODEL must be"):
-        build_model(load_settings(model="openai:gpt-test", anthropic_api_key=key))
+        build_model(_offline_settings(model="openai:gpt-test", anthropic_api_key=key))
     with pytest.raises(ConfigError, match="ANTHROPIC_API_KEY"):
-        build_model(load_settings(model="anthropic:claude-sonnet-5-5", anthropic_api_key=None))
+        build_model(_offline_settings(model="anthropic:claude-sonnet-5-5", anthropic_api_key=None))
