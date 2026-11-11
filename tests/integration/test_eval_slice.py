@@ -386,6 +386,21 @@ def test_a_real_agent_is_gated_before_any_run_then_written_once(
     with pytest.raises(EvalError, match=r"has no PLAN\.json"):
         run()
     estimate(limited, fresh_root, STUB, only="Q01")
+    # The plan's timeout must be the run's (review finding); the stub prices are $3 and $15.
+    planned = limited.query_timeout_s
+    drifted = limited.model_copy(update={"query_timeout_s": planned + 1})
+    drift = f"holds a query timeout of {planned} s, the current setting is {planned + 1} s"
+    with pytest.raises(EvalError, match=drift):
+        run_agent(
+            drifted, fresh_root, STUB, go=True, max_cost_usd=1.0, only="Q01", store="sql", max_run=1
+        )
+    # Before the first --go, the refusal shows the upper bound of one run (review finding).
+    with pytest.raises(EvalError, match="only with --go") as excinfo:
+        run(go=False)
+    assert (
+        "upper bound for one run: $0.7500 (the token limit 50,000 times the higher price $15"
+        " per million)" in str(excinfo.value)
+    )
     for options, reason in (
         ({"go": False}, "only with --go"),
         ({"max_cost_usd": None}, "only with --max-cost-usd"),

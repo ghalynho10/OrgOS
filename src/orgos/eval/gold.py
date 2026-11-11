@@ -13,6 +13,7 @@ Known answers are read here by code and never printed or logged.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import time
@@ -31,7 +32,12 @@ from orgos.eval.gold_adapters import ADAPTERS, Adapter
 from orgos.eval.handoff import STORES, ScoredOutcome, Store, StoreOutage
 from orgos.eval.literal import literal_problems, mask
 from orgos.eval.models import AnswerFile, Question
-from orgos.eval.preflight import preflight, record_load_id, write_fingerprint
+from orgos.eval.preflight import (
+    preflight,
+    record_load_id,
+    require_frozen_set,
+    write_fingerprint,
+)
 from orgos.eval.score import (
     NOT_REVIEWED,
     Entry,
@@ -194,6 +200,15 @@ def layout_message(pair: Layout, missing: tuple[Path, ...]) -> str:
     return "\n".join(lines)
 
 
+def read_files(root: Path, paths: tuple[Path, ...]) -> tuple[tuple[str, str, str], ...]:
+    """Each file's `(path, text, sha256)`, the hash taken from the very bytes the text came from."""
+    read = []
+    for path in paths:
+        data = (root / path).read_bytes()
+        read.append((str(path), data.decode("utf-8"), hashlib.sha256(data).hexdigest()))
+    return tuple(read)
+
+
 @dataclass(frozen=True)
 class FileRun:
     """One query file run through its store's executor."""
@@ -339,6 +354,7 @@ def gold_try(
     cites: str | None,
 ) -> tuple[str, ...]:
     """`orgos eval gold try`: refusals first (not tries), then one logged try of the whole pair."""
+    require_frozen_set(root)
     question = question_by_id(root, question_id)
     known = known_answer(root, question_id)
     pair = layout(question, known, store)
@@ -360,9 +376,8 @@ def gold_try(
     if not checked.fingerprint_saved:
         write_fingerprint(root, checked.fingerprint)
 
-    files = tuple(
-        (str(path), (root / path).read_text(encoding="utf-8")) for path in pair.query_files
-    )
+    read = read_files(root, pair.query_files)
+    files = tuple((path, text) for path, text, _ in read)
     line: dict[str, Any] = {
         "time": now(),
         "event": "try",
@@ -370,7 +385,7 @@ def gold_try(
         "store": store,
         "round": state.round,
         "try": state.next_try,
-        "files": {path: sha256_file(root / path) for path, _ in files},
+        "files": {path: sha for path, _, sha in read},
         "hypothesis": hypothesis if state.next_try >= 2 else None,
         "cites": cites if state.next_try >= 2 else None,
         "load_id": checked.load_id,
@@ -567,6 +582,7 @@ def gold_accept(root: Path, question_id: str, store: Store, *, reviewed: bool) -
 
     Reads no store: L comes from the run records. Logs the round and try the pair passed on.
     """
+    require_frozen_set(root)
     question = question_by_id(root, question_id)
     known = known_answer(root, question_id)
     pair = layout(question, known, store)
@@ -577,11 +593,11 @@ def gold_accept(root: Path, question_id: str, store: Store, *, reviewed: bool) -
     )
     if missing:
         raise EvalError(layout_message(pair, missing))
-    files = tuple(
-        (str(path), (root / path).read_text(encoding="utf-8")) for path in pair.query_files
-    )
-    pinned_files = (*pair.query_files, pair.explain_file)
-    hashes = {str(path): sha256_file(root / path) for path in pinned_files}
+    # The explain file is read last; each hash comes from the same read as its text.
+    read = read_files(root, (*pair.query_files, pair.explain_file))
+    files = tuple((path, text) for path, text, _ in read[:-1])
+    explain = read[-1][1]
+    hashes = {path: sha for path, _, sha in read}
     steps = reading_steps(question.reading)
     zero = (
         zero_guard_problems(
@@ -597,7 +613,7 @@ def gold_accept(root: Path, question_id: str, store: Store, *, reviewed: bool) -
         state,
         hashes,
         literal_problems(files, known, f"{question.text}\n{question.reading}"),
-        explain_problems((root / pair.explain_file).read_text(encoding="utf-8"), steps),
+        explain_problems(explain, steps),
         zero,
         load_id_problems(lines, question_id, store, record_load_id(root)),
         reviewed,
@@ -659,8 +675,8 @@ def zero_guarded_ids(known: Mapping[str, Mapping[str, Any]]) -> frozenset[str]:
 def gold_outcome(state: PairState, accepted: bool) -> SummaryOutcome:
     """A pair's latest state: a discrepancy, the latest try's outcome, or `not_tried`.
 
-    A correct latest try counts as `correct` only for a pair accepted with its
-    pins holding; otherwise it is `correct_not_reviewed`, shown beside the
+    A correct latest try counts as `correct` only for a pair `pair_accepted`
+    holds for; otherwise it is `correct_not_reviewed`, shown beside the
     headline and never inside it. A literal refusal counts as `error`: the query
     broke a rule, so it is not correct.
     """
@@ -675,26 +691,62 @@ def gold_outcome(state: PairState, accepted: bool) -> SummaryOutcome:
     return "error" if outcome == "literal" else cast(ScoredOutcome, outcome)
 
 
-def accepted_pairs(root: Path) -> frozenset[tuple[str, str]]:
-    """Each `(question, store)` with its answer file in `gold/ACCEPTED` and every pin holding."""
+def pair_accepted(
+    pair: Layout,
+    lines: tuple[Mapping[str, Any], ...],
+    pins: tuple[tuple[str, str], ...],
+    holding: frozenset[str],
+) -> bool:
+    """True when the pins and the log agree the pair passed `gold accept` on its pinned files.
+
+    The pair's pins must cover its full file set (answer, every sources file,
+    every stage file, explain) and all hold, and the log must hold an accept
+    event for the pair that pinned exactly those hashes and whose round and try
+    point to a correct try on the same query file hashes. A hand edited
+    `gold/ACCEPTED` therefore counts nothing.
+    """
+    prefix = f"{GOLD / FOLDERS[pair.store] / pair.question_id}."
+    mine = {path: sha for sha, path in pins if path.startswith(prefix)}
+    full = (*pair.query_files, pair.explain_file)
+    if any(str(path) not in mine for path in full) or any(path not in holding for path in mine):
+        return False
+    queries = {str(path): mine[str(path)] for path in pair.query_files}
+
+    def of_pair(line: Mapping[str, Any], event: str) -> bool:
+        return (
+            line.get("event") == event
+            and line.get("question") == pair.question_id
+            and line.get("store") == pair.store
+        )
+
+    tries = {(line["round"], line["try"]): line for line in lines if of_pair(line, "try")}
+    for line in lines:
+        if not of_pair(line, "accept") or dict(line.get("files", {})) != mine:
+            continue
+        accepted = tries.get((line.get("round"), line.get("try")))
+        if (
+            accepted is not None
+            and accepted["correct"]
+            and dict(accepted.get("files", {})) == queries
+        ):
+            return True
+    return False
+
+
+def accepted_pairs(
+    root: Path, lines: tuple[Mapping[str, Any], ...], pairs: tuple[Layout, ...]
+) -> frozenset[tuple[str, str]]:
+    """Each `(question, store)` of `pairs` that `pair_accepted` holds for."""
     path = root / ACCEPTED
     if not path.is_file():
         return frozenset()
     pins = parse_pins(path.read_text(encoding="utf-8"))
-    pairs = set()
-    for store, folder in FOLDERS.items():
-        for _, pinned_path in pins:
-            match = re.fullmatch(rf"{GOLD}/{folder}/(Q\d{{2}})\.answer\.{folder}", pinned_path)
-            if match is None:
-                continue
-            prefix = f"{GOLD / folder / match.group(1)}."
-            if all(
-                (root / p).is_file() and sha256_file(root / p) == s
-                for s, p in pins
-                if p.startswith(prefix)
-            ):
-                pairs.add((match.group(1), store))
-    return frozenset(pairs)
+    holding = frozenset(p for s, p in pins if (root / p).is_file() and sha256_file(root / p) == s)
+    return frozenset(
+        (pair.question_id, pair.store)
+        for pair in pairs
+        if pair_accepted(pair, lines, pins, holding)
+    )
 
 
 def gold_entries(
@@ -733,5 +785,14 @@ def gold_entries(
 
 def gold_summary(root: Path) -> list[str]:
     """The gold layer of the summary, computed from the tries log and not stored (AC-13)."""
-    entries = gold_entries(read_tries(root), read_questions(root), accepted_pairs(root))
-    return summary_lines(entries, zero_guarded_ids(known_answers(root)))
+    lines = read_tries(root)
+    questions = read_questions(root)
+    known = known_answers(root)
+    pairs = tuple(
+        layout(question, known[question.id], store)
+        for question in questions
+        if question.id in known
+        for store in STORES
+    )
+    entries = gold_entries(lines, questions, accepted_pairs(root, lines, pairs))
+    return summary_lines(entries, zero_guarded_ids(known))

@@ -7,7 +7,7 @@ No test here makes a model call: the agent is `StubAgent`, loaded by its dotted 
 import json
 import os
 import subprocess
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +17,7 @@ from orgos.config import Settings, load_settings
 from orgos.eval import EvalError
 from orgos.eval.answers import read_questions
 from orgos.eval.frozen import sha256_file
-from orgos.eval.gold import accepted_pairs, gold_entries
+from orgos.eval.gold import accepted_pairs, gold_entries, layout
 from orgos.eval.handoff import (
     AgentDescription,
     AgentRun,
@@ -302,6 +302,26 @@ def test_the_cap_stops_starting_runs(root: Path) -> None:
     assert stopped == ["stopped: the cost so far, $0.0200, reached the cap $0.0150"]
 
 
+# covers: the review finding on a paid run lost after the call
+def test_a_failure_after_the_model_call_keeps_the_paid_run_in_a_fallback_file(
+    root: Path,
+) -> None:
+    # A statement JSON cannot hold makes the run file's write fail after the call returned.
+    broken = replace(answered(), attempts=(QueryAttempt(object(), "ok", 0.1, 3),))  # type: ignore[arg-type]
+    agent = StubAgent(script=(broken,))
+    with pytest.raises(EvalError, match=r"It cost \$0\.0100; this invocation spent \$0\.0100") as e:
+        execute(root, agent, work(root, 1, 2))
+    message = str(e.value)
+    assert "Q01 sql run 1 failed after the model call: TypeError" in message
+    assert "wrote results/agent_runs/v1/Q01-sql-1.json with outcome error" in message
+    assert agent.calls == ["Q01"]
+    (kept,) = read_run_files(root, "v1")
+    assert (kept["outcome"], kept["correct"], kept["fallback"]) == ("error", False, True)
+    assert kept["usage"] == asdict(USAGE) and kept["problem"].startswith("TypeError")
+    assert run_entries([kept], "v1", read_questions(root), None)[0].outcome == "error"
+    assert planned_work(root, "v1", read_questions(root), ("sql",), 1) == ()
+
+
 def test_files_on_another_load_id_are_named() -> None:
     files = [{"load_id": LOAD_ID}, {"load_id": "1761000000.1"}]
     assert load_id_problems(files, LOAD_ID) == (
@@ -335,24 +355,41 @@ def test_estimate_writes_the_plan_once_with_its_upper_bound(root: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("go", "cap", "costs", "to_start", "reason"),
+    ("go", "cap", "costs", "requests", "to_start", "reason"),
     [
-        (False, 5.0, [], 1, "only with --go"),
-        (True, None, [], 1, "only with --max-cost-usd"),
-        (True, 5.0, [], 2, "no finished run file yet"),
-        (True, 1.0, [0.2, 0.4], 4, "times 4 runs is $1.2000, above the cap $1.0000"),
+        (False, 5.0, [], [], 1, "only with --go"),
+        (True, None, [], [], 1, "only with --max-cost-usd"),
+        (True, 5.0, [], [], 2, "no finished run file yet"),
+        (True, 1.0, [0.2, 0.4], [2, 2], 4, "times 4 runs is $1.2000, above the cap $1.0000"),
+        # covers: the review finding on the gate (a usage the agent did not read)
+        (True, 1.0, [0.0, 0.0], [2, 3], 1, "the measured mean cost is $0.0000"),
+        (True, 1.0, [0.2, 0.0], [2, 0], 1, "1 finished run file reports 0 requests"),
     ],
 )
 def test_the_gate_refuses(
-    go: bool, cap: float | None, costs: list[float], to_start: int, reason: str
+    go: bool,
+    cap: float | None,
+    costs: list[float],
+    requests: list[int],
+    to_start: int,
+    reason: str,
 ) -> None:
-    problem = gate_problem(go=go, cap=cap, finished_costs=costs, to_start=to_start)
+    problem = gate_problem(
+        go=go, cap=cap, finished_costs=costs, finished_requests=requests, to_start=to_start
+    )
     assert problem is not None and reason in problem
 
 
 @pytest.mark.parametrize(("costs", "to_start"), [([], 1), ([0.2, 0.4], 3)])
 def test_the_gate_lets_a_run_through(costs: list[float], to_start: int) -> None:
-    assert gate_problem(go=True, cap=1.0, finished_costs=costs, to_start=to_start) is None
+    problem = gate_problem(
+        go=True,
+        cap=1.0,
+        finished_costs=costs,
+        finished_requests=[2] * len(costs),
+        to_start=to_start,
+    )
+    assert problem is None
 
 
 # --- The versions log (AC-32) ---
@@ -604,18 +641,59 @@ def test_gold_entries_take_the_latest_state_of_every_pair(root: Path) -> None:
     assert entries["graph"].outcome == "error"
 
 
-def test_a_correct_pair_counts_only_once_accepted_with_its_pins_holding(root: Path) -> None:
+def write_pins(root: Path, pins: dict[str, str]) -> None:
+    (root / "gold/ACCEPTED").write_text(
+        "".join(f"{sha}  {path}\n" for path, sha in sorted(pins.items()))
+    )
+
+
+# covers: the review finding on the headline (pins and an accept event on a correct try)
+@pytest.mark.parametrize(
+    "change",
+    [
+        "none",
+        "no accept event",
+        "pins miss a sources file",
+        "accepted try was not correct",
+        "accepted try ran other files",
+        "explain edited and pinned by hand",
+        "a pin no longer holds",
+    ],
+)
+def test_a_correct_pair_counts_only_once_accepted_with_its_pins_holding(
+    root: Path, change: str
+) -> None:
     folder = root / "gold/sql"
     folder.mkdir(parents=True)
-    names = ("Q01.answer.sql", "Q01.sources.1.sql", "Q01.explain.md")
-    for name in names:
+    for name in ("Q01.answer.sql", "Q01.sources.1.sql", "Q01.explain.md"):
         (folder / name).write_text(f"-- {name}\n")
-    (root / "gold/ACCEPTED").write_text(
-        "".join(f"{sha256_file(folder / name)}  gold/sql/{name}\n" for name in names)
-    )
-    assert accepted_pairs(root) == frozenset({("Q01", "sql")})
-    (folder / "Q01.explain.md").write_text("-- edited\n")
-    assert accepted_pairs(root) == frozenset()
+    pins = {f"gold/sql/{p.name}": sha256_file(p) for p in folder.iterdir()}
+    write_pins(root, pins)
+    queries = {path: sha for path, sha in pins.items() if not path.endswith(".md")}
+    tried = {"event": "try", "question": "Q01", "store": "sql", "round": 1, "try": 1}
+    tried |= {"correct": True, "outcome": "correct", "files": queries}
+    accepted = {"event": "accept", "question": "Q01", "store": "sql", "round": 1, "try": 1}
+    accepted |= {"files": pins}
+    lines: tuple[dict[str, Any], ...] = (tried, accepted)
+    if change == "no accept event":
+        lines = (tried,)
+    elif change == "pins miss a sources file":
+        write_pins(root, {p: s for p, s in pins.items() if "sources" not in p})
+    elif change == "accepted try was not correct":
+        lines = (tried | {"correct": False, "outcome": "wrong"}, accepted)
+    elif change == "accepted try ran other files":
+        lines = (tried | {"files": {**queries, "gold/sql/Q01.answer.sql": "0" * 64}}, accepted)
+    elif change == "explain edited and pinned by hand":
+        (folder / "Q01.explain.md").write_text("-- edited\n")
+        write_pins(root, pins | {"gold/sql/Q01.explain.md": sha256_file(folder / "Q01.explain.md")})
+    elif change == "a pin no longer holds":
+        (folder / "Q01.answer.sql").write_text("-- edited\n")
+    pair = layout(read_questions(root)[0], KNOWN_MAP, "sql")
+    expected = frozenset({("Q01", "sql")}) if change == "none" else frozenset()
+    assert accepted_pairs(root, lines, (pair,)) == expected
+
+
+def test_an_unreviewed_correct_pair_is_shown_beside_the_headline() -> None:
     lines = summary_lines(
         [
             entry("gold", "sql", "Q01", "correct_not_reviewed"),

@@ -49,6 +49,7 @@ from orgos.eval.handoff import (
     StoreOutage,
     Usage,
 )
+from orgos.eval.literal import mask
 from orgos.eval.models import QUESTION_COUNT, Question
 from orgos.eval.preflight import preflight
 from orgos.eval.replay import REPLAY, ReplayAgent
@@ -155,9 +156,9 @@ class Plan:
     estimate_usd: float
 
 
-def upper_bound(runs: int, token_limit: int, description: AgentDescription) -> float:
+def upper_bound(runs: int, token_limit: int, prices: AgentDescription | Plan) -> float:
     """Runs times the token limit times the higher price per million tokens: an upper bound."""
-    price = max(description.usd_per_million_input, description.usd_per_million_output)
+    price = max(prices.usd_per_million_input, prices.usd_per_million_output)
     return runs * token_limit * price / 1_000_000
 
 
@@ -210,9 +211,18 @@ def read_plan(root: Path, version: str) -> Plan | None:
 
 
 def gate_problem(
-    *, go: bool, cap: float | None, finished_costs: Sequence[float], to_start: int
+    *,
+    go: bool,
+    cap: float | None,
+    finished_costs: Sequence[float],
+    finished_requests: Sequence[int],
+    to_start: int,
 ) -> str | None:
-    """Why a real agent run is refused before it starts, or None (AC-30)."""
+    """Why a real agent run is refused before it starts, or None (AC-30).
+
+    A finished run that reports 0 requests, or a measured mean of 0, means the
+    agent did not read its usage, so the mean cannot bound the cost.
+    """
     if not go:
         return "a real agent runs only with --go"
     if cap is None:
@@ -224,7 +234,17 @@ def gate_problem(
                 " store first (--only Qnn --store S --max-run 1)"
             )
         return None
+    unread = (
+        "the agent did not read its usage on every exit (spec 0012 AC-23), so the measured"
+        " mean cannot bound the cost"
+    )
+    zero = sum(1 for requests in finished_requests if requests == 0)
+    if zero:
+        files = "1 finished run file reports" if zero == 1 else f"{zero} finished run files report"
+        return f"{files} 0 requests: {unread}"
     mean = sum(finished_costs) / len(finished_costs)
+    if mean <= 0:
+        return f"the measured mean cost is ${mean:.4f}: {unread}"
     if mean * to_start > cap:
         return (
             f"the measured mean cost ${mean:.4f} times {to_start} runs is"
@@ -422,6 +442,78 @@ def run_record(
     }
 
 
+def fallback_record(
+    *, item: Work, version: str, load_id: str, run: AgentRun, problem: str
+) -> dict[str, Any]:
+    """A paid run whose scoring or writing failed: outcome `error`, its usage and the problem.
+
+    Written in place of the run file, so the cost is kept and a resume does not
+    run it again unseen. It holds every field the summary reads.
+    """
+    return {
+        "time": now(),
+        "question": item.question.id,
+        "store": item.store,
+        "run": item.number,
+        "agent_version": version,
+        "load_id": load_id,
+        "type": item.question.type,
+        "data": item.question.data,
+        "fallback": True,
+        "run_outcome": run.outcome,
+        "answer_match": False,
+        "source_match": False,
+        "correct": False,
+        "outcome": "error",
+        "problem": problem,
+        "steps": [],
+        "attempts": [],
+        "attempt_count": len(run.attempts),
+        "retries": retries(run.attempts),
+        "limit": None,
+        "usage": asdict(run.usage),
+        "seconds": run.seconds,
+    }
+
+
+def _first_line(error: BaseException, known: Mapping[str, Any]) -> str:
+    detail = str(error).splitlines()[0] if str(error) else ""
+    return mask(f"{type(error).__name__}: {detail}" if detail else type(error).__name__, known)
+
+
+def keep_failed_run(
+    root: Path,
+    path: Path,
+    *,
+    item: Work,
+    version: str,
+    load_id: str,
+    run: AgentRun,
+    known: Mapping[str, Any],
+    error: BaseException,
+    spent: float,
+) -> str:
+    """Write a paid run that failed after the call as a fallback file; return what to print.
+
+    The problem text is masked like a store error, so it never shows a known value.
+    """
+    problem = _first_line(error, known)
+    shown = path.relative_to(root)
+    try:
+        record = fallback_record(
+            item=item, version=version, load_id=load_id, run=run, problem=problem
+        )
+        write_once(path, record)
+        kept = f"wrote {shown} with outcome error and the run's usage, so a resume skips it"
+    except (EvalError, OSError, TypeError, ValueError) as failed_write:
+        kept = f"could not write {shown} either ({_first_line(failed_write, known)})"
+    return (
+        f"{item.question.id} {item.store} run {item.number} failed after the model call:"
+        f" {problem}. It cost ${run.usage.cost_usd:.4f}; this invocation spent ${spent:.4f}."
+        f" {kept}"
+    )
+
+
 # The summary of a version (AC-23, AC-33, AC-34)
 
 
@@ -576,24 +668,41 @@ def run_work(
                 f"{type(error).__name__}: {error}. Finished run files are kept; run the same"
                 " command again to fill only the missing run numbers"
             ) from None
-        answer = known[item.question.id]
-        scored = score_run(answer, run)
-        record = run_record(
-            question=item.question,
-            store=item.store,
-            number=item.number,
-            version=version,
-            plan=plan,
-            settings=settings,
-            load_id=load_id,
-            known=answer,
-            run=run,
-            scored=scored,
-            compare_sha256=compare_sha256,
-            git=git,
-        )
-        write_once(run_path(root, version, item.question.id, item.store, item.number), record)
         spent += run.usage.cost_usd
+        answer = known[item.question.id]
+        path = run_path(root, version, item.question.id, item.store, item.number)
+        try:
+            scored = score_run(answer, run)
+            record = run_record(
+                question=item.question,
+                store=item.store,
+                number=item.number,
+                version=version,
+                plan=plan,
+                settings=settings,
+                load_id=load_id,
+                known=answer,
+                run=run,
+                scored=scored,
+                compare_sha256=compare_sha256,
+                git=git,
+            )
+            write_once(path, record)
+        # The run is paid for: whatever failed, its usage must reach a file before stopping.
+        except Exception as error:
+            raise EvalError(
+                keep_failed_run(
+                    root,
+                    path,
+                    item=item,
+                    version=version,
+                    load_id=load_id,
+                    run=run,
+                    known=answer,
+                    error=error,
+                    spent=spent,
+                )
+            ) from error
         written += 1
         log.info("%s %s run %s: %s", item.question.id, item.store, item.number, scored.outcome)
     return written, spent, []
@@ -626,6 +735,13 @@ def run_agent(
             raise EvalError(
                 f"version {version} has no {PLAN}; run `orgos eval run --estimate` first"
             )
+        if plan.query_timeout_s != settings.query_timeout_s:
+            raise EvalError(
+                f"the {PLAN} of version {version} holds a query timeout of"
+                f" {plan.query_timeout_s} s, the current setting is {settings.query_timeout_s} s;"
+                f" set ORGOS_QUERY_TIMEOUT_S={plan.query_timeout_s} so every run of the version"
+                " has the same timeout"
+            )
     files = read_run_files(root, version)
     problems = load_id_problems(files, checked.load_id)
     if problems:
@@ -635,14 +751,25 @@ def run_agent(
     runs = plan.runs if plan is not None else settings.eval_runs
     work = planned_work(root, version, questions, stores, max_run or runs)
     lines: list[str] = []
-    if not replay:
+    if plan is not None:
+        price = max(plan.usd_per_million_input, plan.usd_per_million_output)
+        lines.append(
+            f"upper bound for one run: ${upper_bound(1, plan.token_limit, plan):.4f}"
+            f" (the token limit {plan.token_limit:,} times the higher price ${price:g} per million)"
+        )
         costs = [float(f["usage"]["cost_usd"]) for f in files]
         if costs:
             mean = sum(costs) / len(costs)
             lines.append(f"measured mean cost of {len(costs)} finished runs: ${mean:.4f}")
-        problem = gate_problem(go=go, cap=max_cost_usd, finished_costs=costs, to_start=len(work))
+        problem = gate_problem(
+            go=go,
+            cap=max_cost_usd,
+            finished_costs=costs,
+            finished_requests=[int(f["usage"]["requests"]) for f in files],
+            to_start=len(work),
+        )
         if problem is not None:
-            raise EvalError(problem)
+            raise EvalError("\n".join((*lines, problem)))
     if not work:
         lines.append("every planned run number already has a file; nothing to run")
 

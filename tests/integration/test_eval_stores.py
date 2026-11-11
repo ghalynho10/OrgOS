@@ -9,6 +9,7 @@ needs the corpus.
 import secrets
 import time
 from collections.abc import Iterator
+from types import SimpleNamespace
 
 import psycopg
 import pytest
@@ -24,9 +25,11 @@ from orgos.graphstore.query import (
     reader_driver,
     run_cypher,
 )
+from orgos.sqlstore import query
 from orgos.sqlstore.bootstrap import bootstrap
 from orgos.sqlstore.checks import read_sql_state, sql_state_problems
 from orgos.sqlstore.query import (
+    SERVER_TIMEOUT_MARGIN_S,
     SqlConnectionLost,
     SqlQueryError,
     SqlQueryTimeout,
@@ -228,8 +231,42 @@ def test_a_statement_past_the_timeout_is_cancelled_from_the_client(
     started = time.monotonic()
     with pytest.raises(SqlQueryTimeout, match="ran past the 1 s timeout"):
         run_sql(reader, "SELECT pg_sleep(4)", timeout_s=1)
-    assert time.monotonic() - started < 3
+    # Before the server backstop at 2 s: the client's cancel is the one that fired.
+    assert time.monotonic() - started < 1 + SERVER_TIMEOUT_MARGIN_S
     assert run_sql(reader, "SELECT 1 AS ok", timeout_s=5).rows == ({"ok": 1},)
+
+
+class NeverFires:
+    """A client timer whose cancel never reaches the server."""
+
+    def __init__(self, *_: object) -> None:
+        self.daemon = False
+
+    def start(self) -> None:
+        pass
+
+    def cancel(self) -> None:
+        pass
+
+
+# covers: the review finding on the SQL timeout (a server side backstop, same label)
+def test_the_server_stops_a_statement_when_the_client_cancel_fails(
+    eval_db: Settings, reader: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert run_sql(
+        reader, "SELECT current_setting('statement_timeout') AS t", timeout_s=5
+    ).rows == ({"t": "6s"},)
+    monkeypatch.setattr(query, "threading", SimpleNamespace(Timer=NeverFires))
+    started = time.monotonic()
+    # The reader's own role timeout here is longer than the 4 s sleep: the 2 s stop is SET LOCAL.
+    assert eval_db.query_timeout_s > 4
+    with pytest.raises(SqlQueryTimeout, match="ran past the 1 s timeout"):
+        run_sql(reader, "SELECT pg_sleep(4)", timeout_s=1)
+    assert time.monotonic() - started < 3
+    # SET LOCAL ends with the transaction: the session is back on the role's setting.
+    assert reader.execute("SELECT current_setting('statement_timeout')").fetchone() == (
+        f"{eval_db.query_timeout_s}s",
+    )
 
 
 def test_the_row_cap_refuses_one_row_more_and_keeps_none(reader: psycopg.Connection) -> None:

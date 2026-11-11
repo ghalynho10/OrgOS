@@ -19,7 +19,7 @@ import pytest
 from orgos.config import Settings, load_settings
 from orgos.eval import EvalError
 from orgos.eval.answers import read_questions
-from orgos.eval.frozen import sha256_file
+from orgos.eval.frozen import ANSWERS, FROZEN, QUESTIONS, frozen_line, sha256_file
 from orgos.eval.gold import (
     ACCEPTED,
     FileRun,
@@ -34,6 +34,7 @@ from orgos.eval.gold import (
     parse_store,
     pin_problems,
     pinned,
+    read_files,
     zero_guard_problems,
     zero_guarded,
 )
@@ -368,12 +369,20 @@ tracer = true
 '''
 
 
+def freeze(root: Path) -> None:
+    """Pin the made up eval files in `eval/FROZEN`, as the gold commands check it first."""
+    (root / FROZEN).write_text(
+        "".join(frozen_line(root, path) + "\n" for path in (QUESTIONS, ANSWERS))
+    )
+
+
 @pytest.fixture
 def root(tmp_path: Path) -> Path:
     (tmp_path / "eval").mkdir()
     (tmp_path / "eval/questions.toml").write_text(QUESTION_TOML.format(reading=READING))
     answers = {"amendments_sha256": None, "answers": {"Q01": KNOWN_MAP}, "questions_sha256": "x"}
     (tmp_path / "eval/answers.json").write_text(json.dumps(answers))
+    freeze(tmp_path)
     (tmp_path / "dbt/models/model").mkdir(parents=True)
     (tmp_path / "dbt/models/model/model.yml").write_text("models:\n  - name: issue\n")
     return tmp_path
@@ -405,6 +414,44 @@ def test_a_missing_file_is_refused_with_the_layout_and_no_id(root: Path) -> None
     assert "1 source step (step 1: issue)" in message
     assert not any(token in message for token in ("AAA-1", "CCC-9", "123456", "project:"))
     assert not (root / TRIES).exists()
+
+
+# covers: the review finding on the order (the frozen set is checked before any answer is read)
+@pytest.mark.parametrize("command", ["try", "accept"])
+def test_a_broken_frozen_set_refuses_before_the_answers_are_read(root: Path, command: str) -> None:
+    files = accept_root(root)
+    append(root, correct_try(files))
+    (root / ANSWERS).write_text("not the frozen answers")
+    with pytest.raises(EvalError, match="Preflight refused at the frozen set check") as excinfo:
+        if command == "try":
+            gold_try(settings(), root, "Q01", "sql", hypothesis="h", cites="step 1")
+        else:
+            gold_accept(root, "Q01", "sql", reviewed=True)
+    assert f"{ANSWERS} differs from its hash in {FROZEN}" in str(excinfo.value)
+    assert len(read_tries(root)) == 1
+    assert not (root / ACCEPTED).exists()
+
+
+# covers: the review finding on the hash (taken from the bytes already read, not a second read)
+def test_each_hash_comes_from_the_bytes_its_text_was_read_from(tmp_path: Path) -> None:
+    (tmp_path / "Q01.answer.sql").write_bytes(b"SELECT 1\r\nFROM t\r\n")
+    ((path, text, sha),) = read_files(tmp_path, (Path("Q01.answer.sql"),))
+    assert (path, text) == ("Q01.answer.sql", "SELECT 1\r\nFROM t\r\n")
+    assert sha == sha256_file(tmp_path / "Q01.answer.sql")
+
+
+def test_accept_pins_the_hashes_of_what_it_read_without_reading_again(
+    root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    append(root, correct_try(accept_root(root)))
+    expected = {path: sha256_file(root / path) for path in ACCEPT_FILES}
+
+    def no_second_read(path: Path) -> str:
+        raise AssertionError(f"{path} was hashed by a second read")
+
+    monkeypatch.setattr("orgos.eval.gold.sha256_file", no_second_read)
+    gold_accept(root, "Q01", "sql", reviewed=True)
+    assert read_tries(root)[-1]["files"] == expected
 
 
 def test_the_layout_names_stage_files_when_zero_guarded() -> None:
@@ -459,6 +506,7 @@ def test_the_store_is_sql_or_graph() -> None:
 
 LOAD_ID = "1762000000.123456"
 EXPLAIN = "Clause one is step 1, then step 2, and the count is step 3.\n"
+ACCEPT_FILES = ("gold/sql/Q01.answer.sql", "gold/sql/Q01.explain.md", "gold/sql/Q01.sources.1.sql")
 
 
 def accept_root(root: Path, *, explain: str = EXPLAIN) -> dict[str, str]:
@@ -589,6 +637,7 @@ def zero_root(tmp_path: Path) -> Path:
     zero = {"shape": "number", "value": {"int": 0}, "sources": []}
     answers = {"amendments_sha256": None, "answers": {"Q03": zero}, "questions_sha256": "x"}
     (tmp_path / "eval/answers.json").write_text(json.dumps(answers))
+    freeze(tmp_path)
     for folder in ("sql", "cypher"):
         (tmp_path / "gold" / folder).mkdir(parents=True)
         for part in ZERO_PARTS:

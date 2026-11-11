@@ -99,6 +99,13 @@ def frozen_set_problems(root: Path) -> tuple[str, ...]:
     return problems
 
 
+def require_frozen_set(root: Path) -> None:
+    """The frozen set check alone, run first by every command that reads the known answers."""
+    problems = frozen_set_problems(root)
+    if problems:
+        raise refuse(FROZEN_SET, problems)
+
+
 def _read_record(path: Path) -> Mapping[str, Any]:
     try:
         parsed = json.loads(path.read_text(encoding="utf-8"))
@@ -190,9 +197,7 @@ def record_load_id(root: Path) -> str:
 
 def preflight(settings: Settings, root: Path) -> Preflight:
     """Run the five checks in order and stop at the first that fails; writes nothing."""
-    problems = frozen_set_problems(root)
-    if problems:
-        raise refuse(FROZEN_SET, problems)
+    require_frozen_set(root)
     log.info("preflight: the frozen set passed")
 
     load_id = record_load_id(root)

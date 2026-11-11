@@ -1,7 +1,9 @@
 """The one way an eval command or the agent runs a statement on Postgres (spec 0011 AC-8).
 
 Each call runs one statement as the reader login inside `BEGIN READ ONLY`,
-cancels it from the client at the query timeout, and reads its rows one fetch
+cancels it from the client at the query timeout, with `statement_timeout` set
+a little later as a server side backstop should the cancel fail (both end in
+the same `store_timeout` label), and reads its rows one fetch
 at a time through a server side cursor, stopping at `STORE_ROW_CAP` plus one
 row. A server side cursor, not a stream, because a stream that returns no rows
 also returns no column names, and a result must keep its columns. A server side
@@ -20,12 +22,16 @@ from dataclasses import dataclass
 from typing import Any
 
 import psycopg
+from psycopg import sql
 
 from orgos.config import STORE_ROW_CAP, Settings
 from orgos.sqlstore import SqlStoreError
 
 CONNECT_TIMEOUT_S = 10
 CURSOR_NAME = "orgos_query"
+# The server stops a statement this long after the client would, so the client's
+# cancel is the one that normally fires and the server's is only a backstop.
+SERVER_TIMEOUT_MARGIN_S = 1.0
 # Rows per round trip of the server side cursor; memory stays bounded by the cap.
 FETCH_ROWS = 2_000
 
@@ -90,16 +96,19 @@ def run_sql(
     timer = threading.Timer(timeout_s, conn.cancel_safe)
     timer.daemon = True
     timer.start()
+    server_ms = round((timeout_s + SERVER_TIMEOUT_MARGIN_S) * 1000)
     try:
-        with conn.transaction(force_rollback=True), conn.cursor(name=CURSOR_NAME) as cur:
-            cur.itersize = FETCH_ROWS
-            cur.execute(statement)
-            columns = tuple(column.name for column in cur.description or ())
-            rows: list[Mapping[str, Any]] = []
-            for row in cur:
-                if len(rows) == row_cap:
-                    raise SqlRowCapError(row_cap_message("SQL", row_cap))
-                rows.append(dict(zip(columns, row, strict=True)))
+        with conn.transaction(force_rollback=True):
+            conn.execute(sql.SQL("SET LOCAL statement_timeout = {}").format(sql.Literal(server_ms)))
+            with conn.cursor(name=CURSOR_NAME) as cur:
+                cur.itersize = FETCH_ROWS
+                cur.execute(statement)
+                columns = tuple(column.name for column in cur.description or ())
+                rows: list[Mapping[str, Any]] = []
+                for row in cur:
+                    if len(rows) == row_cap:
+                        raise SqlRowCapError(row_cap_message("SQL", row_cap))
+                    rows.append(dict(zip(columns, row, strict=True)))
     except psycopg.errors.QueryCanceled:
         raise SqlQueryTimeout(f"the SQL query ran past the {timeout_s:g} s timeout") from None
     except psycopg.Error as error:
