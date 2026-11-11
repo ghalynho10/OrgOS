@@ -21,6 +21,7 @@ The dbt project that turns `raw.jira_issue` (written by dlt) into three Postgres
 | --- | --- |
 | `dbt_project.yml` | Schemas, materializations, enforced contracts, the `ANALYZE` post hook and reader grant on `model`, `store_failures` into `test_failures` |
 | `macros/generate_schema_name.sql` | Schema names exactly `stg`, `model_int`, `model` (no target prefix) |
+| `macros/instants.sql`, `macros/role_edge.sql`, `macros/time_amount.sql` | Shared `model_int` rules: UTC instants from each string's own offset (spec 0006 AC-18), the issue to person role edges (spec 0006), time entry amounts in seconds (spec 0004 AC-7, spec 0006 AC-14) |
 | `models/stg/sources.yml` | The `raw.jira_issue` source (`mongo_id`, `_dlt_load_id`, `fields`, `changelog`) |
 | `models/model_int/model_int.yml` | Every column and `data_type` of the 12 tables; spec 0008's graph mapping tests read this file |
 | `models/model/model.yml` | The 7 table contracts, keys, 10 indexes, and the `matches_model_int` compare tests |

@@ -21,6 +21,9 @@ from orgos.eval import EvalError
 from orgos.eval.answers import answers
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
+from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
+from orgos.eval.preflight import preflight, summary
+from orgos.eval.runs import estimate, run_agent, version_add
 from orgos.graphstore import GraphStoreError
 from orgos.graphstore.load import load_graph
 from orgos.ingest import IngestError
@@ -174,6 +177,184 @@ def eval_answers_command(
     settings = load_settings()
     for line in answers(settings, Path.cwd(), check=check, only_id=only):
         typer.echo(line)
+
+
+@eval_app.command("preflight")
+def eval_preflight_command() -> None:
+    """Check both stores hold the same checked load before any query is scored.
+
+    Runs, in order, the frozen set, the two load run records, the SQL state as
+    the reader login, the graph state, and the schema fingerprint, and stops at
+    the first that fails. Writes nothing.
+    """
+    settings = load_settings()
+    typer.echo(summary(preflight(settings, Path.cwd())))
+
+
+gold_app = typer.Typer(
+    name="gold",
+    help="Try, decide on and accept the gold queries of each question and store.",
+    no_args_is_help=True,
+)
+eval_app.add_typer(gold_app)
+
+StoreOption = Annotated[str, typer.Option("--store", help="sql or graph.")]
+
+
+@gold_app.command("try")
+def gold_try_command(
+    question: Annotated[str, typer.Argument(help="The question id, for example Q01.")],
+    store: StoreOption,
+    hypothesis: Annotated[
+        str | None,
+        typer.Option("--hypothesis", help="From try 2 of a round: what you think was wrong."),
+    ] = None,
+    cites: Annotated[
+        str | None,
+        typer.Option(
+            "--cites",
+            help="From try 2 of a round: `step <n>` of the reading note, or a schema name.",
+        ),
+    ] = None,
+) -> None:
+    """Run one gold pair on its store and score it against the frozen known answer.
+
+    Runs the preflight first. Prints three booleans and the count of missing and
+    extra IDs per source step, never an answer key, value or ID, and appends the
+    try to results/gold/tries.jsonl. A refusal before the pair runs is not a try.
+    """
+    settings = load_settings()
+    for line in gold_try(
+        settings,
+        Path.cwd(),
+        question,
+        parse_store(store),
+        hypothesis=hypothesis,
+        cites=cites,
+    ):
+        typer.echo(line)
+
+
+@gold_app.command("decide")
+def gold_decide_command(
+    question: Annotated[str, typer.Argument(help="The question id, for example Q01.")],
+    store: StoreOption,
+    rewrite: Annotated[
+        bool, typer.Option("--rewrite", help="Open a fresh round, written from the reading note.")
+    ] = False,
+    discrepancy: Annotated[
+        str | None,
+        typer.Option("--discrepancy", help="Record the pair as a known answer discrepancy."),
+    ] = None,
+) -> None:
+    """After 3 failed tries in a round: open a new round, or record a known answer discrepancy.
+
+    Reads no store; appends the choice to results/gold/tries.jsonl.
+    """
+    typer.echo(
+        gold_decide(
+            Path.cwd(), question, parse_store(store), rewrite=rewrite, discrepancy=discrepancy
+        )
+    )
+
+
+@gold_app.command("accept")
+def gold_accept_command(
+    question: Annotated[str, typer.Argument(help="The question id, for example Q01.")],
+    store: StoreOption,
+    reviewed: Annotated[
+        bool,
+        typer.Option("--reviewed", help="You read every query against gold/CHECKLIST.md."),
+    ] = False,
+) -> None:
+    """Pin a pair in gold/ACCEPTED once its latest try was correct for the files as they are.
+
+    Also needs a clean literal check, the zero guard when it applies, an explain
+    file naming every numbered source step, tries on the current load ID only,
+    and --reviewed. Reads no store; logs the round and try the pair passed on.
+    """
+    for line in gold_accept(Path.cwd(), question, parse_store(store), reviewed=reviewed):
+        typer.echo(line)
+
+
+AgentOption = Annotated[
+    str, typer.Option("--agent", help="replay, or module:factory returning a QueryAgent.")
+]
+
+
+@eval_app.command("run")
+def eval_run_command(
+    agent: AgentOption,
+    estimate_only: Annotated[
+        bool,
+        typer.Option("--estimate", help="Write the version's PLAN.json and its cost bound only."),
+    ] = False,
+    go: Annotated[bool, typer.Option("--go", help="Allow a real agent's paid calls.")] = False,
+    max_cost_usd: Annotated[
+        float | None,
+        typer.Option("--max-cost-usd", help="Stop starting runs once this invocation spends this."),
+    ] = None,
+    only: Annotated[
+        str | None, typer.Option("--only", help="One question id, for example Q01.")
+    ] = None,
+    store: Annotated[
+        str | None, typer.Option("--store", help="sql or graph; both when left out.")
+    ] = None,
+    max_run: Annotated[
+        int | None, typer.Option("--max-run", min=1, help="Run only run numbers 1 to K.")
+    ] = None,
+) -> None:
+    """Run an agent on the questions in both stores and score every run.
+
+    Runs the preflight first. Each run is written once to
+    results/agent_runs/<version>/Qnn-<store>-<n>.json, and a rerun fills only the
+    missing run numbers. A real agent needs `--estimate` first, a versions log
+    entry, --go and --max-cost-usd. `--agent replay` runs the accepted gold
+    queries for free and needs none of these.
+    """
+    settings = load_settings()
+    if estimate_only:
+        lines = estimate(settings, Path.cwd(), agent, only=only)
+    else:
+        lines = run_agent(
+            settings,
+            Path.cwd(),
+            agent,
+            go=go,
+            max_cost_usd=max_cost_usd,
+            only=only,
+            store=store,
+            max_run=max_run,
+        )
+    for line in lines:
+        typer.echo(line)
+
+
+version_app = typer.Typer(
+    name="version",
+    help="The agent versions log: at most 3 versions, append only.",
+    no_args_is_help=True,
+)
+eval_app.add_typer(version_app)
+
+
+@version_app.command("add")
+def version_add_command(
+    agent: AgentOption,
+    reason: Annotated[
+        str | None, typer.Option("--reason", help="Why this version exists (after the first).")
+    ] = None,
+    exposed_by: Annotated[
+        str | None,
+        typer.Option("--exposed-by", help="The run file that exposed the problem."),
+    ] = None,
+    kind: Annotated[str | None, typer.Option("--kind", help="bug_fix or behaviour_change.")] = None,
+) -> None:
+    """Log the agent's current version and the parts that changed since the previous one."""
+    settings = load_settings()
+    typer.echo(
+        version_add(settings, Path.cwd(), agent, reason=reason, exposed_by=exposed_by, kind=kind)
+    )
 
 
 load_app = typer.Typer(

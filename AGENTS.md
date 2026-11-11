@@ -26,6 +26,12 @@ uv run orgos eval check-questions [--file <path>]    # check the questions and a
 uv run orgos eval answers [--check] [--only <id>]    # known answers from raw Mongo; a full run refuses once frozen; --check and --only write nothing
 uv run orgos load sql                                # Mongo to raw, dbt build with tests, load consistency, figure gate; writes results/sql_load/run_record.json pass or fail
 uv run orgos load graph                              # model_int into Neo4j: writable, wipe, load, read only again, every check and the compare; writes results/graph_load/run_record.json pass or fail
+uv run orgos eval preflight                          # frozen set, run records, SQL state, graph state, schema fingerprint, in that order; writes nothing
+uv run orgos eval gold try Qnn --store sql|graph [--hypothesis T --cites C]   # one try of a gold pair, appended to results/gold/tries.jsonl; from try 2 of a round both flags are required
+uv run orgos eval gold decide Qnn --store S (--rewrite | --discrepancy TEXT)  # after 3 failed tries in a round: open a new round or record a known answer discrepancy
+uv run orgos eval gold accept Qnn --store S --reviewed                        # pin a correct pair's files in gold/ACCEPTED; reads no store
+uv run orgos eval version add --agent module:factory [--reason R --exposed-by FILE --kind bug_fix|behaviour_change]   # append to results/agent_runs/versions.jsonl, 3 versions at most; calls no model
+uv run orgos eval run --agent replay|module:factory [--estimate | --go --max-cost-usd X] [--only Qnn] [--store S] [--max-run K]   # replay is free; a real agent needs its version logged, PLAN.json from --estimate, --go and a cap
 PGTZ=America/St_Johns uv run --env-file .env dbt <cmd> --project-dir dbt --profiles-dir dbt   # the build session zone (spec 0009 AC-14)
 uv run pytest -m "not integration"                   # fast tests, no Docker
 uv run pytest                                        # all; stop the compose stack first
@@ -45,6 +51,10 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 - Spikes live in `spikes/NNNN-<name>/`: throwaway scripts outside ruff and mypy, run with `uv run --env-file .env python spikes/<dir>/<script>.py`. Their committed `results/` and README are the deliverable, never the Mongo inputs.
 - The corpus is the 7 Jira collection projects in `spikes/0001-time-data-coverage/results/corpus.json` (spec 0004). Hours come from time entries rebuilt from the changelog, never from issue level `timespent`, and the SQL load, the graph load and the known answers drop the same flagged bot accounts (spec 0004, AC-8 and AC-10).
 - The eval set is frozen at the tag `eval-frozen` (spec 0005): `eval/FROZEN` holds the hashes of `eval/questions.toml`, `eval/amendments.toml` and `eval/answers.json`, `tests/test_eval_frozen.py` fails on any change to them in pre-commit and CI, and `orgos eval answers` refuses to write. `orgos.eval.compare` is the one comparison rule and is never changed after results.
+- The eval runner (spec 0011, amended by spec 0012) lives in `orgos.eval`: `preflight` (the shared five checks, run first by every command that queries a store, also by feature 13), `gold` (pairs, try, decide, accept, the gold summary), `gold_adapters` (one pure adapter per question), `tries`, `literal`, `score`, `runs` (the plan, the cost gate, run files, the versions log), `replay` and `handoff` (the only types the runner and the agent exchange; `orgos.eval` never imports `orgos.agent`).
+- Every eval store query goes through `orgos.sqlstore.query.run_sql` or `orgos.graphstore.query.run_cypher`: read only, the one `ORGOS_QUERY_TIMEOUT_S`, and `STORE_ROW_CAP` (200,000 rows, in `orgos.config`), a whole result or a named error, never a partial one.
+- Gold queries live in `gold/sql/` and `gold/cypher/` (answer, one sources file per step, stage files for a zero guarded question, explain), reviewed by hand against `gold/CHECKLIST.md`. `gold/ACCEPTED` pins accepted pairs by sha256 and is written only by `gold accept`; `results/gold/tries.jsonl` is append only and never hand edited, and the gold headline counts a pair only when its pins hold and the log holds its accept event. `results/gold/schema_fingerprint.json` is written once, by the first `gold try`.
+- `results/agent_runs/<version>/` holds `PLAN.json` and one run file per question, store and run number, each written once; only `summary.json` is rewritten. A correct run file holds known answer values, so gold drafting never opens `results/agent_runs/`.
 - Config is read only through `orgos.config.Settings` and validated at startup; errors surface as one `ConfigError` message. No `os.environ` reads elsewhere.
 - Every module has a docstring saying why it exists; every public function has one.
 - Errors: each subpackage raises its own named exception; the CLI turns them into a clear message and a non zero exit. No bare `except`.
@@ -65,6 +75,8 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 - integration: on
 - branch prefix: feat/
 - commit: per-milestone
+- `main` is protected: the `no-commit-to-branch` hook refuses a commit on `main`, so work lands through a PR.
+- No `Co-Authored-By` trailer: a `commit-msg` hook rejects any commit that carries one.
 
 ## Agent skills
 
@@ -74,6 +86,10 @@ Declined: a wider skills and MCP search (2026-10-25, the installed set covers th
 ## Circuit breaker
 
 If the same problem persists after one corrective prompt, stop and run /recover before trying again. It diagnoses an isolated bug (routes to /debug), a session gone wrong through repeated patching (hard reset), or a foundation resting on a wrong assumption (rethink). It pauses for confirmation before a hard reset or a rethink; a reset note goes to `docs/session-notes.md`, which /checkpoint reads and ages out.
+
+## Standing rules
+
+Read [docs/reflexes.md](docs/reflexes.md) before making changes: standing rules for how work is done here, one line each, written by /reflex. A rule that has become a plain convention belongs in this file instead; /reflex flags it and the engineer moves it.
 
 ## Context files
 

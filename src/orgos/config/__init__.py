@@ -23,6 +23,10 @@ ENV_FILE = Path(".env")
 # zone shows up in the tests. A singular dbt test fails under any other zone.
 DBT_TIMEZONE = "America/St_Johns"
 
+# The most rows one store query may return, the same for both executors (spec
+# 0011 AC-8, AC-9, amended by spec 0012). Fixed before any gold try or agent run.
+STORE_ROW_CAP = 200_000
+
 
 class ConfigError(Exception):
     """Raised when the configuration is missing or invalid."""
@@ -76,6 +80,9 @@ class Settings(BaseSettings):
 
     # The single source for the query timeout in both stores.
     query_timeout_s: int = Field(30, gt=0, validation_alias="ORGOS_QUERY_TIMEOUT_S")
+
+    # Eval runner: runs per question per store (spec 0011 AC-30).
+    eval_runs: int = Field(3, gt=0, validation_alias="ORGOS_EVAL_RUNS")
 
     # Provider keys
     anthropic_api_key: SecretStr | None = Field(None, validation_alias="ANTHROPIC_API_KEY")

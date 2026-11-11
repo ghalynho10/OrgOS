@@ -125,6 +125,17 @@ def _differences(
     return problems
 
 
+def schema_descriptions(observed: GraphState) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """The constraints and the indexes, each described by what it is (not its name), sorted.
+
+    The eval's schema fingerprint stores these (spec 0011 AC-6).
+    """
+    return (
+        tuple(sorted(_describe(_signature(item)) for item in observed.constraints)),
+        tuple(sorted(_describe(_signature(item)) for item in observed.indexes)),
+    )
+
+
 def graph_schema_problems(observed: GraphState, mapping: GraphMapping) -> tuple[str, ...]:
     """Each missing or unexpected constraint or index, compared on what it is, not its name."""
     return (

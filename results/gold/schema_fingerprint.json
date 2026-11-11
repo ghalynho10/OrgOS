@@ -1,0 +1,35 @@
+{
+  "sql_indexes": [
+    "CREATE INDEX ON model.fixed_in USING btree (version_id)",
+    "CREATE INDEX ON model.issue USING btree (assignee_key)",
+    "CREATE INDEX ON model.issue USING btree (creator_key)",
+    "CREATE INDEX ON model.issue USING btree (parent_key)",
+    "CREATE INDEX ON model.issue USING btree (project_key)",
+    "CREATE INDEX ON model.issue USING btree (reporter_key)",
+    "CREATE INDEX ON model.issue_link USING btree (from_issue_key)",
+    "CREATE INDEX ON model.issue_link USING btree (to_issue_key)",
+    "CREATE INDEX ON model.logged_time USING btree (issue_key)",
+    "CREATE INDEX ON model.logged_time USING btree (person_key)",
+    "CREATE UNIQUE INDEX ON model.fix_version USING btree (version_id)",
+    "CREATE UNIQUE INDEX ON model.fixed_in USING btree (issue_key, version_id)",
+    "CREATE UNIQUE INDEX ON model.issue USING btree (issue_key)",
+    "CREATE UNIQUE INDEX ON model.issue_link USING btree (link_id)",
+    "CREATE UNIQUE INDEX ON model.logged_time USING btree (history_id)",
+    "CREATE UNIQUE INDEX ON model.person USING btree (person_key)",
+    "CREATE UNIQUE INDEX ON model.project USING btree (project_key)"
+  ],
+  "graph_constraints": [
+    "NODE_PROPERTY_UNIQUENESS on NODE FixVersion(versionId)",
+    "NODE_PROPERTY_UNIQUENESS on NODE Issue(issueKey)",
+    "NODE_PROPERTY_UNIQUENESS on NODE Person(personKey)",
+    "NODE_PROPERTY_UNIQUENESS on NODE Project(projectKey)"
+  ],
+  "graph_indexes": [
+    "LOOKUP on NODE",
+    "LOOKUP on RELATIONSHIP",
+    "RANGE on NODE FixVersion(versionId) owned by a constraint",
+    "RANGE on NODE Issue(issueKey) owned by a constraint",
+    "RANGE on NODE Person(personKey) owned by a constraint",
+    "RANGE on NODE Project(projectKey) owned by a constraint"
+  ]
+}
