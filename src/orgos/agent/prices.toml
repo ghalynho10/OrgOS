@@ -1,0 +1,24 @@
+# Prices of the models the query agent may use (spec 0012 AC-23), in US
+# dollars per million tokens, one entry per full model string of ORGOS_MODEL.
+#
+# You enter every value from the provider's pricing page, on the day you read
+# it, with that page and that date. The build never fills or guesses a price,
+# and `build_agent` refuses while an entry is missing or incomplete.
+#
+# Each entry needs all six keys:
+#   page         the provider page the prices were read from, as a string
+#   date         the day you read the page, as a TOML date (YYYY-MM-DD, no quotes)
+#   input        input tokens neither written to nor read from the cache
+#   output       output tokens, thinking tokens included
+#   cache_write  input tokens written to the five minute prompt cache
+#   cache_read   input tokens read from the prompt cache
+#
+# To fill an entry, remove the "# " in front of each key and write its value.
+
+["anthropic:claude-sonnet-5-5"]
+# page =
+# date =
+# input =
+# output =
+# cache_write =
+# cache_read =

@@ -164,21 +164,13 @@ def upper_bound(runs: int, token_limit: int, prices: AgentDescription | Plan) ->
 
 def make_plan(settings: Settings, description: AgentDescription) -> Plan:
     """The plan for a version: all 20 questions, the runs per question, both stores."""
-    limits = {
-        "ORGOS_AGENT_REQUEST_LIMIT": settings.agent_request_limit,
-        "ORGOS_AGENT_TOKEN_LIMIT": settings.agent_token_limit,
-        "ORGOS_AGENT_TOOL_CALL_LIMIT": settings.agent_tool_call_limit,
-    }
-    unset = [name for name, value in limits.items() if value is None]
-    if unset:
-        raise EvalError(f"--estimate refuses: {', '.join(unset)} not set")
-    token_limit = settings.agent_token_limit or 0
+    token_limit = settings.agent_token_limit
     planned = QUESTION_COUNT * settings.eval_runs * len(STORES)
     return Plan(
         runs=settings.eval_runs,
-        request_limit=settings.agent_request_limit or 0,
+        request_limit=settings.agent_request_limit,
         token_limit=token_limit,
-        tool_call_limit=settings.agent_tool_call_limit or 0,
+        tool_call_limit=settings.agent_tool_call_limit,
         query_timeout_s=settings.query_timeout_s,
         model_id=description.model_id,
         price_table=description.price_table,

@@ -1,0 +1,239 @@
+# What each field of the data means, written once for both stores (spec 0012 AC-8 to AC-10).
+#
+# `describe_sql` and `describe_graph` print these sentences word for word, so
+# neither store is described better by accident. `[general]` holds the
+# sentences both descriptions print first, in this order. Each `[[field]]` is
+# one field concept: its key names the `model_int` table it comes from (both
+# stores are built from that one entity layer), `meaning` is its one sentence
+# and `dump` lists the Jira dump paths it was read from, printed the same way
+# in both. Keys ending in `.start` and `.end` are the two ends of a link that
+# has its own row in SQL and its own relationship in the graph.
+#
+# Every sentence is checked against the dbt models that build the data; a
+# sentence that stops being true is a change to the agent (a new version).
+
+[general]
+bots = "Flagged bot accounts are already removed, so no query needs a bot filter."
+utc = "Every time is a UTC instant, converted from the offset each dump value carried, and a result shows it in UTC, in the Z form (2013-01-01T00:00:00Z)."
+missing = "A value that is missing or null in the dump has no value here: NULL in SQL, an absent property in the graph. The load checks that no text value is the empty string."
+seconds = "A time entry's seconds is a signed amount: zero or below is a decrease or a removal, so logged time counts only entries with seconds > 0."
+link_direction = "A link runs from the issue that holds the outward wording to the other issue: read forward it says the outward wording, read backwards the inward wording. On a dump link entry held by issue H, an outwardIssue X gives H to X, and an inwardIssue X gives X to H."
+folded = "An issue's project, assignee, reporter, creator and parent are each a single link from the issue: a key column of the issue in SQL, a relationship from the issue in the graph."
+bookkeeping = "Every table, node and relationship also carries bookkeeping fields that say where a record came from and which load wrote it (source_doc_id and load_id in SQL; sourceDocId, loadId and edgeId in the graph); no question needs them."
+
+# --- Issues ---
+
+[[field]]
+key = "issue"
+meaning = "One issue of the 7 corpus projects, one per issue key; a key stored twice in the dump is kept once."
+
+[[field]]
+key = "issue.issue_key"
+meaning = "The issue key, for example CLOUD-1234: the ID of the kind issue."
+dump = ["key"]
+
+[[field]]
+key = "issue.created_at"
+meaning = "When the issue was created."
+dump = ["fields.created"]
+
+[[field]]
+key = "issue.resolution_date"
+meaning = "The issue's current resolution date."
+dump = ["fields.resolutiondate"]
+
+[[field]]
+key = "issue.due_at"
+meaning = "The issue's current due date; a date without a time is midnight UTC at the start of that day."
+dump = ["fields.duedate"]
+
+[[field]]
+key = "issue.time_original_estimate_s"
+meaning = "The issue's current original time estimate, in seconds."
+dump = ["fields.timeoriginalestimate"]
+
+[[field]]
+key = "issue.resolution_name"
+meaning = "The issue's current resolution."
+dump = ["fields.resolution.name"]
+
+[[field]]
+key = "issue.issue_type_name"
+meaning = "The issue's current type."
+dump = ["fields.issuetype.name"]
+
+[[field]]
+key = "issue.priority_name"
+meaning = "The issue's current priority."
+dump = ["fields.priority.name"]
+
+[[field]]
+key = "issue.status_name"
+meaning = "The issue's current status."
+dump = ["fields.status.name"]
+
+# --- Projects, people, fix versions ---
+
+[[field]]
+key = "project"
+meaning = "One of the 7 corpus projects."
+
+[[field]]
+key = "project.project_key"
+meaning = "The project key, for example CLOUD: the ID of the kind project."
+dump = ["fields.project.key"]
+
+[[field]]
+key = "project.project_name"
+meaning = "The project name."
+dump = ["fields.project.name"]
+
+[[field]]
+key = "person"
+meaning = "Everyone who is an assignee, reporter or creator of a corpus issue, or the author of a time entry; a person seen only as a time entry author has no login name and no active flag."
+
+[[field]]
+key = "person.person_key"
+meaning = "The person key: the ID of the kind person."
+dump = ["fields.assignee.key", "fields.reporter.key", "fields.creator.key", "changelog.histories[].author.key"]
+
+[[field]]
+key = "person.login_name"
+meaning = "The person's login name."
+dump = ["fields.assignee.name", "fields.reporter.name", "fields.creator.name"]
+
+[[field]]
+key = "person.is_active"
+meaning = "Whether the person's account is active."
+dump = ["fields.assignee.active", "fields.reporter.active", "fields.creator.active"]
+
+[[field]]
+key = "fix_version"
+meaning = "One fix version named on a corpus issue."
+
+[[field]]
+key = "fix_version.version_id"
+meaning = "The fix version id."
+dump = ["fields.fixVersions[].id"]
+
+[[field]]
+key = "fix_version.version_name"
+meaning = "The fix version name."
+dump = ["fields.fixVersions[].name"]
+
+[[field]]
+key = "fix_version.is_released"
+meaning = "Whether the fix version is released."
+dump = ["fields.fixVersions[].released"]
+
+# --- The five single links of an issue (folded) ---
+
+[[field]]
+key = "in_project"
+meaning = "The issue's current project; every issue has one."
+dump = ["fields.project.key"]
+
+[[field]]
+key = "assigned_to"
+meaning = "The issue's current assignee, when it has one."
+dump = ["fields.assignee.key"]
+
+[[field]]
+key = "reported_by"
+meaning = "The issue's current reporter, when it has one."
+dump = ["fields.reporter.key"]
+
+[[field]]
+key = "created_by"
+meaning = "The issue's creator, when it has one."
+dump = ["fields.creator.key"]
+
+[[field]]
+key = "has_parent"
+meaning = "The issue's parent issue, kept only when the parent is itself a corpus issue."
+dump = ["fields.parent.key"]
+
+# --- Fix versions of an issue ---
+
+[[field]]
+key = "fixed_in"
+meaning = "One issue and one of its fix versions."
+dump = ["fields.fixVersions[].id"]
+
+[[field]]
+key = "fixed_in.start"
+meaning = "The issue."
+dump = ["key"]
+
+[[field]]
+key = "fixed_in.end"
+meaning = "The fix version."
+dump = ["fields.fixVersions[].id"]
+
+# --- Time entries ---
+
+[[field]]
+key = "logged_time"
+meaning = "One time entry, rebuilt from the changelog: a changelog history of the issue that holds a timespent item, giving who logged how many seconds on the issue, and when."
+
+[[field]]
+key = "logged_time.start"
+meaning = "The person who logged the entry."
+dump = ["changelog.histories[].author.key"]
+
+[[field]]
+key = "logged_time.end"
+meaning = "The issue the entry was logged on."
+dump = ["key"]
+
+[[field]]
+key = "logged_time.history_id"
+meaning = "The time entry id, which is the changelog history id: the ID of the kind time_entry."
+dump = ["changelog.histories[].id"]
+
+[[field]]
+key = "logged_time.seconds"
+meaning = "The entry's amount in seconds: the timespent item's to minus its from, two such items of one history summed."
+dump = ["changelog.items[field=timespent].from/to"]
+
+[[field]]
+key = "logged_time.logged_at"
+meaning = "When the entry was logged."
+dump = ["changelog.histories[].created"]
+
+# --- Issue links ---
+
+[[field]]
+key = "issue_link"
+meaning = "One link between two issues, kept only when both ends are corpus issues; the same link stored on both issues is one link."
+dump = ["fields.issuelinks[]"]
+
+[[field]]
+key = "issue_link.start"
+meaning = "The issue that holds the outward wording."
+dump = ["key", "fields.issuelinks[].inwardIssue.key"]
+
+[[field]]
+key = "issue_link.end"
+meaning = "The other issue."
+dump = ["fields.issuelinks[].outwardIssue.key", "key"]
+
+[[field]]
+key = "issue_link.link_id"
+meaning = "The link id: the ID of the kind issue_link."
+dump = ["fields.issuelinks[].id"]
+
+[[field]]
+key = "issue_link.link_type_name"
+meaning = "The link type; the 17 types and their wording are listed below."
+dump = ["fields.issuelinks[].type.name"]
+
+[[field]]
+key = "issue_link.outward_label"
+meaning = "The link's wording read from start to end."
+dump = ["fields.issuelinks[].type.outward"]
+
+[[field]]
+key = "issue_link.inward_label"
+meaning = "The link's wording read from end to start."
+dump = ["fields.issuelinks[].type.inward"]

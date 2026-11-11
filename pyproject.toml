@@ -33,6 +33,7 @@ dev = [
     "pytest>=9.1,<10",
     "ruff>=0.17.2,<0.18",
     "testcontainers[mongodb,neo4j,postgres]>=4.15,<5",
+    "tiktoken>=0.12,<1",
 ]
 
 [tool.pytest.ini_options]

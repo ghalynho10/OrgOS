@@ -16,6 +16,7 @@ from typing import Annotated
 import typer
 
 from orgos import __version__
+from orgos.agent.errors import AgentError
 from orgos.config import ConfigError, load_settings
 from orgos.eval import EvalError
 from orgos.eval.answers import answers
@@ -46,6 +47,7 @@ EXIT_CODES: tuple[tuple[type[Exception], int], ...] = (
     (EvalError, 4),
     (IngestError, 5),
     (GraphStoreError, 6),
+    (AgentError, 7),
 )
 NAMED_ERRORS = tuple(error for error, _ in EXIT_CODES)
 

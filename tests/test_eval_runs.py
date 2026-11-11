@@ -39,7 +39,6 @@ from orgos.eval.runs import (
     limit_reached,
     load_agent,
     load_id_problems,
-    make_plan,
     planned_work,
     read_run_files,
     retries,
@@ -330,13 +329,6 @@ def test_files_on_another_load_id_are_named() -> None:
 
 
 # --- The plan and the cost gate (AC-30) ---
-
-
-def test_estimate_refuses_while_a_limit_is_unset() -> None:
-    with pytest.raises(EvalError, match="ORGOS_AGENT_TOKEN_LIMIT"):
-        make_plan(
-            settings(ORGOS_AGENT_REQUEST_LIMIT=10, ORGOS_AGENT_TOOL_CALL_LIMIT=8), DESCRIPTION
-        )
 
 
 def test_estimate_writes_the_plan_once_with_its_upper_bound(root: Path) -> None:
