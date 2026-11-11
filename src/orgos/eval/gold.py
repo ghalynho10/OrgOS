@@ -19,7 +19,7 @@ import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import ValidationError
 
@@ -28,11 +28,11 @@ from orgos.eval import EvalError
 from orgos.eval.answers import read_questions
 from orgos.eval.frozen import ANSWERS, sha256_file
 from orgos.eval.gold_adapters import ADAPTERS, Adapter
-from orgos.eval.handoff import STORES, Store
+from orgos.eval.handoff import STORES, ScoredOutcome, Store, StoreOutage
 from orgos.eval.literal import literal_problems, mask
 from orgos.eval.models import AnswerFile, Question
 from orgos.eval.preflight import preflight, record_load_id, write_fingerprint
-from orgos.eval.score import Scored, failed, score
+from orgos.eval.score import Entry, Scored, failed, score, summary_lines
 from orgos.eval.tries import (
     MAX_FAILED,
     PairState,
@@ -91,8 +91,8 @@ def question_by_id(root: Path, question_id: str) -> Question:
     return question
 
 
-def known_answer(root: Path, question_id: str) -> Mapping[str, Any]:
-    """One known answer in the JSON form `compare` takes; read by code, never printed."""
+def known_answers(root: Path) -> Mapping[str, Mapping[str, Any]]:
+    """Every known answer in the JSON form `compare` takes; read by code, never printed."""
     try:
         data = json.loads((root / ANSWERS).read_text(encoding="utf-8"))
         AnswerFile.model_validate(data)
@@ -100,10 +100,15 @@ def known_answer(root: Path, question_id: str) -> Mapping[str, Any]:
         raise EvalError(f"cannot read {ANSWERS}: {error.strerror}") from None
     except (json.JSONDecodeError, ValidationError):
         raise EvalError(f"{ANSWERS} does not hold a valid answers file") from None
-    answer = data["answers"].get(question_id)
+    return {str(key): dict(answer) for key, answer in data["answers"].items()}
+
+
+def known_answer(root: Path, question_id: str) -> Mapping[str, Any]:
+    """One known answer; read by code, never printed."""
+    answer = known_answers(root).get(question_id)
     if answer is None:
         raise EvalError(f"{ANSWERS} holds no answer for {question_id}")
-    return dict(answer)
+    return answer
 
 
 def zero_guarded(known: Mapping[str, Any]) -> bool:
@@ -228,7 +233,7 @@ def run_files(
         with reader_driver(settings) as driver:
             return _run_each(files, lambda text: run_cypher(driver, text, timeout_s=timeout))
     except (SqlConnectionLost, GraphConnectionLost) as error:
-        raise EvalError(f"{error}; this was not counted as a try, run it again") from None
+        raise StoreOutage(str(error)) from None
 
 
 @dataclass(frozen=True)
@@ -388,7 +393,10 @@ def gold_try(
             )
         )
 
-    runs = run_files(settings, store, files)
+    try:
+        runs = run_files(settings, store, files)
+    except StoreOutage as error:
+        raise EvalError(f"{error}; this was not counted as a try, run it again") from None
     judged = judge(pair, known, adapter, runs)
     scored = judged.scored
     append(
@@ -411,7 +419,7 @@ def gold_try(
     lines = try_lines(pair, state, scored.outcome, judged)
     if scored.outcome == "row_cap":
         raise EvalError("\n".join((*lines, "A gold query hit the row cap: this is a gold bug.")))
-    return tuple(lines)
+    return (*lines, "", *gold_summary(root))
 
 
 def gold_decide(
@@ -630,3 +638,61 @@ def pin_problems(root: Path) -> tuple[str, ...]:
                 " try the pair and accept it again"
             )
     return tuple(problems)
+
+
+# The gold summary (AC-13, AC-23)
+
+
+def zero_guarded_ids(known: Mapping[str, Mapping[str, Any]]) -> frozenset[str]:
+    """The questions whose known answer is a zero number (today Q03 and Q16)."""
+    return frozenset(qid for qid, answer in known.items() if zero_guarded(answer))
+
+
+def gold_outcome(state: PairState) -> ScoredOutcome:
+    """A pair's latest state: a discrepancy, the latest try's outcome, or `not_tried`.
+
+    A literal refusal counts as `error`: the query broke a rule, so it is not correct.
+    """
+    if state.discrepancy is not None:
+        return "discrepancy"
+    latest = state.latest
+    if latest is None:
+        return "not_tried"
+    outcome = str(latest["outcome"])
+    return "error" if outcome == "literal" else cast(ScoredOutcome, outcome)
+
+
+def gold_entries(
+    lines: tuple[Mapping[str, Any], ...], questions: tuple[Question, ...]
+) -> tuple[Entry, ...]:
+    """One entry per question and store, from the latest state of every pair in the log."""
+    entries = []
+    for question in questions:
+        for store in STORES:
+            tries = [
+                line
+                for line in lines
+                if line.get("event") == "try"
+                and line.get("question") == question.id
+                and line.get("store") == store
+            ]
+            entries.append(
+                Entry(
+                    layer="gold",
+                    version="gold",
+                    store=store,
+                    question_id=question.id,
+                    question_type=question.type,
+                    data=question.data,
+                    outcome=gold_outcome(pair_state(lines, question.id, store)),
+                    timeouts=sum(1 for line in tries if line["outcome"] == "store_timeout"),
+                    row_caps=sum(1 for line in tries if line["outcome"] == "row_cap"),
+                )
+            )
+    return tuple(entries)
+
+
+def gold_summary(root: Path) -> list[str]:
+    """The gold layer of the summary, computed from the tries log and not stored (AC-13)."""
+    entries = gold_entries(read_tries(root), read_questions(root))
+    return summary_lines(entries, zero_guarded_ids(known_answers(root)))

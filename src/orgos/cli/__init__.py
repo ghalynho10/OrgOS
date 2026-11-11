@@ -23,6 +23,7 @@ from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
 from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
 from orgos.eval.preflight import preflight, summary
+from orgos.eval.runs import estimate, run_agent, version_add
 from orgos.graphstore import GraphStoreError
 from orgos.graphstore.load import load_graph
 from orgos.ingest import IngestError
@@ -274,6 +275,86 @@ def gold_accept_command(
     """
     for line in gold_accept(Path.cwd(), question, parse_store(store), reviewed=reviewed):
         typer.echo(line)
+
+
+AgentOption = Annotated[
+    str, typer.Option("--agent", help="replay, or module:factory returning a QueryAgent.")
+]
+
+
+@eval_app.command("run")
+def eval_run_command(
+    agent: AgentOption,
+    estimate_only: Annotated[
+        bool,
+        typer.Option("--estimate", help="Write the version's PLAN.json and its cost bound only."),
+    ] = False,
+    go: Annotated[bool, typer.Option("--go", help="Allow a real agent's paid calls.")] = False,
+    max_cost_usd: Annotated[
+        float | None,
+        typer.Option("--max-cost-usd", help="Stop starting runs once this invocation spends this."),
+    ] = None,
+    only: Annotated[
+        str | None, typer.Option("--only", help="One question id, for example Q01.")
+    ] = None,
+    store: Annotated[
+        str | None, typer.Option("--store", help="sql or graph; both when left out.")
+    ] = None,
+    max_run: Annotated[
+        int | None, typer.Option("--max-run", min=1, help="Run only run numbers 1 to K.")
+    ] = None,
+) -> None:
+    """Run an agent on the questions in both stores and score every run.
+
+    Runs the preflight first. Each run is written once to
+    results/agent_runs/<version>/Qnn-<store>-<n>.json, and a rerun fills only the
+    missing run numbers. A real agent needs `--estimate` first, a versions log
+    entry, --go and --max-cost-usd. `--agent replay` runs the accepted gold
+    queries for free and needs none of these.
+    """
+    settings = load_settings()
+    if estimate_only:
+        lines = estimate(settings, Path.cwd(), agent, only=only)
+    else:
+        lines = run_agent(
+            settings,
+            Path.cwd(),
+            agent,
+            go=go,
+            max_cost_usd=max_cost_usd,
+            only=only,
+            store=store,
+            max_run=max_run,
+        )
+    for line in lines:
+        typer.echo(line)
+
+
+version_app = typer.Typer(
+    name="version",
+    help="The agent versions log: at most 3 versions, append only.",
+    no_args_is_help=True,
+)
+eval_app.add_typer(version_app)
+
+
+@version_app.command("add")
+def version_add_command(
+    agent: AgentOption,
+    reason: Annotated[
+        str | None, typer.Option("--reason", help="Why this version exists (after the first).")
+    ] = None,
+    exposed_by: Annotated[
+        str | None,
+        typer.Option("--exposed-by", help="The run file that exposed the problem."),
+    ] = None,
+    kind: Annotated[str | None, typer.Option("--kind", help="bug_fix or behaviour_change.")] = None,
+) -> None:
+    """Log the agent's current version and the parts that changed since the previous one."""
+    settings = load_settings()
+    typer.echo(
+        version_add(settings, Path.cwd(), agent, reason=reason, exposed_by=exposed_by, kind=kind)
+    )
 
 
 load_app = typer.Typer(
