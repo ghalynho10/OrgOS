@@ -230,4 +230,7 @@ def test_the_eval_package_makes_no_write_or_model_call() -> None:
     for source in EVAL_SOURCES:
         text = source.read_text()
         assert WRITES.search(text) is None, source
-        assert re.search(r"pydantic_ai|anthropic|openai|httpx|requests", text) is None, source
+        # The `requests` library only as an import or a call: `Usage.requests` is a
+        # field of the agent handoff (spec 0011 AC-25), a count, not the library.
+        library = r"pydantic_ai|anthropic|openai|httpx|\b(import|from) requests\b|\brequests\.\w+\("
+        assert re.search(library, text) is None, source

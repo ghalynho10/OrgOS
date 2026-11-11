@@ -1,0 +1,6 @@
+3c508edd7201495b80760ec7bdedee86d84bcbeaccc70b5ec800728d59ed4a67  gold/cypher/Q01.answer.cypher
+d8a72996c27a61e41cc3ba16eb87a3e761a6b9fd5602356dbf67a54429e4f736  gold/cypher/Q01.explain.md
+f7341659ba909705238971035932457a60d92c9c8c6cd09086afecab6968a0ff  gold/cypher/Q01.sources.1.cypher
+3e4851c02b67ad054fbab128f8c264b0fa327fb17bf2cce54b636f2482c5e2b6  gold/sql/Q01.answer.sql
+e9ce296400da4734ebd22de3c9f7cc8aa5a760d3153494e42f60199933b2005e  gold/sql/Q01.explain.md
+d0dfaee19c8b02533a93092657c208724671bdb504c35540cf16c7f3f30b4eed  gold/sql/Q01.sources.1.sql

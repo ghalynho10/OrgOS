@@ -21,6 +21,7 @@ from orgos.eval import EvalError
 from orgos.eval.answers import answers
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
+from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
 from orgos.eval.preflight import preflight, summary
 from orgos.graphstore import GraphStoreError
 from orgos.graphstore.load import load_graph
@@ -187,6 +188,92 @@ def eval_preflight_command() -> None:
     """
     settings = load_settings()
     typer.echo(summary(preflight(settings, Path.cwd())))
+
+
+gold_app = typer.Typer(
+    name="gold",
+    help="Try, decide on and accept the gold queries of each question and store.",
+    no_args_is_help=True,
+)
+eval_app.add_typer(gold_app)
+
+StoreOption = Annotated[str, typer.Option("--store", help="sql or graph.")]
+
+
+@gold_app.command("try")
+def gold_try_command(
+    question: Annotated[str, typer.Argument(help="The question id, for example Q01.")],
+    store: StoreOption,
+    hypothesis: Annotated[
+        str | None,
+        typer.Option("--hypothesis", help="From try 2 of a round: what you think was wrong."),
+    ] = None,
+    cites: Annotated[
+        str | None,
+        typer.Option(
+            "--cites",
+            help="From try 2 of a round: `step <n>` of the reading note, or a schema name.",
+        ),
+    ] = None,
+) -> None:
+    """Run one gold pair on its store and score it against the frozen known answer.
+
+    Runs the preflight first. Prints three booleans and the count of missing and
+    extra IDs per source step, never an answer key, value or ID, and appends the
+    try to results/gold/tries.jsonl. A refusal before the pair runs is not a try.
+    """
+    settings = load_settings()
+    for line in gold_try(
+        settings,
+        Path.cwd(),
+        question,
+        parse_store(store),
+        hypothesis=hypothesis,
+        cites=cites,
+    ):
+        typer.echo(line)
+
+
+@gold_app.command("decide")
+def gold_decide_command(
+    question: Annotated[str, typer.Argument(help="The question id, for example Q01.")],
+    store: StoreOption,
+    rewrite: Annotated[
+        bool, typer.Option("--rewrite", help="Open a fresh round, written from the reading note.")
+    ] = False,
+    discrepancy: Annotated[
+        str | None,
+        typer.Option("--discrepancy", help="Record the pair as a known answer discrepancy."),
+    ] = None,
+) -> None:
+    """After 3 failed tries in a round: open a new round, or record a known answer discrepancy.
+
+    Reads no store; appends the choice to results/gold/tries.jsonl.
+    """
+    typer.echo(
+        gold_decide(
+            Path.cwd(), question, parse_store(store), rewrite=rewrite, discrepancy=discrepancy
+        )
+    )
+
+
+@gold_app.command("accept")
+def gold_accept_command(
+    question: Annotated[str, typer.Argument(help="The question id, for example Q01.")],
+    store: StoreOption,
+    reviewed: Annotated[
+        bool,
+        typer.Option("--reviewed", help="You read every query against gold/CHECKLIST.md."),
+    ] = False,
+) -> None:
+    """Pin a pair in gold/ACCEPTED once its latest try was correct for the files as they are.
+
+    Also needs a clean literal check, the zero guard when it applies, an explain
+    file naming every numbered source step, tries on the current load ID only,
+    and --reviewed. Reads no store; logs the round and try the pair passed on.
+    """
+    for line in gold_accept(Path.cwd(), question, parse_store(store), reviewed=reviewed):
+        typer.echo(line)
 
 
 load_app = typer.Typer(

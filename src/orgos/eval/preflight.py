@@ -173,13 +173,11 @@ def _graph_state(settings: Settings) -> GraphState:
         raise refuse(GRAPH_STATE, (f"cannot read the graph: {type(error).__name__}",)) from None
 
 
-def preflight(settings: Settings, root: Path) -> Preflight:
-    """Run the five checks in order and stop at the first that fails; writes nothing."""
-    problems = frozen_set_problems(root)
-    if problems:
-        raise refuse(FROZEN_SET, problems)
-    log.info("preflight: the frozen set passed")
+def record_load_id(root: Path) -> str:
+    """The run records check (AC-3): both records `ok` with one `dlt_load_id`, which is L.
 
+    Reads only the two record files, so `gold accept` learns L without a store.
+    """
     sql_record = _read_record(root / SQL_RUN_RECORD)
     graph_record = _read_record(root / GRAPH_RUN_RECORD)
     problems = check_run_records(
@@ -187,7 +185,17 @@ def preflight(settings: Settings, root: Path) -> Preflight:
     )
     if problems:
         raise refuse(RUN_RECORDS, problems)
-    load_id = str(sql_record["dlt_load_id"])
+    return str(sql_record["dlt_load_id"])
+
+
+def preflight(settings: Settings, root: Path) -> Preflight:
+    """Run the five checks in order and stop at the first that fails; writes nothing."""
+    problems = frozen_set_problems(root)
+    if problems:
+        raise refuse(FROZEN_SET, problems)
+    log.info("preflight: the frozen set passed")
+
+    load_id = record_load_id(root)
     log.info("preflight: the run records passed, load ID %s", load_id)
 
     sql_state = _sql_state(settings)
