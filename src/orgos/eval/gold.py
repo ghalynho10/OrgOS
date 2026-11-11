@@ -32,7 +32,15 @@ from orgos.eval.handoff import STORES, ScoredOutcome, Store, StoreOutage
 from orgos.eval.literal import literal_problems, mask
 from orgos.eval.models import AnswerFile, Question
 from orgos.eval.preflight import preflight, record_load_id, write_fingerprint
-from orgos.eval.score import Entry, Scored, failed, score, summary_lines
+from orgos.eval.score import (
+    NOT_REVIEWED,
+    Entry,
+    Scored,
+    SummaryOutcome,
+    failed,
+    score,
+    summary_lines,
+)
 from orgos.eval.tries import (
     MAX_FAILED,
     PairState,
@@ -648,10 +656,13 @@ def zero_guarded_ids(known: Mapping[str, Mapping[str, Any]]) -> frozenset[str]:
     return frozenset(qid for qid, answer in known.items() if zero_guarded(answer))
 
 
-def gold_outcome(state: PairState) -> ScoredOutcome:
+def gold_outcome(state: PairState, accepted: bool) -> SummaryOutcome:
     """A pair's latest state: a discrepancy, the latest try's outcome, or `not_tried`.
 
-    A literal refusal counts as `error`: the query broke a rule, so it is not correct.
+    A correct latest try counts as `correct` only for a pair accepted with its
+    pins holding; otherwise it is `correct_not_reviewed`, shown beside the
+    headline and never inside it. A literal refusal counts as `error`: the query
+    broke a rule, so it is not correct.
     """
     if state.discrepancy is not None:
         return "discrepancy"
@@ -659,11 +670,37 @@ def gold_outcome(state: PairState) -> ScoredOutcome:
     if latest is None:
         return "not_tried"
     outcome = str(latest["outcome"])
+    if outcome == "correct":
+        return "correct" if accepted else NOT_REVIEWED
     return "error" if outcome == "literal" else cast(ScoredOutcome, outcome)
 
 
+def accepted_pairs(root: Path) -> frozenset[tuple[str, str]]:
+    """Each `(question, store)` with its answer file in `gold/ACCEPTED` and every pin holding."""
+    path = root / ACCEPTED
+    if not path.is_file():
+        return frozenset()
+    pins = parse_pins(path.read_text(encoding="utf-8"))
+    pairs = set()
+    for store, folder in FOLDERS.items():
+        for _, pinned_path in pins:
+            match = re.fullmatch(rf"{GOLD}/{folder}/(Q\d{{2}})\.answer\.{folder}", pinned_path)
+            if match is None:
+                continue
+            prefix = f"{GOLD / folder / match.group(1)}."
+            if all(
+                (root / p).is_file() and sha256_file(root / p) == s
+                for s, p in pins
+                if p.startswith(prefix)
+            ):
+                pairs.add((match.group(1), store))
+    return frozenset(pairs)
+
+
 def gold_entries(
-    lines: tuple[Mapping[str, Any], ...], questions: tuple[Question, ...]
+    lines: tuple[Mapping[str, Any], ...],
+    questions: tuple[Question, ...],
+    accepted: frozenset[tuple[str, str]],
 ) -> tuple[Entry, ...]:
     """One entry per question and store, from the latest state of every pair in the log."""
     entries = []
@@ -684,7 +721,9 @@ def gold_entries(
                     question_id=question.id,
                     question_type=question.type,
                     data=question.data,
-                    outcome=gold_outcome(pair_state(lines, question.id, store)),
+                    outcome=gold_outcome(
+                        pair_state(lines, question.id, store), (question.id, store) in accepted
+                    ),
                     timeouts=sum(1 for line in tries if line["outcome"] == "store_timeout"),
                     row_caps=sum(1 for line in tries if line["outcome"] == "row_cap"),
                 )
@@ -694,5 +733,5 @@ def gold_entries(
 
 def gold_summary(root: Path) -> list[str]:
     """The gold layer of the summary, computed from the tries log and not stored (AC-13)."""
-    entries = gold_entries(read_tries(root), read_questions(root))
+    entries = gold_entries(read_tries(root), read_questions(root), accepted_pairs(root))
     return summary_lines(entries, zero_guarded_ids(known_answers(root)))

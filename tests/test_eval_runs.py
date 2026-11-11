@@ -17,7 +17,7 @@ from orgos.config import Settings, load_settings
 from orgos.eval import EvalError
 from orgos.eval.answers import read_questions
 from orgos.eval.frozen import sha256_file
-from orgos.eval.gold import gold_entries
+from orgos.eval.gold import accepted_pairs, gold_entries
 from orgos.eval.handoff import (
     AgentDescription,
     AgentRun,
@@ -474,7 +474,9 @@ def test_the_summary_shows_raw_counts_with_and_without_the_zero_guarded() -> Non
         entry("gold", "sql", "Q06", "not_tried", timeouts=2),
     ]
     lines = summary_lines(entries, frozenset({"Q03", "Q16"}))
-    assert lines[0] == "gold sql: 2/4 correct (1/3 without the zero guarded Q03, Q16)"
+    assert lines[0] == (
+        "gold sql: 2/4 correct (1/3 without the zero guarded Q03, Q16); correct, not reviewed 0"
+    )
     assert lines[1] == "  discrepancies 1; attempts timed out 2, at the row cap 0"
     assert lines[3] == "  by data: real 2/4, synthetic 0/0"
 
@@ -586,6 +588,33 @@ def test_gold_entries_take_the_latest_state_of_every_pair(root: Path) -> None:
             "outcome": "literal",
         },
     )
-    entries = {e.store: e for e in gold_entries(lines, questions)}
+    entries = {e.store: e for e in gold_entries(lines, questions, frozenset({("Q01", "sql")}))}
     assert entries["sql"].outcome == "correct" and entries["sql"].timeouts == 1
+    unreviewed = {e.store: e for e in gold_entries(lines, questions, frozenset())}
+    assert unreviewed["sql"].outcome == "correct_not_reviewed"
     assert entries["graph"].outcome == "error"
+
+
+def test_a_correct_pair_counts_only_once_accepted_with_its_pins_holding(root: Path) -> None:
+    folder = root / "gold/sql"
+    folder.mkdir(parents=True)
+    names = ("Q01.answer.sql", "Q01.sources.1.sql", "Q01.explain.md")
+    for name in names:
+        (folder / name).write_text(f"-- {name}\n")
+    (root / "gold/ACCEPTED").write_text(
+        "".join(f"{sha256_file(folder / name)}  gold/sql/{name}\n" for name in names)
+    )
+    assert accepted_pairs(root) == frozenset({("Q01", "sql")})
+    (folder / "Q01.explain.md").write_text("-- edited\n")
+    assert accepted_pairs(root) == frozenset()
+    lines = summary_lines(
+        [
+            entry("gold", "sql", "Q01", "correct_not_reviewed"),
+            entry("gold", "sql", "Q02", "correct"),
+        ],
+        frozenset(),
+    )
+    assert (
+        lines[0]
+        == "gold sql: 1/2 correct (1/2 without the zero guarded none); correct, not reviewed 1"
+    )

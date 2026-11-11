@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 from orgos.eval import EvalError
 from orgos.eval.compare import compare, store_answer
@@ -96,6 +96,10 @@ def score(
 # The summary (AC-23, AC-24, AC-27, AC-33)
 
 Layer = Literal["gold", "agent", "replay"]
+# A gold pair whose latest try is correct but which is not accepted with its pins
+# holding: shown beside the headline, never inside it (your ruling, 2026-11-10).
+NOT_REVIEWED: Final = "correct_not_reviewed"
+SummaryOutcome = ScoredOutcome | Literal["correct_not_reviewed"]
 LIMITS = ("requests", "tool_calls", "tokens")
 QUESTION_TYPES = ("aggregate", "path_connection", "mixed")
 DATA_TAGS = ("real", "synthetic")
@@ -116,7 +120,7 @@ class Entry:
     question_id: str
     question_type: str
     data: str
-    outcome: ScoredOutcome
+    outcome: SummaryOutcome
     attempts: int = 0
     retries: int = 0
     timeouts: int = 0
@@ -174,6 +178,7 @@ class Group:
             },
             "outcomes": {outcome: outcomes[outcome] for outcome in sorted(outcomes)},
             "discrepancies": outcomes["discrepancy"],
+            "correct_not_reviewed": outcomes[NOT_REVIEWED],
             "attempts_timed_out": sum(entry.timeouts for entry in self.entries),
             "attempts_at_row_cap": sum(entry.row_caps for entry in self.entries),
             "limit_hit": {
@@ -192,6 +197,11 @@ class Group:
         lines = [
             f"{name} {self.store}: {_shown(record['headline'])} correct"
             f" ({_shown(record['without_zero_guarded'])} without the zero guarded {zero})"
+            + (
+                f"; correct, not reviewed {record['correct_not_reviewed']}"
+                if self.layer == "gold"
+                else ""
+            )
             + (" PARTIAL" if record["partial"] else ""),
             f"  discrepancies {record['discrepancies']}; attempts timed out"
             f" {record['attempts_timed_out']}, at the row cap {record['attempts_at_row_cap']}",
