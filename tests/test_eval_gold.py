@@ -142,6 +142,36 @@ def test_a_quoted_string_is_checked_whole() -> None:
     assert problems == ("q.sql:1: holds a literal from the known answer",)
 
 
+PATH_KNOWN: dict[str, Any] = {
+    "shape": "path",
+    "value": [{"path": ["issue:P-1", "issue:P-7"], "sources": [{"issue_link": ["L-9"]}]}],
+    "sources": [],
+}
+
+
+# covers: AC-14 (every shape's keys and IDs, and a fraction's long numbers, are checked)
+@pytest.mark.parametrize(
+    ("known", "query"),
+    [
+        (
+            {"shape": "ranking", "value": [{"value": {"int": 4}, "ids": ["person:zed"]}]}
+            | {"sources": []},
+            "WHERE person_key = 'zed'",
+        ),
+        (PATH_KNOWN, "WHERE issue_key = 'P-7'"),
+        (PATH_KNOWN, "WHERE link_id = 'L-9'"),
+        ({"shape": "number", "value": {"num": 98765, "den": 3}, "sources": []}, "RETURN 98765"),
+        ({"shape": "number", "value": {"num": 7, "den": 43210}, "sources": []}, "RETURN 43210"),
+    ],
+    ids=["ranking id", "path id", "path step id", "fraction num", "fraction den"],
+)
+def test_every_answer_shape_has_its_ids_and_long_numbers_checked(
+    known: dict[str, Any], query: str
+) -> None:
+    problems = literal_problems((("q.cypher", query),), known, ALLOWED)
+    assert problems == ("q.cypher:1: holds a literal from the known answer",)
+
+
 def test_a_store_message_is_masked() -> None:
     assert mask('invalid input syntax: "CCC-9" near 123456', KNOWN_MAP) == (
         'invalid input syntax: "<hidden>" near <hidden>'
@@ -493,6 +523,30 @@ def test_accept_refuses_a_missing_explain_file(root: Path) -> None:
         gold_accept(root, "Q01", "sql", reviewed=True)
 
 
+# covers: AC-19 (only the latest try of the current round can be accepted)
+@pytest.mark.parametrize(
+    ("tries", "reason"),
+    [
+        ([True, False], "the latest try (round 1, try 2) was not correct"),
+        ([True, False, False, False, "rewrite"], "no try yet in round 2"),
+    ],
+    ids=["a later failed try", "an earlier round"],
+)
+def test_a_correct_try_counts_only_while_it_is_the_latest_of_the_round(
+    root: Path, tries: list[bool | str], reason: str
+) -> None:
+    files = accept_root(root)
+    for number, item in enumerate(tries, 1):
+        if item == "rewrite":
+            gold_decide(root, "Q01", "sql", rewrite=True, discrepancy=None)
+        else:
+            append(root, try_line(1, number, bool(item)) | {"files": files, "load_id": LOAD_ID})
+    with pytest.raises(EvalError, match="is not accepted") as excinfo:
+        gold_accept(root, "Q01", "sql", reviewed=True)
+    assert reason in str(excinfo.value)
+    assert not (root / ACCEPTED).exists()
+
+
 def test_accepting_one_pair_keeps_the_other_pins() -> None:
     cypher, sql = "gold/cypher/Q01.answer.cypher", "gold/sql/Q01.answer.sql"
     text = pinned((("a" * 64, cypher), ("b" * 64, sql)), PAIR, {sql: "c" * 64})
@@ -516,6 +570,65 @@ def test_the_zero_guard(
         assert problems == ()
     else:
         assert len(problems) == 1 and problem in problems[0]
+
+
+ZERO_READING = (
+    "Population: issues of project AAA.\n"
+    "Sources, step by step: (1) select issues by project; (2) retain the resolved.\n"
+    "If empty: the answer is 0."
+)
+ZERO_PARTS = ("answer", "stage.1", "stage.2")
+
+
+@pytest.fixture
+def zero_root(tmp_path: Path) -> Path:
+    (tmp_path / "eval").mkdir()
+    toml = QUESTION_TOML.format(reading=ZERO_READING)
+    toml = toml.replace('id = "Q01"', 'id = "Q03"').replace('shape = "map"', 'shape = "number"')
+    (tmp_path / "eval/questions.toml").write_text(toml)
+    zero = {"shape": "number", "value": {"int": 0}, "sources": []}
+    answers = {"amendments_sha256": None, "answers": {"Q03": zero}, "questions_sha256": "x"}
+    (tmp_path / "eval/answers.json").write_text(json.dumps(answers))
+    for folder in ("sql", "cypher"):
+        (tmp_path / "gold" / folder).mkdir(parents=True)
+        for part in ZERO_PARTS:
+            (tmp_path / f"gold/{folder}/Q03.{part}.{folder}").write_text(f"-- {part}\n")
+        (tmp_path / f"gold/{folder}/Q03.explain.md").write_text("step 1, then step 2.\n")
+    for path in ("results/sql_load/run_record.json", "results/graph_load/run_record.json"):
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text(json.dumps({"status": "ok", "dlt_load_id": LOAD_ID}))
+    return tmp_path
+
+
+def zero_try(root: Path, store: str, number: int, counts: list[int]) -> dict[str, Any]:
+    folder = "sql" if store == "sql" else "cypher"
+    paths = (f"gold/{folder}/Q03.{part}.{folder}" for part in ZERO_PARTS)
+    return {
+        "event": "try",
+        "question": "Q03",
+        "store": store,
+        "round": 1,
+        "try": number,
+        "correct": True,
+        "outcome": "correct",
+        "files": {path: sha256_file(root / path) for path in paths},
+        "load_id": LOAD_ID,
+        "stage_counts": counts,
+    }
+
+
+# covers: AC-18 (accept reads both stores' latest correct stage counts)
+def test_a_zero_guarded_pair_is_accepted_only_once_both_stores_agree(zero_root: Path) -> None:
+    append(zero_root, zero_try(zero_root, "sql", 1, [40, 3]))
+    with pytest.raises(EvalError, match="no correct try yet in graph"):
+        gold_accept(zero_root, "Q03", "sql", reviewed=True)
+    append(zero_root, zero_try(zero_root, "graph", 1, [41, 3]))
+    with pytest.raises(EvalError, match="stage counts differ at step 1: sql 40, graph 41"):
+        gold_accept(zero_root, "Q03", "sql", reviewed=True)
+    assert not (zero_root / ACCEPTED).exists()
+    append(zero_root, zero_try(zero_root, "graph", 2, [40, 3]))
+    (line,) = gold_accept(zero_root, "Q03", "sql", reviewed=True)
+    assert line.startswith("Q03 sql: accepted on round 1, try 1")
 
 
 def test_an_explain_file_must_name_every_step() -> None:

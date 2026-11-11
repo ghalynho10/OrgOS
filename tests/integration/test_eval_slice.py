@@ -1,4 +1,5 @@
-"""Slice 1 end to end on real containers (spec 0011 AC-1 to AC-6, AC-13, AC-19, AC-34, AC-36).
+"""Slice 1 end to end on real containers (spec 0011 AC-1 to AC-6, AC-13, AC-14, AC-19, AC-30,
+AC-34, AC-36, AC-37).
 
 A temporary repo holds a made up Q01 over two projects, its known answer worked
 out by hand from the rows below, the two load run records and the gold pair in
@@ -13,6 +14,7 @@ answer is AAA 1, BBB 0, with the sources step `issue: [AAA-1]`.
 
 import json
 import os
+import re
 import secrets
 import shutil
 import subprocess
@@ -20,6 +22,7 @@ import time
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import docker
 import psycopg
@@ -32,7 +35,15 @@ from orgos.eval import EvalError
 from orgos.eval.frozen import ANSWERS, FROZEN, QUESTIONS, frozen_line
 from orgos.eval.gold import ACCEPTED, gold_accept, gold_summary, gold_try, pin_problems
 from orgos.eval.preflight import FINGERPRINT, preflight
-from orgos.eval.runs import read_run_files, run_agent
+from orgos.eval.runs import (
+    estimate,
+    read_run_files,
+    run_agent,
+    run_path,
+    version_add,
+    write_once,
+)
+from orgos.eval.tries import read_tries
 from orgos.graphstore.mapping import load_mapping
 from orgos.graphstore.statements import create_constraint
 from orgos.sqlstore.bootstrap import bootstrap
@@ -165,9 +176,7 @@ def _git(root: Path, *args: str) -> None:
     subprocess.run(["git", *args], cwd=root, env=env, check=True, capture_output=True)
 
 
-@pytest.fixture(scope="module")
-def root(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    root = tmp_path_factory.mktemp("slice")
+def _make_root(root: Path) -> Path:
     _git(root, "init", "--quiet")
     _git(
         root,
@@ -200,6 +209,17 @@ def root(tmp_path_factory: pytest.TempPathFactory) -> Path:
     (root / "src/orgos/eval").mkdir(parents=True)
     shutil.copy(REPO / "src/orgos/eval/compare.py", root / "src/orgos/eval/compare.py")
     return root
+
+
+@pytest.fixture(scope="module")
+def root(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return _make_root(tmp_path_factory.mktemp("slice"))
+
+
+@pytest.fixture
+def fresh_root(tmp_path: Path) -> Path:
+    """A repo of its own, so a test's tries and run files touch no other test."""
+    return _make_root(tmp_path)
 
 
 @pytest.fixture(scope="module")
@@ -326,3 +346,75 @@ def test_an_index_added_after_the_first_try_is_refused(
         finally:
             conn.execute("DROP INDEX model.slice_added")
     assert preflight(settings, root).fingerprint_saved
+
+
+# covers: AC-14, AC-15, AC-17 (the literal refusal is a logged failed try that names no literal)
+def test_a_literal_in_a_gold_query_is_a_failed_try_that_names_no_literal(
+    settings: Settings, fresh_root: Path
+) -> None:
+    sources = fresh_root / "gold/sql/Q01.sources.1.sql"
+    sources.write_text(sources.read_text() + "-- AAA-1\n")
+    line = len(sources.read_text().splitlines())
+    with pytest.raises(EvalError, match="this counts as a failed try") as excinfo:
+        gold_try(settings, fresh_root, "Q01", "sql", hypothesis=None, cites=None)
+    message = str(excinfo.value)
+    assert f"gold/sql/Q01.sources.1.sql:{line}: holds a literal from the known answer" in message
+    assert "AAA-1" not in message
+    (logged,) = read_tries(fresh_root)
+    assert (logged["outcome"], logged["correct"], logged["try"]) == ("literal", False, 1)
+    assert "AAA-1" not in json.dumps(logged)
+
+
+STUB = "tests.test_eval_runs:stub_factory"
+
+
+# covers: AC-30, AC-32, AC-35, AC-37 (the gate is wired into `run`; the stub calls no model)
+def test_a_real_agent_is_gated_before_any_run_then_written_once(
+    settings: Settings, fresh_root: Path
+) -> None:
+    limited = settings.model_copy(
+        update={"agent_request_limit": 10, "agent_token_limit": 50_000, "agent_tool_call_limit": 8}
+    )
+
+    def run(**options: Any) -> tuple[str, ...]:
+        chosen = {"go": True, "max_cost_usd": 1.0, "only": "Q01", "store": "sql", "max_run": 1}
+        return run_agent(limited, fresh_root, STUB, **(chosen | options))
+
+    with pytest.raises(EvalError, match=r"has no entry in results/agent_runs/versions\.jsonl"):
+        run()
+    version_add(limited, fresh_root, STUB, reason=None, exposed_by=None, kind=None)
+    with pytest.raises(EvalError, match=r"has no PLAN\.json"):
+        run()
+    estimate(limited, fresh_root, STUB, only="Q01")
+    for options, reason in (
+        ({"go": False}, "only with --go"),
+        ({"max_cost_usd": None}, "only with --max-cost-usd"),
+        ({"store": None}, "no finished run file yet"),
+        ({"max_run": None}, "no finished run file yet"),
+    ):
+        with pytest.raises(EvalError, match=reason):
+            run(**options)
+    assert read_run_files(fresh_root, "v1") == ()
+
+    assert "wrote 1 run files under results/agent_runs/v1/" in run()
+    (first,) = read_run_files(fresh_root, "v1")
+    assert (first["agent_version"], first["load_id"]) == ("v1", LOAD_ID)
+    assert first["usage"]["cost_usd"] == 0.01
+
+    # The measured mean, $0.01, times the 5 runs left is above a $0.02 cap.
+    with pytest.raises(EvalError, match=r"times 5 runs is \$0\.0500, above the cap \$0\.0200"):
+        run(store=None, max_run=None, max_cost_usd=0.02)
+    assert len(read_run_files(fresh_root, "v1")) == 1
+    lines = run(store=None, max_run=None)
+    assert "cost this invocation $0.0500; cumulative for version v1 $0.0600" in lines
+    assert len(read_run_files(fresh_root, "v1")) == 6
+
+    # A run file of the version on another load ID refuses the next run (AC-37).
+    write_once(
+        run_path(fresh_root, "v1", "Q01", "sql", 4),
+        dict(first) | {"run": 4, "load_id": "1761000000.1"},
+    )
+    with pytest.raises(
+        EvalError, match=re.escape(f"hold load ID 1761000000.1, the current load ID is {LOAD_ID}")
+    ):
+        run(store=None, max_run=4)

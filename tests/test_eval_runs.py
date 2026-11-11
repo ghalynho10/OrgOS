@@ -414,6 +414,15 @@ def test_the_versions_log_refuses(
         )
 
 
+# covers: AC-32 (a later version names the run file that exposed the problem)
+def test_a_later_version_needs_its_exposing_run_file_to_exist() -> None:
+    second = replace(DESCRIPTION, version_hash="v2", parts={**DESCRIPTION.parts, "tools": "c" * 64})
+    with pytest.raises(EvalError, match=r"--exposed-by r\.json is not a run file"):
+        version_entry(
+            [FIRST], second, reason="r", exposed_by="r.json", kind="bug_fix", exposed_exists=False
+        )
+
+
 def test_version_add_logs_the_loaded_agent(root: Path) -> None:
     line = version_add(
         settings(),
