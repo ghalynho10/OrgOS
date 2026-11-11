@@ -317,6 +317,8 @@ def test_a_failure_after_the_model_call_keeps_the_paid_run_in_a_fallback_file(
     (kept,) = read_run_files(root, "v1")
     assert (kept["outcome"], kept["correct"], kept["fallback"]) == ("error", False, True)
     assert kept["usage"] == asdict(USAGE) and kept["problem"].startswith("TypeError")
+    # spec 0012 AC-25: every run record holds the model name the API returned.
+    assert kept["response_model"] == "stub-model"
     assert run_entries([kept], "v1", read_questions(root), None)[0].outcome == "error"
     assert planned_work(root, "v1", read_questions(root), ("sql",), 1) == ()
 

@@ -452,6 +452,7 @@ def fallback_record(
         "type": item.question.type,
         "data": item.question.data,
         "fallback": True,
+        "response_model": run.response_model,
         "run_outcome": run.outcome,
         "answer_match": False,
         "source_match": False,
