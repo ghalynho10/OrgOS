@@ -102,6 +102,7 @@ def _agent(
     script: Script,
     sql: Callable[[str], QueryResult] | None = None,
     limits: Limits = LIMITS,
+    graph: Callable[[str], QueryResult] | None = None,
     model_id: str = "test:scripted",
     descriptions: dict[Store, Description] = DESCRIPTIONS,  # type: ignore[assignment]
     question_blocks: tuple[str, ...] = ("Question: one",),
@@ -112,7 +113,7 @@ def _agent(
         model_id=model_id,
         prices=PRICES,
         limits=limits,
-        executors={"sql": sql or _executor(SIXTY), "graph": _executor(SIXTY)},
+        executors={"sql": sql or _executor(SIXTY), "graph": graph or _executor(SIXTY)},
         descriptions=descriptions,
         question_blocks=question_blocks,
         meanings_text="meanings",
