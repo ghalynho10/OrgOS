@@ -21,6 +21,7 @@ from orgos.eval import EvalError
 from orgos.eval.answers import answers
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
+from orgos.eval.preflight import preflight, summary
 from orgos.graphstore import GraphStoreError
 from orgos.graphstore.load import load_graph
 from orgos.ingest import IngestError
@@ -174,6 +175,18 @@ def eval_answers_command(
     settings = load_settings()
     for line in answers(settings, Path.cwd(), check=check, only_id=only):
         typer.echo(line)
+
+
+@eval_app.command("preflight")
+def eval_preflight_command() -> None:
+    """Check both stores hold the same checked load before any query is scored.
+
+    Runs, in order, the frozen set, the two load run records, the SQL state as
+    the reader login, the graph state, and the schema fingerprint, and stops at
+    the first that fails. Writes nothing.
+    """
+    settings = load_settings()
+    typer.echo(summary(preflight(settings, Path.cwd())))
 
 
 load_app = typer.Typer(
