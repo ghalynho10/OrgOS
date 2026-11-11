@@ -69,6 +69,7 @@ You need Docker Desktop, [uv](https://docs.astral.sh/uv/), and git. uv installs 
    ```sh
    uv run --env-file .env dbt debug --project-dir dbt --profiles-dir dbt
    ```
+7. **Give the agent a model and its prices** (only for the query agent). Set `ANTHROPIC_API_KEY` and `ORGOS_MODEL` in `.env` (`.env.example` names the model), and fill that model's entry in `src/orgos/agent/prices.toml` from the provider's pricing page: the page, the date, and the four prices per million tokens (input, output, cache write, cache read). Without them the agent refuses before any model call.
 
 ### Docker disk and memory
 
@@ -140,6 +141,35 @@ uv run orgos load graph   # model_int into Neo4j, restarted read only, every che
 - **Reruns** wipe and reload, so a second run ends with the same counts. On the full corpus it takes about 80 seconds (measured 2026-11-08), two Neo4j restarts of about 12 seconds each included.
 - **Exit codes**: 0 when every step and check passed, 2 configuration, 6 a preflight refusal, a failed step or a failed check (named in one message). Progress goes to stderr, the summary to stdout.
 
+### Run the eval
+
+Run it from the repo root after passing loads of both stores, with the `sql` and `graph` profiles up. The full command list, with every flag, is in [AGENTS.md](AGENTS.md#commands).
+
+```sh
+uv run orgos eval preflight                                          # the five checks, in order; writes nothing
+uv run orgos eval gold try Q01 --store sql                           # one try of a gold query pair
+uv run orgos eval gold accept Q01 --store sql --reviewed             # pin a correct pair in gold/ACCEPTED
+uv run orgos eval version add --agent orgos.agent:build_agent        # log the agent version; calls no model
+uv run orgos eval run --agent orgos.agent:build_agent --estimate     # write PLAN.json with the limits and the upper bound
+uv run orgos eval run --agent orgos.agent:build_agent --go --max-cost-usd 1 --only Q01 --store sql --max-run 1
+```
+
+- **Preflight** runs first in every command that queries a store: the frozen eval set, the load run records, the SQL state, the graph state and the schema fingerprint. It stops at the first that fails.
+- **Gold queries** are what each store can express, written by hand under `gold/`. `gold try` runs one pair and logs the try; `gold accept` pins a correct pair by its hashes. `--agent replay` replays the accepted pairs through the runner for free.
+- **Agent runs** need the version logged, a `PLAN.json` from `--estimate`, `--go` and a cost cap. A version with no finished run may start only one run (one question, one store, `--max-run 1`); after that, the measured mean cost times the runs to start must stay under the cap.
+- **Run files** go to `results/agent_runs/<version>/`, one per question, store and run number. Each is written once and never overwritten (only `summary.json` is rewritten), so a rerun fills only the missing run numbers. They are committed as evidence.
+- **Exit codes**: 0 on success, 2 configuration, 4 a runner refusal, a failed check or a provider or store outage, 7 an agent that cannot be built or a provider refusal.
+
+### Ask a question
+
+```sh
+uv run orgos ask "How many issues are there?" --store sql --go   # one plain question of one store
+```
+
+- **Not scored**, and it writes no file. It runs the same agent with the question text only, so the model states the shape of its answer itself.
+- **The bound first.** After the preflight it prints the upper bound for one run (the token limit times the higher price) and, when this version has finished run files, their measured mean cost.
+- **Refuses without `--go`**, with no model call (exit 7). With `--go` it makes paid calls and prints the answer on one line, then the sources with their count, then each query it ran. Progress goes to stderr.
+
 ## Pinned versions
 
 Image tags and package versions confirmed on 2026-10-25. Python packages are locked exactly in `uv.lock`.
@@ -161,6 +191,7 @@ Image tags and package versions confirmed on 2026-10-25. Python packages are loc
 | pymongo | 4.19.0 | Supports MongoDB 7.0 |
 | pytest | 9.1.1 | dev |
 | testcontainers | 4.15.0 | dev. Modules live at `testcontainers.community.{postgres,neo4j,mongodb}` |
+| tiktoken | 0.14.0 | dev. The `o200k_base` token counts of `spikes/0012-agent-sizes/` |
 
 dbt-core, dlt, Typer, and Pydantic AI 2.x resolve together in one environment (protobuf 6.33.6, click 8.5.0), so dbt runs from the project environment, not a separate tool environment.
 
