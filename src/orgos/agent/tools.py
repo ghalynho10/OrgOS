@@ -88,6 +88,9 @@ class RunTrace:
     max_rows: int
     attempts: list[QueryAttempt] = field(default_factory=list)
     results: dict[str, StoredResult] = field(default_factory=dict)
+    # Model responses received, counted by the agent's hook: Pydantic AI 2.61 leaves
+    # out of `requests` the response that goes over the token limit.
+    requests: int = 0
 
 
 def blank_hidden(statement: str, store: Store) -> str:
