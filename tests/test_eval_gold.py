@@ -38,7 +38,19 @@ from orgos.eval.gold import (
     zero_guard_problems,
     zero_guarded,
 )
-from orgos.eval.gold_adapters import ADAPTERS, q01, step
+from orgos.eval.gold_adapters import (
+    ADAPTERS,
+    Adapter,
+    q01,
+    q02,
+    q03,
+    q04,
+    q05,
+    q06,
+    q07,
+    single,
+    step,
+)
 from orgos.eval.handoff import (
     AgentDescription,
     AgentRun,
@@ -217,6 +229,86 @@ def test_the_adapter_adds_no_project_fills_no_zero_and_sums_nothing() -> None:
 def test_the_adapter_names_a_missing_column() -> None:
     with pytest.raises(EvalError, match="no column issues"):
         q01(result(("project_key", "n")), ())
+
+
+# --- The Q02 to Q07 adapters (AC-12) ---
+
+
+def test_single_returns_the_one_value_as_it_comes() -> None:
+    assert single(result(("issues",), (Decimal("7"),)), "issues") == Decimal("7")
+    assert single(result(("issues",), (0,)), "issues") == 0
+
+
+@pytest.mark.parametrize("rows", [(), ((1,), (2,))], ids=["no row", "two rows"])
+def test_single_refuses_any_row_count_but_one(rows: tuple[tuple[Any, ...], ...]) -> None:
+    with pytest.raises(EvalError, match=f"returns {len(rows)} rows, not 1"):
+        single(result(("issues",), *rows), "issues")
+
+
+@pytest.mark.parametrize("adapter", [q02, q03], ids=["Q02", "Q03"])
+def test_a_number_adapter_takes_the_one_count_and_every_step(adapter: Adapter) -> None:
+    answer = result(("issues",), (3,))
+    sources = (result(("issue",), ("A-1",), ("A-2",)), result(("issue",)))
+    value, steps = adapter(answer, sources)
+    assert value == 3
+    assert steps == [{"issue": ["A-1", "A-2"]}, {"issue": []}]
+
+
+@pytest.mark.parametrize("adapter", [q02, q03], ids=["Q02", "Q03"])
+def test_a_number_adapter_refuses_more_than_one_row(adapter: Adapter) -> None:
+    with pytest.raises(EvalError, match="returns 2 rows, not 1"):
+        adapter(result(("issues",), (1,), (2,)), ())
+
+
+def test_the_q04_adapter_keeps_each_difference_as_it_comes() -> None:
+    answer = result(
+        ("project_key", "difference"), ("AAA", Decimal("-5")), ("BBB", 0), ("CCC", None)
+    )
+    value, sources = q04(answer, (result(("issue", "time_entry"), ("A-1", None)),))
+    assert value == [("project:AAA", Decimal("-5")), ("project:BBB", 0), ("project:CCC", None)]
+    assert sources == [{"issue": ["A-1"], "time_entry": []}]
+
+
+def test_the_q05_adapter_types_each_author_as_a_person() -> None:
+    answer = result(("person_key", "seconds"), ("zed", Decimal("60")), ("amy", 0))
+    value, sources = q05(answer, (result(("issue", "time_entry"), ("A-1", "h1")),))
+    assert value == [("person:zed", Decimal("60")), ("person:amy", 0)]
+    assert sources == [{"issue": ["A-1"], "time_entry": ["h1"]}]
+
+
+def test_the_q06_adapter_keeps_row_order_ties_and_drops_the_reader_column() -> None:
+    answer = result(
+        ("project_key", "issue_key", "seconds"),
+        ("BBB", "B-2", 90),
+        ("AAA", "A-1", 30),
+        ("AAA", "A-3", 30),
+    )
+    value, _ = q06(answer, ())
+    assert value == [("issue:B-2", 90), ("issue:A-1", 30), ("issue:A-3", 30)]
+
+
+def test_the_q07_adapter_keeps_row_order_and_each_difference() -> None:
+    answer = result(("issue_key", "difference"), ("A-9", Decimal("120")), ("A-2", 0))
+    value, sources = q07(answer, (result(("issue", "person", "time_entry")),))
+    assert value == [("issue:A-9", Decimal("120")), ("issue:A-2", 0)]
+    assert sources == [{"issue": [], "person": [], "time_entry": []}]
+
+
+@pytest.mark.parametrize(
+    ("adapter", "columns", "missing"),
+    [
+        (q04, ("project_key", "diff"), "difference"),
+        (q05, ("author_key", "seconds"), "person_key"),
+        (q06, ("issue_key", "total"), "seconds"),
+        (q07, ("key", "difference"), "issue_key"),
+    ],
+    ids=["Q04", "Q05", "Q06", "Q07"],
+)
+def test_a_pairs_adapter_names_a_missing_column(
+    adapter: Adapter, columns: tuple[str, ...], missing: str
+) -> None:
+    with pytest.raises(EvalError, match=f"no column {missing}"):
+        adapter(result(columns, ("x", 1)), ())
 
 
 # --- Empty cells in a sources step (AC-12, amended 2026-11-12) ---
