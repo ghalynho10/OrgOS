@@ -76,9 +76,23 @@ def q05(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     )
 
 
+def q06(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q06, a `ranking` of issues by seconds: rows in the query's rank order, cut included.
+
+    `issue_key` and `seconds` only; the `project_key` column is for the reader, since a
+    ranking item carries an ID and a value and nothing else.
+    """
+    keys = column(answer, "issue_key")
+    seconds = column(answer, "seconds")
+    return [(f"issue:{key}", total) for key, total in zip(keys, seconds, strict=True)], steps(
+        sources
+    )
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
     "Q03": q03,
     "Q05": q05,
+    "Q06": q06,
 }
