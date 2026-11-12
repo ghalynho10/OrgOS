@@ -4,7 +4,7 @@
     "attempts_timed_out": 0,
     "by_data": {
       "real": {
-        "correct": 3,
+        "correct": 9,
         "total": 60
       },
       "synthetic": {
@@ -14,7 +14,7 @@
     },
     "by_type": {
       "aggregate": {
-        "correct": 3,
+        "correct": 9,
         "total": 21
       },
       "mixed": {
@@ -29,7 +29,7 @@
     "correct_not_reviewed": 0,
     "discrepancies": 0,
     "headline": {
-      "correct": 3,
+      "correct": 9,
       "total": 60
     },
     "layer": "agent",
@@ -39,24 +39,6 @@
       "tool_calls": 0
     },
     "missing": [
-      "Q02-graph-1",
-      "Q02-graph-2",
-      "Q02-graph-3",
-      "Q03-graph-1",
-      "Q03-graph-2",
-      "Q03-graph-3",
-      "Q04-graph-1",
-      "Q04-graph-2",
-      "Q04-graph-3",
-      "Q05-graph-1",
-      "Q05-graph-2",
-      "Q05-graph-3",
-      "Q06-graph-1",
-      "Q06-graph-2",
-      "Q06-graph-3",
-      "Q07-graph-1",
-      "Q07-graph-2",
-      "Q07-graph-3",
       "Q08-graph-1",
       "Q08-graph-2",
       "Q08-graph-3",
@@ -98,8 +80,9 @@
       "Q20-graph-3"
     ],
     "outcomes": {
-      "correct": 3,
-      "not_tried": 57
+      "correct": 9,
+      "not_tried": 39,
+      "wrong": 12
     },
     "partial": true,
     "per_question": {
@@ -109,32 +92,32 @@
         "runs": 3
       },
       "Q02": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
       "Q03": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
       "Q04": {
-        "attempts": 0,
+        "attempts": 10,
         "retries": 0,
         "runs": 3
       },
       "Q05": {
-        "attempts": 0,
+        "attempts": 7,
         "retries": 0,
         "runs": 3
       },
       "Q06": {
-        "attempts": 0,
+        "attempts": 5,
         "retries": 0,
         "runs": 3
       },
       "Q07": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
@@ -207,7 +190,7 @@
     "store": "graph",
     "version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
     "without_zero_guarded": {
-      "correct": 3,
+      "correct": 6,
       "total": 54
     },
     "zero_guarded": [
@@ -220,7 +203,7 @@
     "attempts_timed_out": 0,
     "by_data": {
       "real": {
-        "correct": 3,
+        "correct": 10,
         "total": 60
       },
       "synthetic": {
@@ -230,7 +213,7 @@
     },
     "by_type": {
       "aggregate": {
-        "correct": 3,
+        "correct": 10,
         "total": 21
       },
       "mixed": {
@@ -245,7 +228,7 @@
     "correct_not_reviewed": 0,
     "discrepancies": 0,
     "headline": {
-      "correct": 3,
+      "correct": 10,
       "total": 60
     },
     "layer": "agent",
@@ -255,24 +238,6 @@
       "tool_calls": 0
     },
     "missing": [
-      "Q02-sql-1",
-      "Q02-sql-2",
-      "Q02-sql-3",
-      "Q03-sql-1",
-      "Q03-sql-2",
-      "Q03-sql-3",
-      "Q04-sql-1",
-      "Q04-sql-2",
-      "Q04-sql-3",
-      "Q05-sql-1",
-      "Q05-sql-2",
-      "Q05-sql-3",
-      "Q06-sql-1",
-      "Q06-sql-2",
-      "Q06-sql-3",
-      "Q07-sql-1",
-      "Q07-sql-2",
-      "Q07-sql-3",
       "Q08-sql-1",
       "Q08-sql-2",
       "Q08-sql-3",
@@ -314,8 +279,9 @@
       "Q20-sql-3"
     ],
     "outcomes": {
-      "correct": 3,
-      "not_tried": 57
+      "correct": 10,
+      "not_tried": 39,
+      "wrong": 11
     },
     "partial": true,
     "per_question": {
@@ -325,32 +291,32 @@
         "runs": 3
       },
       "Q02": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
       "Q03": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
       "Q04": {
-        "attempts": 0,
+        "attempts": 9,
         "retries": 0,
         "runs": 3
       },
       "Q05": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
       "Q06": {
-        "attempts": 0,
+        "attempts": 5,
         "retries": 0,
         "runs": 3
       },
       "Q07": {
-        "attempts": 0,
+        "attempts": 7,
         "retries": 0,
         "runs": 3
       },
@@ -423,7 +389,7 @@
     "store": "sql",
     "version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
     "without_zero_guarded": {
-      "correct": 3,
+      "correct": 7,
       "total": 54
     },
     "zero_guarded": [
