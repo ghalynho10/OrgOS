@@ -67,8 +67,18 @@ def q03(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return single(answer, "issues"), steps(sources)
 
 
+def q05(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q05, a `map` of person to seconds: one row per author, `person_key` and `seconds`."""
+    keys = column(answer, "person_key")
+    seconds = column(answer, "seconds")
+    return [(f"person:{key}", total) for key, total in zip(keys, seconds, strict=True)], steps(
+        sources
+    )
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
     "Q03": q03,
+    "Q05": q05,
 }
