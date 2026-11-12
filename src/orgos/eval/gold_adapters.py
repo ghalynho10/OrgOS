@@ -8,6 +8,15 @@ included, must come from the query itself (checklist item 4). A source step
 file returns one column per kind, named after the kind, with one ID per row, so
 an empty step still names its kinds (an empty list is kept, AC-26). A pair with
 no adapter here is refused.
+
+An empty cell (AC-12, amended 2026-11-12): when the kinds of a step have
+different numbers of IDs, as in Q04's step 1 where some issues have no time
+entry, a kind's cell is a true NULL (Python `None`) on the rows it has no ID
+for. That is the absence of an ID, not a value, so `step()` skips it, and
+skipping it is not filtering. An empty string or the text "None" is a value: it
+stays an ID and fails loudly as an extra one. The agent's rule (spec 0012
+AC-17) still sends the model back on any NULL source cell, because a gold pair
+must also match the known evidence exactly and pass hand review.
 """
 
 from __future__ import annotations
@@ -39,8 +48,14 @@ def single(result: QueryResult, name: str) -> Any:
 
 
 def step(result: QueryResult) -> dict[str, list[object]]:
-    """One source step: each column is a kind, its values the IDs, in row order."""
-    return {kind: column(result, kind) for kind in result.columns}
+    """One source step: each column is a kind, its values the IDs, in row order.
+
+    A `None` cell is no ID and is skipped; every other value is kept as it comes.
+    """
+    return {
+        kind: [value for value in column(result, kind) if value is not None]
+        for kind in result.columns
+    }
 
 
 def steps(results: tuple[QueryResult, ...]) -> Sources:

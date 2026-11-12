@@ -38,7 +38,7 @@ from orgos.eval.gold import (
     zero_guard_problems,
     zero_guarded,
 )
-from orgos.eval.gold_adapters import ADAPTERS, q01
+from orgos.eval.gold_adapters import ADAPTERS, q01, step
 from orgos.eval.handoff import (
     AgentDescription,
     AgentRun,
@@ -217,6 +217,30 @@ def test_the_adapter_adds_no_project_fills_no_zero_and_sums_nothing() -> None:
 def test_the_adapter_names_a_missing_column() -> None:
     with pytest.raises(EvalError, match="no column issues"):
         q01(result(("project_key", "n")), ())
+
+
+# --- Empty cells in a sources step (AC-12, amended 2026-11-12) ---
+
+
+def test_an_empty_cell_none_is_skipped() -> None:
+    rows = result(("issue", "time_entry"), ("A-1", "h1"), ("A-2", None), ("A-3", "h3"))
+    assert step(rows) == {"issue": ["A-1", "A-2", "A-3"], "time_entry": ["h1", "h3"]}
+
+
+def test_an_empty_cell_column_of_only_none_gives_an_empty_list() -> None:
+    rows = result(("issue", "time_entry"), ("A-1", None), ("A-2", None))
+    assert step(rows) == {"issue": ["A-1", "A-2"], "time_entry": []}
+
+
+def test_an_empty_cell_rule_keeps_an_empty_string_and_the_text_none() -> None:
+    rows = result(("issue", "time_entry"), ("A-1", ""), ("A-2", "None"))
+    assert step(rows) == {"issue": ["A-1", "A-2"], "time_entry": ["", "None"]}
+
+
+def test_an_empty_cell_rule_leaves_rows_with_no_none_unchanged() -> None:
+    rows = result(("issue", "time_entry"), ("A-1", "h1"), ("A-1", "h2"), ("A-2", 7))
+    assert step(rows) == {"issue": ["A-1", "A-1", "A-2"], "time_entry": ["h1", "h2", 7]}
+    assert step(rows) == {kind: [row[kind] for row in rows.rows] for kind in rows.columns}
 
 
 def test_every_question_with_gold_files_has_an_adapter() -> None:
