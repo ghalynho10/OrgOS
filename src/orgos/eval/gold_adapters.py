@@ -30,6 +30,14 @@ def column(result: QueryResult, name: str) -> list[Any]:
     return [row[name] for row in result.rows]
 
 
+def single(result: QueryResult, name: str) -> Any:
+    """The one value of a one row result, or an `EvalError` naming the row count."""
+    values = column(result, name)
+    if len(values) != 1:
+        raise EvalError(f"the query returns {len(values)} rows, not 1")
+    return values[0]
+
+
 def step(result: QueryResult) -> dict[str, list[object]]:
     """One source step: each column is a kind, its values the IDs, in row order."""
     return {kind: column(result, kind) for kind in result.columns}
@@ -49,6 +57,12 @@ def q01(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     )
 
 
+def q02(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q02, a `number`: one row, `issues`."""
+    return single(answer, "issues"), steps(sources)
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
+    "Q02": q02,
 }
