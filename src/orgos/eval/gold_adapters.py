@@ -82,6 +82,15 @@ def q03(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return single(answer, "issues"), steps(sources)
 
 
+def q04(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q04, a `map` of project to seconds: one row per project, `project_key` and `difference`."""
+    keys = column(answer, "project_key")
+    differences = column(answer, "difference")
+    return [(f"project:{key}", gap) for key, gap in zip(keys, differences, strict=True)], steps(
+        sources
+    )
+
+
 def q05(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
     """Q05, a `map` of person to seconds: one row per author, `person_key` and `seconds`."""
     keys = column(answer, "person_key")
@@ -117,6 +126,7 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
     "Q03": q03,
+    "Q04": q04,
     "Q05": q05,
     "Q06": q06,
     "Q07": q07,
