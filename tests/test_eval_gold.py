@@ -19,6 +19,7 @@ import pytest
 from orgos.config import Settings, load_settings
 from orgos.eval import EvalError
 from orgos.eval.answers import read_questions
+from orgos.eval.compare import store_answer
 from orgos.eval.frozen import ANSWERS, FROZEN, QUESTIONS, frozen_line, sha256_file
 from orgos.eval.gold import (
     ACCEPTED,
@@ -29,6 +30,7 @@ from orgos.eval.gold import (
     gold_decide,
     gold_try,
     judge,
+    layout,
     layout_message,
     parse_pins,
     parse_store,
@@ -41,6 +43,7 @@ from orgos.eval.gold import (
 from orgos.eval.gold_adapters import (
     ADAPTERS,
     Adapter,
+    path_rows,
     q01,
     q02,
     q03,
@@ -333,6 +336,132 @@ def test_an_empty_cell_rule_leaves_rows_with_no_none_unchanged() -> None:
     rows = result(("issue", "time_entry"), ("A-1", "h1"), ("A-1", "h2"), ("A-2", 7))
     assert step(rows) == {"issue": ["A-1", "A-1", "A-2"], "time_entry": ["h1", "h2", 7]}
     assert step(rows) == {kind: [row[kind] for row in rows.rows] for kind in rows.columns}
+
+
+# --- Path rows (AC-12, amended 2026-11-12 for feature 15) ---
+
+
+def test_path_rows_give_one_step_per_hop_and_wrap_a_single_id() -> None:
+    answer = result(
+        ("path", "issue_link", "issue"),
+        (["A-1", "A-2", "A-3", "A-4"], ["l1", ["l2", "l3"], "l4"], [["A-1", "A-2"], "x", None]),
+    )
+    ((path, hops),) = path_rows(answer, "issue")
+    assert path == ["issue:A-1", "issue:A-2", "issue:A-3", "issue:A-4"]
+    assert hops == [
+        {"issue_link": ["l1"], "issue": ["A-1", "A-2"]},
+        {"issue_link": ["l2", "l3"], "issue": ["x"]},
+        {"issue_link": ["l4"], "issue": []},
+    ]
+
+
+def test_path_rows_keep_an_empty_string_and_the_text_none_as_ids() -> None:
+    answer = result(("path", "issue_link"), (["A-1", "A-2", "A-3"], ["", ["None", None]]))
+    ((_, hops),) = path_rows(answer, "issue")
+    assert hops == [{"issue_link": [""]}, {"issue_link": ["None"]}]
+
+
+def test_path_rows_do_not_sort_filter_or_dedupe_rows() -> None:
+    answer = result(
+        ("path", "issue_link"),
+        (["B-2", "A-1"], ["l1"]),
+        (["A-1", "B-2"], ["l1"]),
+        (["A-1", "B-2"], ["l1"]),
+    )
+    rows = path_rows(answer, "issue")
+    assert [path for path, _ in rows] == [
+        ["issue:B-2", "issue:A-1"],
+        ["issue:A-1", "issue:B-2"],
+        ["issue:A-1", "issue:B-2"],
+    ]
+
+
+def test_path_rows_through_the_adapter_keep_top_level_sources_empty() -> None:
+    answer = result(("path", "issue_link", "issue"), (["A-1", "A-2"], ["l1"], [["A-1", "A-2"]]))
+    stored = store_answer("path", path_rows(answer, "issue"), [])
+    assert stored["sources"] == []
+    assert stored["value"] == [
+        {
+            "path": ["issue:A-1", "issue:A-2"],
+            "sources": [{"issue": ["A-1", "A-2"], "issue_link": ["l1"]}],
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("columns", "row", "message"),
+    [
+        (
+            ("path", "issue_link"),
+            (["SEC-1", "SEC-2", "SEC-3"], ["SEC-9"]),
+            "holds 1 items for a path of 3 IDs, it needs 2",
+        ),
+        (
+            ("path", "issue_link"),
+            (["SEC-1", "SEC-2"], None),
+            "column issue_link is NULL or not a list",
+        ),
+        (("path", "issue_link"), (None, ["SEC-9"]), "column path is NULL or not a list"),
+        (("issue", "issue_link"), (["SEC-1"], ["SEC-9"]), "no column path"),
+        (
+            ("path", "issue_link", "label"),
+            (["SEC-1", "SEC-2"], ["SEC-9"], "SEC-blocks"),
+            "columns label are neither path nor a kind",
+        ),
+    ],
+    ids=["wrong_length", "null_cell", "null_path", "missing_path", "not_a_kind"],
+)
+def test_path_rows_refuse_a_malformed_row_with_no_value(
+    columns: tuple[str, ...], row: tuple[Any, ...], message: str
+) -> None:
+    with pytest.raises(EvalError, match=message) as excinfo:
+        path_rows(result(columns, row), "issue")
+    assert "SEC-" not in str(excinfo.value)
+
+
+# --- The layout message of a path pair (AC-11, AC-13, amended 2026-11-12) ---
+
+
+def test_layout_message_path_names_columns_and_kind_sets_and_no_count() -> None:
+    known = {
+        "shape": "path",
+        "sources": [],
+        "value": [
+            {
+                "path": ["issue:SEC-1", "issue:SEC-2", "issue:SEC-3"],
+                "sources": [
+                    {"issue_link": ["SEC-77"], "issue": ["SEC-1", "SEC-2"]},
+                    {"issue": ["SEC-2", "SEC-3"], "issue_link": ["SEC-78"]},
+                ],
+            },
+            {
+                "path": ["issue:SEC-4", "issue:SEC-5"],
+                "sources": [{"issue": ["SEC-4", "SEC-5"], "issue_link": []}],
+            },
+        ],
+    }
+    question = next(q for q in read_questions(ROOT) if q.id == "Q08")
+    pair = layout(question, known, "sql")
+    assert pair.path_kinds == (("issue", "issue_link"),)
+    assert pair.query_files == (Path("gold/sql/Q08.answer.sql"),)
+    message = layout_message(pair, pair.query_files)
+    assert "a `path` column" in message
+    assert "one list column per kind, named after the kind, with one item per hop" in message
+    assert "Kinds per hop in the known answer: issue, issue_link." in message
+    assert "SEC-" not in message
+    assert "source step" not in message
+    assert not any(char.isdigit() for char in message.replace("Q08", ""))
+
+
+def test_layout_message_path_leaves_a_non_path_pair_unchanged() -> None:
+    message = layout_message(PAIR, PAIR.query_files)
+    assert message == (
+        "Q01 sql: missing gold/sql/Q01.answer.sql, gold/sql/Q01.sources.1.sql.\n"
+        "The known answer has 1 source step (step 1: issue).\n"
+        "Each sources file returns one column per kind of its step, named after the kind,"
+        " with one ID per row.\n"
+        "Expected files: gold/sql/Q01.answer.sql, gold/sql/Q01.sources.1.sql"
+    )
 
 
 def test_every_question_with_gold_files_has_an_adapter() -> None:

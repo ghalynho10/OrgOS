@@ -132,12 +132,17 @@ def zero_guarded(known: Mapping[str, Any]) -> bool:
 
 @dataclass(frozen=True)
 class Layout:
-    """The files of one pair, from the known answer's step kinds and the reading note."""
+    """The files of one pair, from the known answer's step kinds and the reading note.
+
+    `path_kinds` holds the distinct kind sets of a `path` answer's per path steps,
+    sorted, and is empty for every other shape (AC-13 as amended 2026-11-12).
+    """
 
     question_id: str
     store: Store
     kinds: tuple[tuple[str, ...], ...]
     stages: tuple[int, ...]
+    path_kinds: tuple[tuple[str, ...], ...] = ()
 
     def _file(self, part: str) -> Path:
         folder = FOLDERS[self.store]
@@ -170,27 +175,56 @@ class Layout:
 
 
 def layout(question: Question, known: Mapping[str, Any], store: Store) -> Layout:
-    """The pair's files: the known step kinds (never IDs) and, when zero guarded, the stages."""
+    """The pair's files: the known step kinds (never IDs) and, when zero guarded, the stages.
+
+    For a `path` answer, also the distinct kind sets of the per path steps (kind names only).
+    """
+    path_kinds: tuple[tuple[str, ...], ...] = ()
+    if known["shape"] == "path":
+        path_kinds = tuple(
+            sorted({tuple(sorted(step)) for item in known["value"] for step in item["sources"]})
+        )
     return Layout(
         question_id=question.id,
         store=store,
         kinds=tuple(tuple(sorted(step)) for step in known["sources"]),
         stages=reading_steps(question.reading) if zero_guarded(known) else (),
+        path_kinds=path_kinds,
     )
 
 
 def layout_message(pair: Layout, missing: tuple[Path, ...]) -> str:
-    """Why a pair is refused for a missing file, and the file layout; kind names only."""
+    """Why a pair is refused for a missing file, and the file layout; kind names only.
+
+    A path pair names no step count, hop count or path count, only the column
+    sentence and the distinct kind sets of the known per path steps.
+    """
+    lines = [
+        f"{pair.question_id} {pair.store}: missing {', '.join(str(path) for path in missing)}.",
+    ]
+    if pair.path_kinds:
+        sets = "; ".join(", ".join(kinds) or "no kinds" for kinds in pair.path_kinds)
+        lines.extend(
+            (
+                "A path answer: the answer file returns one row per path, a `path` column with"
+                " the path's IDs in order and one list column per kind, named after the kind,"
+                " with one item per hop.",
+                f"Kinds per hop in the known answer: {sets}.",
+            )
+        )
+        lines.append(f"Expected files: {', '.join(str(path) for path in pair.query_files)}")
+        return "\n".join(lines)
     steps = "; ".join(
         f"step {k}: {', '.join(kinds) or 'no kinds'}" for k, kinds in enumerate(pair.kinds, 1)
     )
-    lines = [
-        f"{pair.question_id} {pair.store}: missing {', '.join(str(path) for path in missing)}.",
-        f"The known answer has {len(pair.kinds)} source step{'' if len(pair.kinds) == 1 else 's'}"
-        + (f" ({steps})." if pair.kinds else "."),
-        "Each sources file returns one column per kind of its step, named after the kind,"
-        " with one ID per row.",
-    ]
+    lines.extend(
+        (
+            f"The known answer has {len(pair.kinds)} source"
+            f" step{'' if len(pair.kinds) == 1 else 's'}" + (f" ({steps})." if pair.kinds else "."),
+            "Each sources file returns one column per kind of its step, named after the kind,"
+            " with one ID per row.",
+        )
+    )
     if pair.stages:
         lines.append(
             f"Zero guarded: one stage file per numbered source step"
