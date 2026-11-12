@@ -1,0 +1,115 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 34,
+      "seconds": 0.04213554202578962,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(:Project {projectKey:'CWD'}), (i)-[:FIXED_IN]->(v:FixVersion) WHERE i.resolutionName='Fixed' AND v.isReleased=false RETURN DISTINCT i.issueKey AS id"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.047334957867860794,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(:Project {projectKey:'CWD'}), (i)-[:FIXED_IN]->(v:FixVersion) WHERE i.resolutionName='Fixed' AND v.isReleased=false RETURN count(DISTINCT i) AS value"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "1e0530a99694f5d317112d65ae11ffee81d76634",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q02",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 4.4226314588449895,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "number",
+      "sources": [
+        {
+          "issue": [
+            "CWD-1977",
+            "CWD-3874",
+            "CWD-3888",
+            "CWD-3904",
+            "CWD-3923",
+            "CWD-3939",
+            "CWD-3955",
+            "CWD-3961",
+            "CWD-3997",
+            "CWD-4017",
+            "CWD-4857",
+            "CWD-4911",
+            "CWD-4925",
+            "CWD-4935",
+            "CWD-5116",
+            "CWD-5177",
+            "CWD-5212",
+            "CWD-5215",
+            "CWD-5231",
+            "CWD-5301",
+            "CWD-5369",
+            "CWD-5392",
+            "CWD-5401",
+            "CWD-5404",
+            "CWD-5455",
+            "CWD-5456",
+            "CWD-5468",
+            "CWD-5540",
+            "CWD-5623",
+            "CWD-5658",
+            "CWD-5678",
+            "CWD-5688",
+            "CWD-5720",
+            "CWD-5722"
+          ]
+        }
+      ],
+      "value": {
+        "int": 34
+      }
+    }
+  },
+  "time": "2026-11-12T20:30:27+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.0076522,
+    "input_tokens": 17978,
+    "output_tokens": 438,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

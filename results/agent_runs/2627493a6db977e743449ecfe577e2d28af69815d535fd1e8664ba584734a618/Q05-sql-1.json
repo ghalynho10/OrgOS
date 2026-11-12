@@ -1,0 +1,74 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 84,
+      "seconds": 0.030087166000157595,
+      "text": "select l.person_key as id, sum(l.seconds) as value, count(*) c from model.logged_time l join model.issue i on i.issue_key=l.issue_key where l.seconds>0 and i.assignee_key is not null and i.assignee_key<>'' and i.assignee_key<>l.person_key group by l.person_key order by 2 desc"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1574,
+      "seconds": 0.0330678338650614,
+      "text": "select l.person_key as id, l.issue_key, l.history_id, sum(l.seconds) over (partition by l.person_key) as value from model.logged_time l join model.issue i on i.issue_key=l.issue_key where l.seconds>0 and i.assignee_key is not null and i.assignee_key<>'' and i.assignee_key<>l.person_key"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "1e0530a99694f5d317112d65ae11ffee81d76634",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q05",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 5.0795110408216715,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "4e8144d176b6717c1b9411df377b7c7a5f55522e307d1b8b767620915024b62e",
+    "source_ids": [
+      3148
+    ],
+    "value_items": 84
+  },
+  "time": "2026-11-12T20:32:08+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.0237112,
+    "input_tokens": 26152,
+    "output_tokens": 562,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

@@ -1,0 +1,112 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 3,
+      "seconds": 0.03612929116934538,
+      "text": "MATCH (p:Person)-[t:LOGGED_TIME]->(i:Issue)-[:IN_PROJECT]->(pr:Project)\nWHERE t.seconds>0 AND t.loggedAt>=datetime('2009-10-01T00:00:00Z') AND t.loggedAt<datetime('2010-01-01T00:00:00Z') AND (i.resolutionName IS NULL OR i.resolutionName='')\nWITH i.issueKey AS id, pr.projectKey AS project, sum(t.seconds) AS value, collect(t.historyId) AS entries\nORDER BY value DESC\nWITH collect({id:id,project:project,value:value,entries:entries}) AS rows\nWITH rows, rows[4].value AS cut\nUNWIND rows AS r\nWITH r WHERE size(rows)<5 OR r.value>=cut\nRETURN r.id AS id, r.project AS project, r.value AS value, r.entries AS entries"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "1e0530a99694f5d317112d65ae11ffee81d76634",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q06",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 4.234074917156249,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 10
+    },
+    {
+      "extra": 1,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "ranking",
+      "sources": [
+        {
+          "issue": [
+            "CRUC-1857",
+            "CRUC-2781",
+            "CRUC-2892"
+          ]
+        },
+        {
+          "project": [
+            "CRUC",
+            "CRUC",
+            "CRUC"
+          ]
+        }
+      ],
+      "value": [
+        {
+          "ids": [
+            "issue:CRUC-2781"
+          ],
+          "value": {
+            "int": 140400
+          }
+        },
+        {
+          "ids": [
+            "issue:CRUC-2892"
+          ],
+          "value": {
+            "int": 15000
+          }
+        },
+        {
+          "ids": [
+            "issue:CRUC-1857"
+          ],
+          "value": {
+            "int": 1800
+          }
+        }
+      ]
+    }
+  },
+  "time": "2026-11-12T20:33:15+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.006894,
+    "input_tokens": 12726,
+    "output_tokens": 561,
+    "requests": 2,
+    "tool_calls": 1
+  },
+  "zero_answer": false
+}
