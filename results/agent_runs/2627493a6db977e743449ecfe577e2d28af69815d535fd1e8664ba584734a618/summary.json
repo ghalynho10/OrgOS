@@ -54,9 +54,6 @@
       "Q06-graph-1",
       "Q06-graph-2",
       "Q06-graph-3",
-      "Q07-graph-1",
-      "Q07-graph-2",
-      "Q07-graph-3",
       "Q08-graph-1",
       "Q08-graph-2",
       "Q08-graph-3",
@@ -99,7 +96,8 @@
     ],
     "outcomes": {
       "correct": 3,
-      "not_tried": 57
+      "not_tried": 54,
+      "wrong": 3
     },
     "partial": true,
     "per_question": {
@@ -134,7 +132,7 @@
         "runs": 3
       },
       "Q07": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
@@ -270,9 +268,6 @@
       "Q06-sql-1",
       "Q06-sql-2",
       "Q06-sql-3",
-      "Q07-sql-1",
-      "Q07-sql-2",
-      "Q07-sql-3",
       "Q08-sql-1",
       "Q08-sql-2",
       "Q08-sql-3",
@@ -315,7 +310,8 @@
     ],
     "outcomes": {
       "correct": 3,
-      "not_tried": 57
+      "not_tried": 54,
+      "wrong": 3
     },
     "partial": true,
     "per_question": {
@@ -350,7 +346,7 @@
         "runs": 3
       },
       "Q07": {
-        "attempts": 0,
+        "attempts": 7,
         "retries": 0,
         "runs": 3
       },
