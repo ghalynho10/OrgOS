@@ -89,10 +89,20 @@ def q06(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     )
 
 
+def q07(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q07, a `ranking` of issues by `difference`: rows in the query's rank order, cut included."""
+    keys = column(answer, "issue_key")
+    differences = column(answer, "difference")
+    return [(f"issue:{key}", gap) for key, gap in zip(keys, differences, strict=True)], steps(
+        sources
+    )
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
     "Q03": q03,
     "Q05": q05,
     "Q06": q06,
+    "Q07": q07,
 }
