@@ -172,6 +172,11 @@ def q07(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     )
 
 
+def q08(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q08, a `path` of issues: one row per chain, each hop listing `issue_link` and `issue`."""
+    return path_rows(answer, "issue"), []
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -180,4 +185,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q05": q05,
     "Q06": q06,
     "Q07": q07,
+    "Q08": q08,
 }
