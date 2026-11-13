@@ -1,0 +1,120 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 6,
+      "seconds": 0.01907829218544066,
+      "text": "with pairs as (\nselect l.link_id, l.from_issue_key a, l.to_issue_key b from model.issue_link l\njoin model.issue i1 on i1.issue_key=l.from_issue_key join model.issue i2 on i2.issue_key=l.to_issue_key\nwhere i1.project_key<>i2.project_key),\npp as (select distinct p.link_id, x.person_key, p.a, p.b from pairs p\njoin model.logged_time x on x.issue_key=p.a and x.seconds>0\njoin model.logged_time y on y.issue_key=p.b and y.seconds>0 and y.person_key=x.person_key),\npi as (select person_key, a as issue_key from pp union select person_key, b from pp)\nselect pi.person_key id, sum(t.seconds) value from pi join model.logged_time t on t.person_key=pi.person_key and t.issue_key=pi.issue_key and t.seconds>0 group by 1 order by 2 desc"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "34e9d3ff2b383eb21eea9388f3a4035430e1a0e4",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q17",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 4.586144334170967,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 6,
+      "missing": 24
+    },
+    {
+      "extra": 0,
+      "missing": 50
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "map",
+      "sources": [
+        {
+          "person": [
+            "<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+            "<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+            "<<|author_key|27f5cf44-db91-42e2-b42b-a57e48f9c207|>>",
+            "<<|author_key|5bf891a1-634d-4f38-b153-46ccb8deb6ad|>>",
+            "<<|author_key|7d12fc76-9b8a-4981-9a39-2201fe9063da|>>",
+            "<<|author_key|a1b9a9c9-75c2-4488-9fa2-77bd10c61464|>>"
+          ]
+        }
+      ],
+      "value": [
+        {
+          "id": "person:<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+          "value": {
+            "int": 275400
+          }
+        },
+        {
+          "id": "person:<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+          "value": {
+            "int": 47520
+          }
+        },
+        {
+          "id": "person:<<|author_key|27f5cf44-db91-42e2-b42b-a57e48f9c207|>>",
+          "value": {
+            "int": 25200
+          }
+        },
+        {
+          "id": "person:<<|author_key|5bf891a1-634d-4f38-b153-46ccb8deb6ad|>>",
+          "value": {
+            "int": 40500
+          }
+        },
+        {
+          "id": "person:<<|author_key|7d12fc76-9b8a-4981-9a39-2201fe9063da|>>",
+          "value": {
+            "int": 7020
+          }
+        },
+        {
+          "id": "person:<<|author_key|a1b9a9c9-75c2-4488-9fa2-77bd10c61464|>>",
+          "value": {
+            "int": 262800
+          }
+        }
+      ]
+    }
+  },
+  "time": "2026-11-13T06:01:02+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.009912200000000001,
+    "input_tokens": 12828,
+    "output_tokens": 509,
+    "requests": 2,
+    "tool_calls": 1
+  },
+  "zero_answer": false
+}
