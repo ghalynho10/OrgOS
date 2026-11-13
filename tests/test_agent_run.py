@@ -602,6 +602,14 @@ def test_a_run_on_a_question_with_no_layout_is_an_agent_error() -> None:
         _agent(_scripted()).run(other, "sql")
 
 
+# covers: spec 0015 AC-1, a missing layouts file stops the build with a named error
+def test_an_unreadable_layout_file_is_an_agent_error(tmp_path: Path) -> None:
+    from orgos.agent.agent import read_layouts
+
+    with pytest.raises(AgentError, match=r"Cannot read .*layouts\.toml"):
+        read_layouts((QUESTION,), tmp_path / "layouts.toml")
+
+
 def test_both_stores_see_the_same_block_ending_in_its_layout_line_for_all_20() -> None:
     from orgos.agent.agent import read_layouts, read_questions
 

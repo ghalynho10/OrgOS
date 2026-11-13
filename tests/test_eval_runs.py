@@ -469,8 +469,18 @@ def test_several_exposing_run_files_are_kept_in_order() -> None:
             r"--exposed-by .*Q11-graph-3\.json is not a run file$",
         ),
         ((EXPOSED, EXPOSED_2, EXPOSED), (), r"Q04-sql-1\.json is given more than once"),
+        (("results/agent_runs/v1/Q04-sql-0.json",), (), "is not a run file of version v1"),
     ],
-    ids=["empty", "not a path", "other version", "bad store", "plan file", "missing", "repeat"],
+    ids=[
+        "empty",
+        "not a path",
+        "other version",
+        "bad store",
+        "plan file",
+        "missing",
+        "repeat",
+        "run 0",
+    ],
 )
 def test_a_bad_exposing_run_file_is_refused(
     exposed_by: tuple[str, ...], missing: tuple[str, ...], reason: str
@@ -540,6 +550,44 @@ def test_version_add_logs_the_loaded_agent(root: Path) -> None:
     )
     assert line.startswith("logged version v1 (1 of 3)")
     assert json.loads((root / VERSIONS).read_text())["parts"] == dict(DESCRIPTION.parts)
+
+
+# covers: spec 0015 AC-12, `--exposed-by` given twice on the command line is stored in that order
+def test_the_cli_keeps_each_exposed_by_in_the_order_given(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from orgos.cli import app
+
+    first = {"version_hash": "v0", "parts": {**DESCRIPTION.parts, "tools": "d" * 64}}
+    (tmp_path / VERSIONS).parent.mkdir(parents=True)
+    (tmp_path / VERSIONS).write_text(json.dumps(first) + "\n")
+    exposed = ("results/agent_runs/v0/Q02-graph-3.json", "results/agent_runs/v0/Q01-sql-1.json")
+    (tmp_path / "results/agent_runs/v0").mkdir()
+    for path in exposed:
+        (tmp_path / path).write_text("{}")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("orgos.cli.load_settings", settings)
+    app(
+        args=[
+            "eval",
+            "version",
+            "add",
+            "--agent",
+            "tests.test_eval_runs:stub_factory",
+            "--reason",
+            "r",
+            "--exposed-by",
+            exposed[0],
+            "--exposed-by",
+            exposed[1],
+            "--kind",
+            "bug_fix",
+        ],
+        standalone_mode=False,
+    )
+    last = json.loads((tmp_path / VERSIONS).read_text().splitlines()[-1])
+    assert last["version_hash"] == "v1"
+    assert last["exposed_by"] == list(exposed)
 
 
 # --- Agent loading (AC-38) ---
