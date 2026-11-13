@@ -1,0 +1,104 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.005498500075191259,
+      "text": "select coalesce(sum(l.seconds),0) value from model.logged_time l where l.seconds>0 and l.issue_key in (select issue_key from model.issue where issue_key='CLOUD-643' or parent_key='CLOUD-643')"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.003424250055104494,
+      "text": "select issue_key id from model.issue where issue_key='CLOUD-643' or parent_key='CLOUD-643'"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.0035815408919006586,
+      "text": "select l.history_id from model.logged_time l where l.seconds>0 and l.issue_key in (select issue_key from model.issue where issue_key='CLOUD-643' or parent_key='CLOUD-643')"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "34e9d3ff2b383eb21eea9388f3a4035430e1a0e4",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q15",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 3.539052709005773,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 8
+    },
+    {
+      "extra": 5,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "number",
+      "sources": [
+        {
+          "issue": [
+            "CLOUD-643",
+            "CLOUD-688",
+            "CLOUD-689",
+            "CLOUD-690"
+          ]
+        },
+        {
+          "time_entry": [
+            "1099397",
+            "1099440",
+            "1099441",
+            "1099647",
+            "1099795"
+          ]
+        }
+      ],
+      "value": {
+        "int": 102600
+      }
+    }
+  },
+  "time": "2026-11-13T05:59:10+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0213141,
+    "input_tokens": 12319,
+    "output_tokens": 467,
+    "requests": 2,
+    "tool_calls": 3
+  },
+  "zero_answer": false
+}

@@ -211,6 +211,52 @@ def q14(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return single(answer, "resolved"), steps(sources)
 
 
+def q15(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q15, a `number` of seconds: one row, `seconds`."""
+    return single(answer, "seconds"), steps(sources)
+
+
+def q16(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q16, a `number`: one row, `issues`; its stage files are judged by `gold`, not here."""
+    return single(answer, "issues"), steps(sources)
+
+
+def q17(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q17, a `map` of person to seconds: one row per person, `person_key` and `seconds`."""
+    keys = column(answer, "person_key")
+    seconds = column(answer, "seconds")
+    return [(f"person:{key}", total) for key, total in zip(keys, seconds, strict=True)], steps(
+        sources
+    )
+
+
+def q18(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q18, a `map` of person to project count: one row per person, `person_key` and `projects`."""
+    keys = column(answer, "person_key")
+    counts = column(answer, "projects")
+    return [(f"person:{key}", count) for key, count in zip(keys, counts, strict=True)], steps(
+        sources
+    )
+
+
+def q19(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q19, a `ranking` of projects by `issues`: rows in the query's rank order, cut included."""
+    keys = column(answer, "project_key")
+    counts = column(answer, "issues")
+    return [(f"project:{key}", count) for key, count in zip(keys, counts, strict=True)], steps(
+        sources
+    )
+
+
+def q20(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q20, a `ranking` of people by `seconds`: rows in the query's rank order, cut included."""
+    keys = column(answer, "person_key")
+    seconds = column(answer, "seconds")
+    return [(f"person:{key}", total) for key, total in zip(keys, seconds, strict=True)], steps(
+        sources
+    )
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -226,4 +272,10 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q12": q12,
     "Q13": q13,
     "Q14": q14,
+    "Q15": q15,
+    "Q16": q16,
+    "Q17": q17,
+    "Q18": q18,
+    "Q19": q19,
+    "Q20": q20,
 }

@@ -1,0 +1,84 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.04300070786848664,
+      "text": "with l as (select l.link_id, l.from_issue_key a, l.to_issue_key b, i.project_key pa, j.project_key pb from model.issue_link l join model.issue i on i.issue_key=l.from_issue_key join model.issue j on j.issue_key=l.to_issue_key where i.project_key<>j.project_key),\ne as (select a k, pa p from l union select b, pb from l),\nc as (select p id, count(*) value from e group by p),\nt as (select id,value, rank() over(order by value desc) r from c)\nselect id,value from t where r<=5 order by value desc"
+    },
+    {
+      "outcome": "ok",
+      "rows": 892,
+      "seconds": 0.11181804211810231,
+      "text": "select l.link_id, l.from_issue_key, l.to_issue_key from model.issue_link l join model.issue i on i.issue_key=l.from_issue_key join model.issue j on j.issue_key=l.to_issue_key where i.project_key<>j.project_key and (i.project_key in ('FE','CRUC','JRASERVER','CWD','BAM') or j.project_key in ('FE','CRUC','JRASERVER','CWD','BAM'))"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "34e9d3ff2b383eb21eea9388f3a4035430e1a0e4",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q19",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 8.231891333824024,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 2361
+    },
+    {
+      "extra": 892,
+      "missing": 0
+    },
+    {
+      "extra": 791,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "642dafc3bbfa153a5e98288e6f10c946c18a96ba570c4072a572f929692a48e7",
+    "source_ids": [
+      5,
+      892,
+      892
+    ],
+    "value_items": 5
+  },
+  "time": "2026-11-13T06:03:01+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0163209,
+    "input_tokens": 20101,
+    "output_tokens": 843,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

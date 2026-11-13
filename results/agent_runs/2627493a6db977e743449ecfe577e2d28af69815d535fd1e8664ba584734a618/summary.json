@@ -4,7 +4,7 @@
     "attempts_timed_out": 2,
     "by_data": {
       "real": {
-        "correct": 9,
+        "correct": 12,
         "total": 60
       },
       "synthetic": {
@@ -18,7 +18,7 @@
         "total": 21
       },
       "mixed": {
-        "correct": 0,
+        "correct": 3,
         "total": 18
       },
       "path_connection": {
@@ -29,7 +29,7 @@
     "correct_not_reviewed": 0,
     "discrepancies": 0,
     "headline": {
-      "correct": 9,
+      "correct": 12,
       "total": 60
     },
     "layer": "agent",
@@ -38,33 +38,13 @@
       "tokens": 0,
       "tool_calls": 0
     },
-    "missing": [
-      "Q15-graph-1",
-      "Q15-graph-2",
-      "Q15-graph-3",
-      "Q16-graph-1",
-      "Q16-graph-2",
-      "Q16-graph-3",
-      "Q17-graph-1",
-      "Q17-graph-2",
-      "Q17-graph-3",
-      "Q18-graph-1",
-      "Q18-graph-2",
-      "Q18-graph-3",
-      "Q19-graph-1",
-      "Q19-graph-2",
-      "Q19-graph-3",
-      "Q20-graph-1",
-      "Q20-graph-2",
-      "Q20-graph-3"
-    ],
+    "missing": [],
     "outcomes": {
-      "correct": 9,
+      "correct": 12,
       "no_answer": 1,
-      "not_tried": 18,
-      "wrong": 32
+      "wrong": 47
     },
-    "partial": true,
+    "partial": false,
     "per_question": {
       "Q01": {
         "attempts": 6,
@@ -137,33 +117,33 @@
         "runs": 3
       },
       "Q15": {
-        "attempts": 0,
+        "attempts": 7,
         "retries": 0,
         "runs": 3
       },
       "Q16": {
-        "attempts": 0,
+        "attempts": 5,
         "retries": 0,
         "runs": 3
       },
       "Q17": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 5,
+        "retries": 1,
         "runs": 3
       },
       "Q18": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
       "Q19": {
-        "attempts": 0,
+        "attempts": 12,
         "retries": 0,
         "runs": 3
       },
       "Q20": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 6,
+        "retries": 1,
         "runs": 3
       }
     },
@@ -183,7 +163,7 @@
     "attempts_timed_out": 0,
     "by_data": {
       "real": {
-        "correct": 10,
+        "correct": 13,
         "total": 60
       },
       "synthetic": {
@@ -197,7 +177,7 @@
         "total": 21
       },
       "mixed": {
-        "correct": 0,
+        "correct": 3,
         "total": 18
       },
       "path_connection": {
@@ -208,7 +188,7 @@
     "correct_not_reviewed": 0,
     "discrepancies": 0,
     "headline": {
-      "correct": 10,
+      "correct": 13,
       "total": 60
     },
     "layer": "agent",
@@ -217,33 +197,13 @@
       "tokens": 0,
       "tool_calls": 0
     },
-    "missing": [
-      "Q15-sql-1",
-      "Q15-sql-2",
-      "Q15-sql-3",
-      "Q16-sql-1",
-      "Q16-sql-2",
-      "Q16-sql-3",
-      "Q17-sql-1",
-      "Q17-sql-2",
-      "Q17-sql-3",
-      "Q18-sql-1",
-      "Q18-sql-2",
-      "Q18-sql-3",
-      "Q19-sql-1",
-      "Q19-sql-2",
-      "Q19-sql-3",
-      "Q20-sql-1",
-      "Q20-sql-2",
-      "Q20-sql-3"
-    ],
+    "missing": [],
     "outcomes": {
-      "correct": 10,
+      "correct": 13,
       "no_answer": 1,
-      "not_tried": 18,
-      "wrong": 31
+      "wrong": 46
     },
-    "partial": true,
+    "partial": false,
     "per_question": {
       "Q01": {
         "attempts": 6,
@@ -316,33 +276,33 @@
         "runs": 3
       },
       "Q15": {
-        "attempts": 0,
+        "attempts": 9,
         "retries": 0,
         "runs": 3
       },
       "Q16": {
-        "attempts": 0,
+        "attempts": 6,
         "retries": 0,
         "runs": 3
       },
       "Q17": {
-        "attempts": 0,
+        "attempts": 3,
         "retries": 0,
         "runs": 3
       },
       "Q18": {
-        "attempts": 0,
+        "attempts": 7,
         "retries": 0,
         "runs": 3
       },
       "Q19": {
-        "attempts": 0,
+        "attempts": 5,
         "retries": 0,
         "runs": 3
       },
       "Q20": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 8,
+        "retries": 1,
         "runs": 3
       }
     },

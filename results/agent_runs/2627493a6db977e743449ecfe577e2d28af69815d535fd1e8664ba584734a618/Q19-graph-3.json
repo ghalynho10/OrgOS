@@ -1,0 +1,97 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 5,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.1377699999138713,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE r.linkId IS NOT NULL\nMATCH (a)-[:IN_PROJECT]->(p:Project), (b)-[:IN_PROJECT]->(q:Project) WHERE p<>q\nWITH p.projectKey AS pk, a.issueKey AS ak, b.issueKey AS bk, r.linkId AS l\nUNWIND [[pk,ak],[null,bk]] AS x\nRETURN count(*) AS n"
+    },
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.1327628749422729,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE r.linkId IS NOT NULL\nMATCH (a)-[:IN_PROJECT]->(p:Project), (b)-[:IN_PROJECT]->(q:Project) WHERE p<>q\nUNWIND [[p.projectKey,a.issueKey],[q.projectKey,b.issueKey]] AS x\nWITH x[0] AS id, count(DISTINCT x[1]) AS value\nORDER BY value DESC RETURN id, value"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1784,
+      "seconds": 0.16817254200577736,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE r.linkId IS NOT NULL\nMATCH (a)-[:IN_PROJECT]->(p:Project), (b)-[:IN_PROJECT]->(q:Project) WHERE p<>q\nWITH collect({p:p.projectKey,a:a.issueKey,q:q.projectKey,b:b.issueKey,l:r.linkId}) AS rows\nUNWIND rows AS x\nWITH x WHERE x.p IN ['FE','CRUC','JRASERVER','CWD','BAM'] OR x.q IN ['FE','CRUC','JRASERVER','CWD','BAM']\nUNWIND [x.a,x.b] AS issue\nRETURN DISTINCT issue, x.l AS link, x.p AS project"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.1088784160092473,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE r.linkId IS NOT NULL\nMATCH (a)-[:IN_PROJECT]->(p:Project), (b)-[:IN_PROJECT]->(q:Project) WHERE p<>q\nUNWIND [[p.projectKey,a.issueKey],[q.projectKey,b.issueKey]] AS x\nWITH x[0] AS id, count(DISTINCT x[1]) AS value\nORDER BY value DESC LIMIT 5 RETURN id, value"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1784,
+      "seconds": 0.1081145831849426,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE r.linkId IS NOT NULL\nMATCH (a)-[:IN_PROJECT]->(p:Project), (b)-[:IN_PROJECT]->(q:Project) WHERE p<>q AND (p.projectKey IN ['FE','CRUC','JRASERVER','CWD','BAM'] OR q.projectKey IN ['FE','CRUC','JRASERVER','CWD','BAM'])\nUNWIND [a.issueKey,b.issueKey] AS issue\nRETURN DISTINCT issue, r.linkId AS link"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "34e9d3ff2b383eb21eea9388f3a4035430e1a0e4",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q19",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 13.774414082989097,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 2361
+    },
+    {
+      "extra": 2361,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "1aca4562760c7f077d9ccd427130c59d8172c82ffc6fad265b2811c5dc70d7c8",
+    "source_ids": [
+      5,
+      3568
+    ],
+    "value_items": 5
+  },
+  "time": "2026-11-13T06:03:46+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0298128,
+    "input_tokens": 36392,
+    "output_tokens": 1789,
+    "requests": 5,
+    "tool_calls": 5
+  },
+  "zero_answer": false
+}

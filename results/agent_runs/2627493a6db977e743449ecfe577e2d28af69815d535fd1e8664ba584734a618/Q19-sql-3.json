@@ -1,0 +1,119 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.07567220809869468,
+      "text": "with l as (select l.link_id, l.from_issue_key a, l.to_issue_key b, i.project_key pa, j.project_key pb from model.issue_link l join model.issue i on i.issue_key=l.from_issue_key join model.issue j on j.issue_key=l.to_issue_key where i.project_key<>j.project_key),\ne as (select a k, pa p from l union select b, pb from l),\nc as (select p id, count(*) value from e group by p),\nr as (select *, rank() over(order by value desc) rk from c)\nselect id, value from r where rk<=5 order by value desc"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "34e9d3ff2b383eb21eea9388f3a4035430e1a0e4",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q19",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 4.5612748330459,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 2361
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "ranking",
+      "sources": [
+        {
+          "project": [
+            "BAM",
+            "CRUC",
+            "CWD",
+            "FE",
+            "JRASERVER"
+          ]
+        }
+      ],
+      "value": [
+        {
+          "ids": [
+            "project:FE"
+          ],
+          "value": {
+            "int": 400
+          }
+        },
+        {
+          "ids": [
+            "project:CRUC"
+          ],
+          "value": {
+            "int": 350
+          }
+        },
+        {
+          "ids": [
+            "project:JRASERVER"
+          ],
+          "value": {
+            "int": 300
+          }
+        },
+        {
+          "ids": [
+            "project:CWD"
+          ],
+          "value": {
+            "int": 211
+          }
+        },
+        {
+          "ids": [
+            "project:BAM"
+          ],
+          "value": {
+            "int": 107
+          }
+        }
+      ]
+    }
+  },
+  "time": "2026-11-13T06:03:13+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0058295,
+    "input_tokens": 12381,
+    "output_tokens": 458,
+    "requests": 2,
+    "tool_calls": 1
+  },
+  "zero_answer": false
+}
