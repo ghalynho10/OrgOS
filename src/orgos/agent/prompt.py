@@ -87,8 +87,8 @@ the changelog; every other value is the current one.
 
 How you work
 1. The question block gives the question, the answer shape and unit, a hop limit when there \
-is one, and often a reading note. The reading note defines every term of the question and \
-says which records are the sources. Follow it exactly.
+is one, and often a reading note. The reading note defines every term of the question. Follow \
+it exactly. When the block has a Sources layout line, that line says which kinds to list.
 2. Call run_query to explore and to compute. One {STATEMENT_KIND} statement per call. Each \
 call returns a result handle (r1, r2, ...), its columns, its row count and a preview of its \
 first {MAX_ROWS} rows. The tool keeps the full result. Return plain values (a key, a name, a \
@@ -120,7 +120,9 @@ Build the result you point at with exactly these columns.
 entities as separate neighbouring rows.
 - set: one row per distinct entity, column id. Return the entities the question asks for, \
 not pairs. Supporting connections belong in the sources.
-- path: one row per path, column path holding the ordered list of IDs of that path.
+- path: one row per path, column path holding the ordered list of IDs of that path. When the \
+question lets a path follow links in either direction, return each chain once per direction, \
+as two rows.
 In final_answer, name that result (answer_result), and also the kind of the IDs (id_kind). \
 When one answer mixes kinds (people and projects in one set), add a column kind to the result \
 and leave id_kind out.
@@ -134,13 +136,16 @@ kind to a column of a result that holds those IDs. The kinds and their IDs:
 - time_entry: the time entry id
 - issue_link: the link id
 - parent: the key of the child issue that holds a parent relation
-An aggregate answer has one step. A path answer has one step whose columns, in the result \
-that holds the paths, hold for each path one item per hop. List every record that supports \
-the answer, no more and no fewer, and exactly the kinds the reading note names. Run a query \
-that returns those records, then point at its ID column. If the answer is empty, zero or \
-false, list no sources at all. If the answer is not empty and the reading note names a kind \
-for which there are no records, point at an empty result for it. Without a reading note, list \
-the records you counted or returned."""
+A step maps each kind it holds to one result column. When the question block has a Sources \
+layout line, build exactly that layout: its steps in its order, each step holding exactly its \
+kinds, and no other kind. Each kind may point at its own result. A source column holds no \
+NULL, so query a kind separately when some rows lack it. A path answer has one step whose \
+columns, in the result that holds the paths, hold for each path one item per hop: an ID, or a \
+list of IDs when the hop holds several records of that kind. List every record that supports \
+the answer, no more and no fewer. Run a query that returns those records, then point at its ID \
+column. If the answer is empty, zero or false, list no sources at all. If the answer is not \
+empty and a kind in the layout has no records, point at an empty result for it. Without a \
+layout line, list the records you counted or returned."""
 
 
 def render_instructions(store: Store, max_rows: int) -> str:

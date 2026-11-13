@@ -102,6 +102,57 @@ def test_reading_rules_differ_only_in_the_dialect_lines() -> None:
         assert any(sql_fields[name] in a and graph_fields[name] in b for a, b in differing), name
 
 
+# --- The three edits of version 2 (spec 0015 AC-6, AC-7) ---
+
+V2_SENTENCES = {
+    "How you work": (
+        "The reading note defines every term of the question. Follow it exactly. When the block"
+        " has a Sources layout line, that line says which kinds to list."
+    ),
+    "Sources": (
+        "A step maps each kind it holds to one result column. When the question block has a"
+        " Sources layout line, build exactly that layout: its steps in its order, each step"
+        " holding exactly its kinds, and no other kind. Each kind may point at its own result. A"
+        " source column holds no NULL, so query a kind separately when some rows lack it. A path"
+        " answer has one step whose columns, in the result that holds the paths, hold for each"
+        " path one item per hop: an ID, or a list of IDs when the hop holds several records of"
+        " that kind. List every record that supports the answer, no more and no fewer. Run a"
+        " query that returns those records, then point at its ID column. If the answer is empty,"
+        " zero or false, list no sources at all. If the answer is not empty and a kind in the"
+        " layout has no records, point at an empty result for it. Without a layout line, list the"
+        " records you counted or returned."
+    ),
+    "Answer shapes": (
+        "- path: one row per path, column path holding the ordered list of IDs of that path."
+        " When the question lets a path follow links in either direction, return each chain once"
+        " per direction, as two rows."
+    ),
+}
+V1_PHRASES = (
+    "exactly the kinds the reading note names",
+    "says which records are the sources",
+    "An aggregate answer has one step.",
+    "the reading note names a kind",
+    "Without a reading note",
+)
+
+
+@pytest.mark.parametrize("store", ["sql", "graph"])
+def test_the_three_edits_are_in_and_the_old_wording_is_gone(store: str) -> None:
+    sections = _sections(render_instructions(store, 50))  # type: ignore[arg-type]
+    for name, sentence in V2_SENTENCES.items():
+        assert sentence in " ".join(sections[name].split()), name
+    text = " ".join(render_instructions(store, 50).split())  # type: ignore[arg-type]
+    for phrase in V1_PHRASES:
+        assert phrase not in text, phrase
+
+
+def test_the_two_direction_rule_is_one_shared_sentence() -> None:
+    rule = "return each chain once per direction, as two rows"
+    for store in ("sql", "graph"):
+        assert render_instructions(store, 50).replace("\n", " ").count(rule) == 1  # type: ignore[arg-type]
+
+
 # --- The question block (AC-4) ---
 
 
