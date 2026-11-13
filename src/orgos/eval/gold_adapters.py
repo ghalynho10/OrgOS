@@ -187,6 +187,13 @@ def q10(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return [f"person:{key}" for key in column(answer, "person_key")], steps(sources)
 
 
+def q11(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q11, a `set` of people and projects: one row per member, `kind` and `id`."""
+    kinds = column(answer, "kind")
+    ids = column(answer, "id")
+    return [f"{kind}:{key}" for kind, key in zip(kinds, ids, strict=True)], steps(sources)
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -198,4 +205,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q08": q08,
     "Q09": q09,
     "Q10": q10,
+    "Q11": q11,
 }
