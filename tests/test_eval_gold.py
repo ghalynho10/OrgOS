@@ -59,6 +59,12 @@ from orgos.eval.gold_adapters import (
     q12,
     q13,
     q14,
+    q15,
+    q16,
+    q17,
+    q18,
+    q19,
+    q20,
     single,
     step,
 )
@@ -409,6 +415,90 @@ def test_a_q10_to_q14_adapter_names_a_missing_column(
 ) -> None:
     with pytest.raises(EvalError, match=f"no column {missing}"):
         adapter(result(columns, ("x", 1)), ())
+
+
+# --- The Q15 to Q20 adapters (AC-12) ---
+
+
+def test_the_q15_adapter_takes_the_one_total_and_keeps_empty_cells_out() -> None:
+    step_1 = result(("issue", "parent", "time_entry"), ("A-1", None, "h1"), ("A-2", "A-2", None))
+    value, sources = q15(result(("seconds",), (Decimal("90"),)), (step_1,))
+    assert value == Decimal("90")
+    assert sources == [{"issue": ["A-1", "A-2"], "parent": ["A-2"], "time_entry": ["h1"]}]
+
+
+def test_the_q16_adapter_takes_the_count_with_an_empty_step_list() -> None:
+    value, sources = q16(result(("issues",), (0,)), ())
+    assert value == 0
+    assert sources == []
+
+
+def test_the_q17_adapter_maps_each_person_and_keeps_both_steps_in_order() -> None:
+    answer = result(("person_key", "seconds"), ("zed", Decimal("60")), ("amy", 30))
+    step_1 = result(("issue", "issue_link"), ("A-1", "l1"), ("B-2", "l1"))
+    step_2 = result(("person", "time_entry"), ("zed", "h1"), ("amy", "h2"))
+    value, sources = q17(answer, (step_1, step_2))
+    assert value == [("person:zed", Decimal("60")), ("person:amy", 30)]
+    assert sources == [
+        {"issue": ["A-1", "B-2"], "issue_link": ["l1", "l1"]},
+        {"person": ["zed", "amy"], "time_entry": ["h1", "h2"]},
+    ]
+
+
+def test_the_q18_adapter_maps_each_person_to_a_project_count() -> None:
+    answer = result(("person_key", "projects"), ("zed", 3), ("amy", 2))
+    step_1 = result(("issue", "person", "project"), ("A-1", "zed", "AAA"), ("B-2", "amy", "BBB"))
+    value, sources = q18(answer, (step_1,))
+    assert value == [("person:zed", 3), ("person:amy", 2)]
+    assert sources == [
+        {"issue": ["A-1", "B-2"], "person": ["zed", "amy"], "project": ["AAA", "BBB"]}
+    ]
+
+
+def test_the_q19_adapter_keeps_row_order_and_ties() -> None:
+    answer = result(("project_key", "issues"), ("BBB", 9), ("AAA", 4), ("CCC", 4))
+    step_1 = result(("project", "issue", "issue_link"), ("BBB", "B-1", "l1"), ("BBB", "A-1", "l1"))
+    value, sources = q19(answer, (step_1,))
+    assert value == [("project:BBB", 9), ("project:AAA", 4), ("project:CCC", 4)]
+    assert sources == [
+        {"project": ["BBB", "BBB"], "issue": ["B-1", "A-1"], "issue_link": ["l1", "l1"]}
+    ]
+
+
+def test_the_q20_adapter_keeps_row_order_and_ties() -> None:
+    answer = result(("person_key", "seconds"), ("zed", Decimal("90")), ("amy", 30), ("bob", 30))
+    step_1 = result(("issue", "person", "project", "time_entry"), ("A-1", "zed", "AAA", "h1"))
+    value, sources = q20(answer, (step_1,))
+    assert value == [("person:zed", Decimal("90")), ("person:amy", 30), ("person:bob", 30)]
+    assert sources == [
+        {"issue": ["A-1"], "person": ["zed"], "project": ["AAA"], "time_entry": ["h1"]}
+    ]
+
+
+@pytest.mark.parametrize(
+    ("adapter", "columns", "missing"),
+    [
+        (q15, ("total", "x"), "seconds"),
+        (q16, ("bugs", "x"), "issues"),
+        (q17, ("author_key", "seconds"), "person_key"),
+        (q18, ("person_key", "count"), "projects"),
+        (q19, ("key", "issues"), "project_key"),
+        (q20, ("person_key", "total"), "seconds"),
+    ],
+    ids=["Q15", "Q16", "Q17", "Q18", "Q19", "Q20"],
+)
+def test_a_q15_to_q20_adapter_names_a_missing_column(
+    adapter: Adapter, columns: tuple[str, ...], missing: str
+) -> None:
+    with pytest.raises(EvalError, match=f"no column {missing}"):
+        adapter(result(columns, ("x", 1)), ())
+
+
+@pytest.mark.parametrize("adapter", [q15, q16], ids=["Q15", "Q16"])
+def test_a_q15_or_q16_adapter_refuses_more_than_one_row(adapter: Adapter) -> None:
+    columns = ("seconds",) if adapter is q15 else ("issues",)
+    with pytest.raises(EvalError, match="returns 2 rows, not 1"):
+        adapter(result(columns, (1,), (2,)), ())
 
 
 # --- Empty cells in a sources step (AC-12, amended 2026-11-12) ---
