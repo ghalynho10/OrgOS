@@ -199,6 +199,11 @@ def q12(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return [f"issue:{key}" for key in column(answer, "issue_key")], steps(sources)
 
 
+def q13(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q13, a `set` of sub-tasks: one row per direct child of the parent, `issue_key`."""
+    return [f"issue:{key}" for key in column(answer, "issue_key")], steps(sources)
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -212,4 +217,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q10": q10,
     "Q11": q11,
     "Q12": q12,
+    "Q13": q13,
 }
