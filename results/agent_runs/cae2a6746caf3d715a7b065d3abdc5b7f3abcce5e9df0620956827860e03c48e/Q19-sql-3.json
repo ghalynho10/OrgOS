@@ -1,0 +1,74 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.06798708392307162,
+      "text": "with l as (select l.link_id, a.issue_key ak, a.project_key ap, b.issue_key bk, b.project_key bp from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.project_key<>b.project_key),\ne as (select ak k, ap p from l union select bk, bp from l),\nc as (select p id, count(*) value from e group by p),\nt as (select id, value, rank() over (order by value desc) r from c)\nselect id, value from t where r<=5 order by value desc"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1784,
+      "seconds": 0.05010041710920632,
+      "text": "with l as (select l.link_id, a.issue_key ak, a.project_key ap, b.issue_key bk, b.project_key bp from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.project_key<>b.project_key),\ntop as (select unnest(array['FE','CRUC','JRASERVER','CWD','BAM']) p)\nselect link_id, ak issue from l where ap in (select p from top)\nunion select link_id, bk from l where ap in (select p from top) or bp in (select p from top)\nunion select link_id, ak from l where bp in (select p from top)"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q19",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 7.6078100830782205,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "a5d038f7657ba6cf6646410ad1973f3f3f69a1de51ebe8372137134e90eaa90b",
+    "source_ids": [
+      3573
+    ],
+    "value_items": 5
+  },
+  "time": "2026-11-13T23:11:31+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0133411,
+    "input_tokens": 20199,
+    "output_tokens": 815,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

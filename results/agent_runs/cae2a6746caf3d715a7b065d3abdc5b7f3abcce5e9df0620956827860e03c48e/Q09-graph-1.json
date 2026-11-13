@@ -1,0 +1,103 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": false,
+  "attempt_count": 8,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.2485150417778641,
+      "text": "MATCH (a:Issue)-[l]->(b:Issue) WHERE a<>b AND type(l) <> 'HAS_PARENT' AND exists{(a)-[:ASSIGNED_TO]->(p)} AND exists{(b)-[:ASSIGNED_TO]->(q)} AND [(a)-[:ASSIGNED_TO]->(p)|p.personKey][0] <> [(b)-[:ASSIGNED_TO]->(q)|q.personKey][0] RETURN count(l)"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.022780749946832657,
+      "text": "MATCH p=(a:Issue)-[rs*1..5]-(b:Issue)\nWHERE all(r IN rs WHERE NOT type(r) IN ['HAS_PARENT','IN_PROJECT','ASSIGNED_TO','REPORTED_BY','CREATED_BY','FIXED_IN','LOGGED_TIME'] AND exists{(startNode(r))-[:ASSIGNED_TO]->(x) MATCH (endNode(r))-[:ASSIGNED_TO]->(y) WHERE x<>y})\nAND size(nodes(p))=size(apoc.coll.toSet(nodes(p)))\nAND NOT exists{(a)-[r2]-(c:Issue) WHERE NOT c IN nodes(p) AND NOT type(r2) IN ['HAS_PARENT','IN_PROJECT','ASSIGNED_TO','REPORTED_BY','CREATED_BY','FIXED_IN','LOGGED_TIME'] AND exists{(a)-[:ASSIGNED_TO]->(x) MATCH (c)-[:ASSIGNED_TO]->(y) WHERE x<>y}}\nAND NOT exists{(b)-[r2]-(c:Issue) WHERE NOT c IN nodes(p) AND NOT type(r2) IN ['HAS_PARENT','IN_PROJECT','ASSIGNED_TO','REPORTED_BY','CREATED_BY','FIXED_IN','LOGGED_TIME'] AND exists{(b)-[:ASSIGNED_TO]->(x) MATCH (c)-[:ASSIGNED_TO]->(y) WHERE x<>y}}\nRETURN [n IN nodes(p)|n.issueKey] AS path, [r IN rs|r.linkId] AS links"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.052226665895432234,
+      "text": "MATCH p=(a:Issue)-[rs*1..5]-(b:Issue)\nWHERE all(r IN rs WHERE r.linkId IS NOT NULL)\nWITH p, rs, a, b, [n IN nodes(p)|head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS asg\nWHERE all(i IN range(0,size(asg)-2) WHERE asg[i] IS NOT NULL AND asg[i+1] IS NOT NULL AND asg[i]<>asg[i+1])\nAND size(apoc.coll.toSet(nodes(p)))=size(nodes(p))\nAND NOT exists{(a)-[r2]-(c:Issue) WHERE r2.linkId IS NOT NULL AND NOT c IN nodes(p) AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey]) IS NOT NULL AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey])<>asg[0]}\nAND NOT exists{(b)-[r2]-(c:Issue) WHERE r2.linkId IS NOT NULL AND NOT c IN nodes(p) AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey]) IS NOT NULL AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey])<>asg[-1]}\nRETURN [n IN nodes(p)|n.issueKey] AS path, [r IN rs|r.linkId] AS links, [n IN nodes(p)|n.issueKey] AS issues"
+    },
+    {
+      "outcome": "store_timeout",
+      "rows": 0,
+      "seconds": 30.637653667014092,
+      "text": "MATCH p=(a:Issue)-[rs*1..5]-(b:Issue)\nWHERE all(r IN rs WHERE r.linkId IS NOT NULL)\nWITH p, rs, a, b, nodes(p) AS ns, [n IN nodes(p)|head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS asg\nWHERE all(i IN range(0,size(asg)-2) WHERE asg[i] IS NOT NULL AND asg[i+1] IS NOT NULL AND asg[i]<>asg[i+1])\nAND all(i IN range(0,size(ns)-1) WHERE all(j IN range(i+1,size(ns)-1) WHERE ns[i]<>ns[j]))\nAND NOT exists{(a)-[r2]-(c:Issue) WHERE r2.linkId IS NOT NULL AND NOT c IN ns AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey]) IS NOT NULL AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey])<>asg[0]}\nAND NOT exists{(b)-[r2]-(c:Issue) WHERE r2.linkId IS NOT NULL AND NOT c IN ns AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey]) IS NOT NULL AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey])<>asg[-1]}\nRETURN [n IN ns|n.issueKey] AS path, [r IN rs|r.linkId] AS links, [n IN ns|n.issueKey] AS issues"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.4992437500040978,
+      "text": "MATCH p=(a:Issue)-[:ASSIGNED_TO]->(:Person) WITH count(*) AS c\nMATCH (a:Issue)-[r]-(b:Issue) WHERE r.linkId IS NOT NULL AND id(a)<id(b) AND head([(a)-[:ASSIGNED_TO]->(x)|x.personKey])<>head([(b)-[:ASSIGNED_TO]->(y)|y.personKey]) RETURN c, count(r), count(DISTINCT a)+count(DISTINCT b)"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.07005191710777581,
+      "text": "MATCH p=(a:Issue)((x:Issue)-[r]-(y:Issue) WHERE r.linkId IS NOT NULL AND head([(x)-[:ASSIGNED_TO]->(u)|u.personKey]) <> head([(y)-[:ASSIGNED_TO]->(v)|v.personKey])){1,5}(b:Issue)\nWITH p, a, b, nodes(p) AS ns, relationships(p) AS rs\nWHERE all(i IN range(0,size(ns)-1) WHERE all(j IN range(i+1,size(ns)-1) WHERE ns[i]<>ns[j]))\nAND NOT exists{(a)-[r2]-(c:Issue) WHERE r2.linkId IS NOT NULL AND NOT c IN ns AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey]) IS NOT NULL AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey])<>head([(a)-[:ASSIGNED_TO]->(z)|z.personKey])}\nAND NOT exists{(b)-[r2]-(c:Issue) WHERE r2.linkId IS NOT NULL AND NOT c IN ns AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey]) IS NOT NULL AND head([(c)-[:ASSIGNED_TO]->(y)|y.personKey])<>head([(b)-[:ASSIGNED_TO]->(z)|z.personKey])}\nRETURN [n IN ns|n.issueKey] AS path, [r IN rs|r.linkId] AS links, [n IN ns|n.issueKey] AS issues"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2962,
+      "seconds": 0.9362179581075907,
+      "text": "MATCH p=(a:Issue)((x:Issue)-[r]-(y:Issue) WHERE r.linkId IS NOT NULL AND head([(x)-[:ASSIGNED_TO]->(u)|u.personKey]) <> head([(y)-[:ASSIGNED_TO]->(v)|v.personKey])){1,5}(b:Issue)\nWITH p, a, b, nodes(p) AS ns, relationships(p) AS rs\nWHERE all(i IN range(0,size(ns)-1) WHERE all(j IN range(i+1,size(ns)-1) WHERE ns[i]<>ns[j]))\nAND NOT exists{(a)-[r2]-(c:Issue) WHERE r2.linkId IS NOT NULL AND NOT c IN ns AND head([(c)-[:ASSIGNED_TO]->(k)|k.personKey]) IS NOT NULL AND head([(c)-[:ASSIGNED_TO]->(k)|k.personKey])<>head([(a)-[:ASSIGNED_TO]->(m)|m.personKey])}\nAND NOT exists{(b)-[r3]-(d:Issue) WHERE r3.linkId IS NOT NULL AND NOT d IN ns AND head([(d)-[:ASSIGNED_TO]->(k)|k.personKey]) IS NOT NULL AND head([(d)-[:ASSIGNED_TO]->(k)|k.personKey])<>head([(b)-[:ASSIGNED_TO]->(m)|m.personKey])}\nRETURN [n IN ns|n.issueKey] AS path, [r IN rs|r.linkId] AS links, [n IN ns|n.issueKey] AS issues"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2962,
+      "seconds": 0.7437904588878155,
+      "text": "MATCH p=(a:Issue)((x:Issue)-[r]-(y:Issue) WHERE r.linkId IS NOT NULL AND head([(x)-[:ASSIGNED_TO]->(u)|u.personKey]) <> head([(y)-[:ASSIGNED_TO]->(v)|v.personKey])){1,5}(b:Issue)\nWITH p, a, b, nodes(p) AS ns, relationships(p) AS rs\nWHERE all(i IN range(0,size(ns)-1) WHERE all(j IN range(i+1,size(ns)-1) WHERE ns[i]<>ns[j]))\nAND NOT exists{(a)-[r2]-(c:Issue) WHERE r2.linkId IS NOT NULL AND NOT c IN ns AND head([(c)-[:ASSIGNED_TO]->(k)|k.personKey]) IS NOT NULL AND head([(c)-[:ASSIGNED_TO]->(k)|k.personKey])<>head([(a)-[:ASSIGNED_TO]->(m)|m.personKey])}\nAND NOT exists{(b)-[r3]-(d:Issue) WHERE r3.linkId IS NOT NULL AND NOT d IN ns AND head([(d)-[:ASSIGNED_TO]->(k)|k.personKey]) IS NOT NULL AND head([(d)-[:ASSIGNED_TO]->(k)|k.personKey])<>head([(b)-[:ASSIGNED_TO]->(m)|m.personKey])}\nRETURN [n IN ns|n.issueKey] AS path, [i IN range(0,size(rs)-1)|[ns[i].issueKey, ns[i+1].issueKey]] AS issue, [r IN rs|r.linkId] AS issue_link"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 4,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 71.6525164579507,
+  "source_match": false,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "ec523e42637bc7dd190985752f8764cf43c8457d29a243bc91c97de404810284",
+    "source_ids": [],
+    "value_items": 2962
+  },
+  "time": "2026-11-13T22:46:08+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.095208,
+    "input_tokens": 108254,
+    "output_tokens": 5460,
+    "requests": 10,
+    "tool_calls": 8
+  },
+  "zero_answer": false
+}

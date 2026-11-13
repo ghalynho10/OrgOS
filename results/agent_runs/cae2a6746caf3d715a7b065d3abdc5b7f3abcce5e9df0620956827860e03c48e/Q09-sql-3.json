@@ -1,0 +1,109 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 9,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.0350642919074744,
+      "text": "select count(*), count(distinct link_id) from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key is not null and b.assignee_key is not null and a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.036752957850694656,
+      "text": "select count(*) c, count(distinct link_id) d from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where coalesce(a.assignee_key,'')<>'' and coalesce(b.assignee_key,'')<>'' and a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.0049386250320822,
+      "text": "create temp view x as select 1"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2874,
+      "seconds": 0.42892295913770795,
+      "text": "with recursive e as (select l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where coalesce(x.assignee_key,'')<>'' and coalesce(y.assignee_key,'')<>'' and x.assignee_key<>y.assignee_key and l.from_issue_key<>l.to_issue_key),\nd as (select a s, b t from e union select b,a from e),\np as (select array[s,t] arr, 1 n from d\n union all select p.arr||d.t, p.n+1 from p join d on d.s=p.arr[array_length(p.arr,1)] where not d.t=any(p.arr) and p.n<5)\nselect arr as path, n from p where\n not exists(select 1 from d where d.s=arr[array_length(arr,1)] and not d.t=any(arr))\n and not exists(select 1 from d where d.s=arr[1] and not d.t=any(arr))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1440,
+      "seconds": 4.843333499971777,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where coalesce(x.assignee_key,'')<>'' and coalesce(y.assignee_key,'')<>'' and x.assignee_key<>y.assignee_key and l.from_issue_key<>l.to_issue_key),\nd as (select a s, b t from e union select b,a from e),\np as (select array[s,t] arr, 1 n from d\n union all select p.arr||d.t, p.n+1 from p join d on d.s=p.arr[array_length(p.arr,1)] where not d.t=any(p.arr) and p.n<5),\nf as (select arr from p where\n not exists(select 1 from d where d.s=arr[array_length(arr,1)] and not d.t=any(arr))\n and not exists(select 1 from d where d.s=arr[1] and not d.t=any(arr)))\nselect distinct e.link_id from f join e on exists(select 1 from generate_series(1,array_length(arr,1)-1) i where (arr[i]=e.a and arr[i+1]=e.b) or (arr[i]=e.b and arr[i+1]=e.a))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2316,
+      "seconds": 0.3509995830245316,
+      "text": "with recursive e as (select l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where coalesce(x.assignee_key,'')<>'' and coalesce(y.assignee_key,'')<>'' and x.assignee_key<>y.assignee_key and l.from_issue_key<>l.to_issue_key),\nd as (select a s, b t from e union select b,a from e),\np as (select array[s,t] arr, 1 n from d\n union all select p.arr||d.t, p.n+1 from p join d on d.s=p.arr[array_length(p.arr,1)] where not d.t=any(p.arr) and p.n<5),\nf as (select arr from p where\n not exists(select 1 from d where d.s=arr[array_length(arr,1)] and not d.t=any(arr))\n and not exists(select 1 from d where d.s=arr[1] and not d.t=any(arr)))\nselect distinct unnest(arr) k from f"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 1.8081525000743568,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where coalesce(x.assignee_key,'')<>'' and coalesce(y.assignee_key,'')<>'' and x.assignee_key<>y.assignee_key and l.from_issue_key<>l.to_issue_key),\nd as (select a s, b t from e union select b,a from e),\np as (select array[s,t] arr, 1 n from d\n union all select p.arr||d.t, p.n+1 from p join d on d.s=p.arr[array_length(p.arr,1)] where not d.t=any(p.arr) and p.n<5),\nf as (select arr from p where\n not exists(select 1 from d where d.s=arr[array_length(arr,1)] and not d.t=any(arr))\n and not exists(select 1 from d where d.s=arr[1] and not d.t=any(arr)))\nselect arr as path, arr as issue, (select array_agg((select array_agg(e.link_id) from e where (e.a=arr[i] and e.b=arr[i+1]) or (e.a=arr[i+1] and e.b=arr[i])) order by i) from generate_series(1,array_length(arr,1)-1) i) as issue_link from f"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2874,
+      "seconds": 3.465116041013971,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where coalesce(x.assignee_key,'')<>'' and coalesce(y.assignee_key,'')<>'' and x.assignee_key<>y.assignee_key and l.from_issue_key<>l.to_issue_key),\nd as (select a s, b t from e union select b,a from e),\np as (select array[s,t] arr, 1 n from d\n union all select p.arr||d.t, p.n+1 from p join d on d.s=p.arr[array_length(p.arr,1)] where not d.t=any(p.arr) and p.n<5),\nf as (select arr from p where\n not exists(select 1 from d where d.s=arr[array_length(arr,1)] and not d.t=any(arr))\n and not exists(select 1 from d where d.s=arr[1] and not d.t=any(arr)))\nselect arr as path, arr as issue, (select array_agg((select string_agg(e.link_id,',') from e where (e.a=arr[i] and e.b=arr[i+1]) or (e.a=arr[i+1] and e.b=arr[i])) order by i) from generate_series(1,array_length(arr,1)-1) i) as issue_link from f"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2874,
+      "seconds": 3.455806832993403,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where coalesce(x.assignee_key,'')<>'' and coalesce(y.assignee_key,'')<>'' and x.assignee_key<>y.assignee_key and l.from_issue_key<>l.to_issue_key),\nd as (select a s, b t from e union select b,a from e),\np as (select array[s,t] arr, 1 n from d\n union all select p.arr||d.t, p.n+1 from p join d on d.s=p.arr[array_length(p.arr,1)] where not d.t=any(p.arr) and p.n<5),\nf as (select arr from p where\n not exists(select 1 from d where d.s=arr[array_length(arr,1)] and not d.t=any(arr))\n and not exists(select 1 from d where d.s=arr[1] and not d.t=any(arr)))\nselect arr as path, (select jsonb_agg(jsonb_build_array(arr[i],arr[i+1]) order by i) from generate_series(1,array_length(arr,1)-1) i) as issue, (select jsonb_agg((select to_jsonb(array_agg(e.link_id)) from e where (e.a=arr[i] and e.b=arr[i+1]) or (e.a=arr[i+1] and e.b=arr[i])) order by i) from generate_series(1,array_length(arr,1)-1) i) as issue_link from f"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 3,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 46.74895066698082,
+  "source_match": true,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "3bcb5972ccd237abf05af0ed43eda3c7534be7a56b5d6064c11117ef1166b86b",
+    "source_ids": [],
+    "value_items": 2874
+  },
+  "time": "2026-11-13T22:58:41+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.086584,
+    "input_tokens": 116424,
+    "output_tokens": 4612,
+    "requests": 11,
+    "tool_calls": 9
+  },
+  "zero_answer": false
+}

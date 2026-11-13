@@ -1,0 +1,92 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 5,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.42347808298654854,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(p:Project)\nOPTIONAL MATCH (:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH p,i,coalesce(i.timeOriginalEstimateS,0) AS e, collect(l.seconds) AS ls\nWITH p,i,e,reduce(s=0,x IN ls|s+x) AS lg\nRETURN p.projectKey AS id, sum(lg)-sum(e) AS value"
+    },
+    {
+      "outcome": "ok",
+      "rows": 10454,
+      "seconds": 0.25172733305953443,
+      "text": "MATCH (i:Issue)\nOPTIONAL MATCH (:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH i,l WHERE l IS NOT NULL OR i.timeOriginalEstimateS IS NOT NULL\nRETURN i.issueKey AS issue, l.historyId AS time_entry"
+    },
+    {
+      "outcome": "ok",
+      "rows": 10454,
+      "seconds": 0.22710299980826676,
+      "text": "MATCH (i:Issue)\nOPTIONAL MATCH (:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH i,l WHERE l IS NOT NULL OR i.timeOriginalEstimateS IS NOT NULL\nRETURN i.issueKey AS issue, l.historyId AS time_entry"
+    },
+    {
+      "outcome": "ok",
+      "rows": 7923,
+      "seconds": 0.17929820786230266,
+      "text": "MATCH (:Person)-[l:LOGGED_TIME]->(i:Issue) WHERE l.seconds>0\nRETURN i.issueKey AS issue, l.historyId AS time_entry"
+    },
+    {
+      "outcome": "ok",
+      "rows": 6958,
+      "seconds": 0.1785266250371933,
+      "text": "MATCH (i:Issue) WHERE i.timeOriginalEstimateS IS NOT NULL OR EXISTS { (:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0 }\nRETURN i.issueKey AS issue"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q04",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 12.425733000040054,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "4e9fa5a7be002fe1ad8999bd53a4b092f9629b0b787215670b3558f7ba94e757",
+    "source_ids": [
+      14881
+    ],
+    "value_items": 7
+  },
+  "time": "2026-11-13T22:53:22+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.0243439,
+    "input_tokens": 38795,
+    "output_tokens": 1118,
+    "requests": 5,
+    "tool_calls": 5
+  },
+  "zero_answer": false
+}

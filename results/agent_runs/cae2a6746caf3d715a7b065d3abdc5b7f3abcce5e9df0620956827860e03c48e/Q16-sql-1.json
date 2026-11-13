@@ -1,0 +1,77 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "rejected",
+      "rows": 0,
+      "seconds": 0.0,
+      "text": "create temp table x as select 1;\nwith q as (select l.link_id, b.issue_key bug, o.issue_key other from model.issue_link l join model.issue b on b.issue_key = case when l.link_type_name is not null and l.inward_label='is blocked by' then l.to_issue_key else l.from_issue_key end join model.issue o on o.issue_key = case when l.inward_label='is blocked by' then l.from_issue_key else l.to_issue_key end where ((l.inward_label='is blocked by') or (l.outward_label='depends on')) and b.issue_type_name='Bug' and b.priority_name='Highest' and coalesce(b.resolution_name,'')='' and coalesce(o.resolution_name,'')='') select * from q"
+    },
+    {
+      "outcome": "ok",
+      "rows": 0,
+      "seconds": 0.012373832985758781,
+      "text": "with q as (select l.link_id, b.issue_key bug, o.issue_key other from model.issue_link l join model.issue b on b.issue_key = case when l.inward_label='is blocked by' then l.to_issue_key else l.from_issue_key end join model.issue o on o.issue_key = case when l.inward_label='is blocked by' then l.from_issue_key else l.to_issue_key end where ((l.inward_label='is blocked by') or (l.outward_label='depends on')) and b.issue_type_name='Bug' and b.priority_name='Highest' and coalesce(b.resolution_name,'')='' and coalesce(o.resolution_name,'')='') select link_id, bug, other, (select count(distinct bug) from q) value from q"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.007953958818688989,
+      "text": "select 0 as value"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q16",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 10.496308999834582,
+  "source_match": true,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "number",
+      "sources": [],
+      "value": {
+        "int": 0
+      }
+    }
+  },
+  "time": "2026-11-13T23:07:57+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0175967,
+    "input_tokens": 27365,
+    "output_tokens": 1043,
+    "requests": 4,
+    "tool_calls": 3
+  },
+  "zero_answer": true
+}

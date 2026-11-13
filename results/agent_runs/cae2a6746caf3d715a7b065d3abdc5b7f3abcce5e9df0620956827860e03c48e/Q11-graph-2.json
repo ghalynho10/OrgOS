@@ -1,0 +1,104 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 7,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.015771667007356882,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nOPTIONAL MATCH (q:Person)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0\nWITH i,pr,collect(DISTINCT p.personKey)+collect(DISTINCT q.personKey) AS ks\nWITH i,pr,apoc.coll.toSet(ks) AS s WHERE size(s)>=2\nRETURN count(i) AS n, count(DISTINCT pr) AS pc"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.01873929100111127,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,pr,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0\nWITH i,pr,a,collect(DISTINCT q.personKey) AS b\nWITH i,pr,[x IN a+b WHERE x IS NOT NULL] AS l\nUNWIND l AS k\nWITH i,pr,collect(DISTINCT k) AS s WHERE size(s)>=2\nRETURN collect(i.issueKey) AS issues, collect(DISTINCT pr.projectKey) AS projs, size(apoc.coll.flatten(collect(s))) AS x"
+    },
+    {
+      "outcome": "ok",
+      "rows": 51229,
+      "seconds": 1.3633166251238436,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,pr,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0\nWITH i,pr,a,collect(DISTINCT q.personKey) AS b\nWITH i,pr,[x IN a+b WHERE x IS NOT NULL] AS l\nUNWIND l AS k\nWITH i,pr,collect(DISTINCT k) AS s WHERE size(s)>=2\nUNWIND s AS person\nWITH i,pr,person\nOPTIONAL MATCH (:Person)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0\nRETURN i.issueKey AS issue, pr.projectKey AS project, person, t.historyId AS te"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4110,
+      "seconds": 2.172660249983892,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,pr,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0\nWITH i,pr,a,collect(DISTINCT q.personKey) AS b\nWITH i,pr,[x IN a+b WHERE x IS NOT NULL] AS l\nUNWIND l AS k\nWITH i,pr,collect(DISTINCT k) AS s WHERE size(s)>=2\nWITH collect({i:i.issueKey,p:pr.projectKey,s:s}) AS rows\nUNWIND (reduce(acc=[],r IN rows|acc+[x IN r.s|{id:x,kind:'person'}]) + [r IN rows|{id:r.p,kind:'project'}]) AS e\nRETURN DISTINCT e.id AS id, e.kind AS kind"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.011097708949819207,
+      "text": "MATCH (i:Issue)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0\nWITH i,a,collect(DISTINCT q.personKey) AS b, collect(t.historyId) AS tes\nWHERE size([x IN a+b WHERE x IS NOT NULL | x])>=0\nWITH i,tes, apoc.coll.toSet(a+b) AS s\nRETURN 1"
+    },
+    {
+      "outcome": "ok",
+      "rows": 20750,
+      "seconds": 0.4884592918679118,
+      "text": "MATCH (i:Issue)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0\nWITH i,a,collect(DISTINCT q.personKey) AS b\nWITH i,[x IN a+b WHERE x IS NOT NULL] AS l\nUNWIND l AS k\nWITH i,count(DISTINCT k) AS n WHERE n>=2\nRETURN i.issueKey AS issue"
+    },
+    {
+      "outcome": "ok",
+      "rows": 6237,
+      "seconds": 0.3543939171358943,
+      "text": "MATCH (i:Issue)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0\nWITH i,a,collect(DISTINCT q.personKey) AS b, collect(t.historyId) AS tes\nWITH i,tes,[x IN a+b WHERE x IS NOT NULL] AS l\nUNWIND l AS k\nWITH i,tes,count(DISTINCT k) AS n WHERE n>=2\nUNWIND tes AS te\nRETURN DISTINCT te"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q11",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 3,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 26.529440250014886,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "96f852c0fbf6c69f9ac0a699b70ce07f062f534cf1de8a39520b99049660e13b",
+    "source_ids": [
+      26987
+    ],
+    "value_items": 4110
+  },
+  "time": "2026-11-13T23:04:09+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0552809,
+    "input_tokens": 58823,
+    "output_tokens": 2872,
+    "requests": 6,
+    "tool_calls": 7
+  },
+  "zero_answer": false
+}

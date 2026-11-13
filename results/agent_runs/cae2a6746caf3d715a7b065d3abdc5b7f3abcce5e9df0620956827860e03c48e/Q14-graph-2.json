@@ -1,0 +1,89 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.004237834131345153,
+      "text": "MATCH (c:Issue)-[:HAS_PARENT]->(p:Issue {issueKey:'CLOV-538'}) RETURN c.issueKey AS child, p.issueKey AS parent, c.resolutionName AS res, c.issueTypeName AS t"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.02361266710795462,
+      "text": "MATCH (c:Issue)-[:HAS_PARENT]->(p:Issue {issueKey:'CLOV-538'}) WITH collect(c) AS cs RETURN all(x IN cs WHERE x.resolutionName IS NOT NULL AND x.resolutionName<>'') AND size(cs)>0 AS value"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q14",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 5.757075082976371,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 1
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "boolean",
+      "sources": [
+        {
+          "issue": [
+            "CLOV-679",
+            "CLOV-682",
+            "CLOV-691",
+            "CLOV-694"
+          ],
+          "parent": [
+            "CLOV-679",
+            "CLOV-682",
+            "CLOV-691",
+            "CLOV-694"
+          ]
+        }
+      ],
+      "value": true
+    }
+  },
+  "time": "2026-11-13T23:06:53+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0076535,
+    "input_tokens": 18595,
+    "output_tokens": 515,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

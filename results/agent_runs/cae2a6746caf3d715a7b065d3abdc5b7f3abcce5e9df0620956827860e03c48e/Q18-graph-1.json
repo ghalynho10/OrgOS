@@ -1,0 +1,74 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1634,
+      "seconds": 0.17448358400724828,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(p:Project)\nMATCH (i)-[:REPORTED_BY|ASSIGNED_TO]->(x:Person)\nWITH x, collect(DISTINCT p.projectKey) AS ps\nWHERE size(ps)>1\nRETURN x.personKey AS id, size(ps) AS value"
+    },
+    {
+      "outcome": "ok",
+      "rows": 69124,
+      "seconds": 1.2329332090448588,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(p:Project)\nMATCH (i)-[:REPORTED_BY|ASSIGNED_TO]->(x:Person)\nWITH x, collect(DISTINCT p.projectKey) AS ps\nWHERE size(ps)>1\nMATCH (i:Issue)-[:IN_PROJECT]->(p:Project) WHERE p.projectKey IN ps\nMATCH (i)-[:REPORTED_BY|ASSIGNED_TO]->(x)\nRETURN DISTINCT i.issueKey AS issue, x.personKey AS person, p.projectKey AS project"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q18",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 6.954700999893248,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "940abac15182740e806617514e4ab51a0cfb8682f7d90b1046c2c2259d3ce7f5",
+    "source_ids": [
+      207372
+    ],
+    "value_items": 1634
+  },
+  "time": "2026-11-13T23:10:41+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0236273,
+    "input_tokens": 17743,
+    "output_tokens": 670,
+    "requests": 2,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

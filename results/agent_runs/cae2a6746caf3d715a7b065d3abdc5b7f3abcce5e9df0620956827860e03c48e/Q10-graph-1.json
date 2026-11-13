@@ -1,0 +1,74 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 516,
+      "seconds": 0.13274691719561815,
+      "text": "MATCH (a:Issue)-[r:BLOCKER|DEPENDS|DUPLICATE|SUPERSESSION]->(b:Issue)\nWITH r, CASE WHEN type(r)='SUPERSESSION' THEN b ELSE a END AS s, CASE WHEN type(r)='SUPERSESSION' THEN a ELSE b END AS t\nMATCH (s)-[:ASSIGNED_TO]->(sp:Person), (t)-[:ASSIGNED_TO]->(tp:Person)\nWHERE sp<>tp\nWITH r, s, t, sp, tp\nUNWIND [[s.issueKey, sp.personKey],[t.issueKey, tp.personKey]] AS x\nRETURN DISTINCT x[0] AS issue, r.linkId AS link, x[1] AS person, sp.personKey AS id"
+    },
+    {
+      "outcome": "ok",
+      "rows": 114,
+      "seconds": 0.097141208127141,
+      "text": "MATCH (a:Issue)-[r:BLOCKER|DEPENDS|DUPLICATE|SUPERSESSION]->(b:Issue)\nWITH r, CASE WHEN type(r)='SUPERSESSION' THEN b ELSE a END AS s, CASE WHEN type(r)='SUPERSESSION' THEN a ELSE b END AS t\nMATCH (s)-[:ASSIGNED_TO]->(sp:Person), (t)-[:ASSIGNED_TO]->(tp:Person)\nWHERE sp<>tp\nRETURN DISTINCT sp.personKey AS id"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q10",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 11.156154541997239,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "20251ceb95183719381e36b406a07b13a061d59e7cbcf4357d12d2e30ad493aa",
+    "source_ids": [
+      1548
+    ],
+    "value_items": 114
+  },
+  "time": "2026-11-13T23:02:08+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0374857,
+    "input_tokens": 32273,
+    "output_tokens": 1308,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

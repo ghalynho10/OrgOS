@@ -1,0 +1,80 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.14095716713927686,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue)-[:IN_PROJECT]->(pb:Project) MATCH (a)-[:IN_PROJECT]->(pa:Project) WHERE r.linkId IS NOT NULL AND pa<>pb\nWITH pa.projectKey AS p, collect(DISTINCT a.issueKey)+collect(DISTINCT b.issueKey) AS x, r\nRETURN p, r.linkId AS l, x LIMIT 1"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.12099995906464756,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE r.linkId IS NOT NULL\nMATCH (a)-[:IN_PROJECT]->(pa), (b)-[:IN_PROJECT]->(pb) WHERE pa<>pb\nUNWIND [[a,pa],[b,pb]] AS e\nWITH e[1].projectKey AS id, count(DISTINCT e[0].issueKey) AS value\nORDER BY value DESC\nWITH collect({id:id,value:value}) AS L\nWITH L, L[4].value AS c\nUNWIND L AS x WITH x WHERE x.value>=c\nRETURN x.id AS id, x.value AS value"
+    },
+    {
+      "outcome": "ok",
+      "rows": 3354,
+      "seconds": 0.26934845885261893,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE r.linkId IS NOT NULL\nMATCH (a)-[:IN_PROJECT]->(pa), (b)-[:IN_PROJECT]->(pb) WHERE pa<>pb AND (pa.projectKey IN ['FE','CRUC','JRASERVER','CWD','BAM'] OR pb.projectKey IN ['FE','CRUC','JRASERVER','CWD','BAM'])\nUNWIND [[a,pa],[b,pb]] AS e\nWITH e, r WHERE e[1].projectKey IN ['FE','CRUC','JRASERVER','CWD','BAM']\nRETURN DISTINCT e[0].issueKey AS issue, r.linkId AS link, e[1].projectKey AS project\nUNION\nMATCH (a:Issue)-[r]->(b:Issue) WHERE r.linkId IS NOT NULL\nMATCH (a)-[:IN_PROJECT]->(pa), (b)-[:IN_PROJECT]->(pb) WHERE pa<>pb AND (pa.projectKey IN ['FE','CRUC','JRASERVER','CWD','BAM'] OR pb.projectKey IN ['FE','CRUC','JRASERVER','CWD','BAM'])\nUNWIND [[a,pa,b],[b,pb,a]] AS e\nWITH e, r WHERE e[1].projectKey IN ['FE','CRUC','JRASERVER','CWD','BAM']\nRETURN DISTINCT e[2].issueKey AS issue, r.linkId AS link, e[1].projectKey AS project"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q19",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 12.646348957903683,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "25afd54a8ca55616d4f1a798a81b6f9f4e50ab76b32cc1498aef4cf857f99bfd",
+    "source_ids": [
+      6713
+    ],
+    "value_items": 5
+  },
+  "time": "2026-11-13T23:11:54+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.023687,
+    "input_tokens": 28048,
+    "output_tokens": 1530,
+    "requests": 4,
+    "tool_calls": 3
+  },
+  "zero_answer": false
+}

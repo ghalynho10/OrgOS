@@ -1,0 +1,102 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 4,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.007237416924908757,
+      "text": "MATCH (c:Issue)-[:HAS_PARENT]->(p:Issue {issueKey:'CLOV-538'}) RETURN c.issueKey AS child, p.issueKey AS parent, c.resolutionName AS res, c.issueTypeName AS t"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.011617750162258744,
+      "text": "MATCH (p:Issue {issueKey:'CLOV-538'}) OPTIONAL MATCH (c:Issue)-[:HAS_PARENT]->(p) WITH p, collect(c) AS cs RETURN count(*)>0 AND size(cs)>0 AND all(x IN cs WHERE x.resolutionName IS NOT NULL AND x.resolutionName<>'') AS value"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.02903220779262483,
+      "text": "MATCH (p:Issue {issueKey:'CLOV-538'}) RETURN p.issueKey AS k UNION MATCH (c:Issue)-[:HAS_PARENT]->(:Issue {issueKey:'CLOV-538'}) RETURN c.issueKey AS k"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.057937582954764366,
+      "text": "MATCH (c:Issue)-[:HAS_PARENT]->(:Issue {issueKey:'CLOV-538'}) WITH collect(c) AS cs RETURN size(cs)>0 AND all(x IN cs WHERE x.resolutionName IS NOT NULL AND x.resolutionName<>'') AS value"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q14",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 8.425687416922301,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "boolean",
+      "sources": [
+        {
+          "issue": [
+            "CLOV-538",
+            "CLOV-679",
+            "CLOV-682",
+            "CLOV-691",
+            "CLOV-694"
+          ],
+          "parent": [
+            "CLOV-679",
+            "CLOV-682",
+            "CLOV-691",
+            "CLOV-694"
+          ]
+        }
+      ],
+      "value": true
+    }
+  },
+  "time": "2026-11-13T23:07:01+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0140749,
+    "input_tokens": 26463,
+    "output_tokens": 888,
+    "requests": 4,
+    "tool_calls": 4
+  },
+  "zero_answer": false
+}
