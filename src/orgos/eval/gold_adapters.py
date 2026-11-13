@@ -182,6 +182,11 @@ def q09(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return path_rows(answer, "issue"), []
 
 
+def q10(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q10, a `set` of people: one row per source assignee, `person_key`."""
+    return [f"person:{key}" for key in column(answer, "person_key")], steps(sources)
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -192,4 +197,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q07": q07,
     "Q08": q08,
     "Q09": q09,
+    "Q10": q10,
 }
