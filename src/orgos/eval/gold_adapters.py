@@ -248,6 +248,15 @@ def q19(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     )
 
 
+def q20(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q20, a `ranking` of people by `seconds`: rows in the query's rank order, cut included."""
+    keys = column(answer, "person_key")
+    seconds = column(answer, "seconds")
+    return [(f"person:{key}", total) for key, total in zip(keys, seconds, strict=True)], steps(
+        sources
+    )
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -268,4 +277,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q17": q17,
     "Q18": q18,
     "Q19": q19,
+    "Q20": q20,
 }
