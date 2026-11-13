@@ -17,18 +17,29 @@ skipping it is not filtering. An empty string or the text "None" is a value: it
 stays an ID and fails loudly as an extra one. The agent's rule (spec 0012
 AC-17) still sends the model back on any NULL source cell, because a gold pair
 must also match the known evidence exactly and pass hand review.
+
+A path answer (AC-12, amended 2026-11-12 for feature 15): the answer file
+returns one row per path, a `path` column with the path's IDs in order and one
+list column per kind with one item per hop, the convention the agent uses
+(spec 0012 AC-19). `path_rows()` turns each row into the typed path and one
+step per hop; the top level sources stay empty, so a path pair has no sources
+file. It refuses, naming columns and lengths and never a value, a missing or
+NULL path, a NULL or non list kind cell, a kind list that is not one item
+shorter than its path, and a column that is not a kind.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import Any
+from typing import Any, get_args
 
 from orgos.eval import EvalError
+from orgos.eval.models import SourceKind
 from orgos.sqlstore.query import QueryResult
 
 Sources = list[dict[str, list[object]]]
 Adapter = Callable[[QueryResult, tuple[QueryResult, ...]], tuple[Any, Sources]]
+KINDS: frozenset[str] = frozenset(get_args(SourceKind))
 
 
 def column(result: QueryResult, name: str) -> list[Any]:
@@ -61,6 +72,47 @@ def step(result: QueryResult) -> dict[str, list[object]]:
 def steps(results: tuple[QueryResult, ...]) -> Sources:
     """Every source step, in file order."""
     return [step(result) for result in results]
+
+
+def _hop(item: object) -> list[object]:
+    # One hop's IDs of one kind: a single ID is wrapped, a NULL is no ID. A list
+    # nested inside the hop's list is kept as one item on purpose, not flattened:
+    # the adapter only reshapes (AC-12), so a malformed hop reaches compare as is.
+    if item is None:
+        return []
+    if isinstance(item, list | tuple):
+        return [value for value in item if value is not None]
+    return [item]
+
+
+def path_rows(answer: QueryResult, node: str) -> list[tuple[list[str], Sources]]:
+    """Each row as `(typed path, one step per hop)`, in row order; `node` is the path's kind."""
+    if "path" not in answer.columns:
+        returned = ", ".join(answer.columns) or "no columns"
+        raise EvalError(f"the query returns no column path (it returns {returned})")
+    kinds = [name for name in answer.columns if name != "path"]
+    strays = [name for name in kinds if name not in KINDS]
+    if strays:
+        raise EvalError(
+            f"columns {', '.join(strays)} are neither path nor a kind ({', '.join(sorted(KINDS))})"
+        )
+    paths = []
+    for number, row in enumerate(answer.rows, start=1):
+        path = row["path"]
+        if not isinstance(path, list | tuple):
+            raise EvalError(f"row {number}: column path is NULL or not a list")
+        for kind in kinds:
+            cell = row[kind]
+            if not isinstance(cell, list | tuple):
+                raise EvalError(f"row {number}: column {kind} is NULL or not a list")
+            if len(cell) != len(path) - 1:
+                raise EvalError(
+                    f"row {number}: column {kind} holds {len(cell)} item(s) for a path of"
+                    f" {len(path)} IDs, it needs {len(path) - 1}"
+                )
+        hops = [{kind: _hop(row[kind][hop]) for kind in kinds} for hop in range(len(path) - 1)]
+        paths.append(([f"{node}:{key}" for key in path], hops))
+    return paths
 
 
 def q01(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
@@ -122,6 +174,43 @@ def q07(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     )
 
 
+def q08(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q08, a `path` of issues: one row per chain, each hop listing `issue_link` and `issue`."""
+    return path_rows(answer, "issue"), []
+
+
+def q09(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q09, a `path` of issues: a row per chain and direction, each hop `issue_link` and `issue`."""
+    return path_rows(answer, "issue"), []
+
+
+def q10(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q10, a `set` of people: one row per source assignee, `person_key`."""
+    return [f"person:{key}" for key in column(answer, "person_key")], steps(sources)
+
+
+def q11(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q11, a `set` of people and projects: one row per member, `kind` and `id`."""
+    kinds = column(answer, "kind")
+    ids = column(answer, "id")
+    return [f"{kind}:{key}" for kind, key in zip(kinds, ids, strict=True)], steps(sources)
+
+
+def q12(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q12, a `set` of parent issues: one row per qualifying parent, `issue_key`."""
+    return [f"issue:{key}" for key in column(answer, "issue_key")], steps(sources)
+
+
+def q13(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q13, a `set` of sub-tasks: one row per direct child of the parent, `issue_key`."""
+    return [f"issue:{key}" for key in column(answer, "issue_key")], steps(sources)
+
+
+def q14(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q14, a `boolean`: one row, `resolved`."""
+    return single(answer, "resolved"), steps(sources)
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -130,4 +219,11 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q05": q05,
     "Q06": q06,
     "Q07": q07,
+    "Q08": q08,
+    "Q09": q09,
+    "Q10": q10,
+    "Q11": q11,
+    "Q12": q12,
+    "Q13": q13,
+    "Q14": q14,
 }

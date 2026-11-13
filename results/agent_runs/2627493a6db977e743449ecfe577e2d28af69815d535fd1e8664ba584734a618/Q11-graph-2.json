@@ -1,0 +1,78 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "store_timeout",
+      "rows": 0,
+      "seconds": 31.11412104195915,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nMATCH (p:Person)\nWHERE (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p) OR EXISTS { (p)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0 }\nWITH i,pr,collect(DISTINCT p.personKey) AS ps\nWHERE size(ps)>=2\nUNWIND ps AS k\nRETURN DISTINCT k AS id, 'person' AS kind\nUNION\nMATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nMATCH (p:Person)\nWHERE (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p) OR EXISTS { (p)-[t:LOGGED_TIME]->(i) WHERE t.seconds>0 }\nWITH i,pr,count(DISTINCT p) AS n\nWHERE n>=2\nRETURN DISTINCT pr.projectKey AS id, 'project' AS kind"
+    },
+    {
+      "outcome": "ok",
+      "rows": 109560,
+      "seconds": 1.4747942921239883,
+      "text": "MATCH (i:Issue)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i, p.personKey AS k RETURN i.issueKey AS issue, k\nUNION\nMATCH (p:Person)-[t:LOGGED_TIME]->(i:Issue) WHERE t.seconds>0\nRETURN i.issueKey AS issue, p.personKey AS k"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4110,
+      "seconds": 0.3886480419896543,
+      "text": "CALL () {\nMATCH (i:Issue)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nRETURN i, p\nUNION\nMATCH (p:Person)-[t:LOGGED_TIME]->(i:Issue) WHERE t.seconds>0\nRETURN i, p\n}\nWITH i, count(DISTINCT p) AS n, collect(DISTINCT p.personKey) AS ps\nWHERE n>=2\nMATCH (i)-[:IN_PROJECT]->(pr:Project)\nWITH collect(DISTINCT pr.projectKey) AS prs, collect(ps) AS l\nUNWIND l AS x UNWIND x AS k\nWITH prs, collect(DISTINCT k) AS people\nUNWIND (prs+people) AS id\nRETURN id, CASE WHEN id IN prs THEN 'project' ELSE 'person' END AS kind"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q11",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 42.78637958411127,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 26987
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "e700dac817e33a3ffeaa79d46beb69a08682b97d899ad7bf04377af6c64b86c5",
+    "source_ids": [],
+    "value_items": 4110
+  },
+  "time": "2026-11-13T03:47:47+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.029303799999999998,
+    "input_tokens": 33368,
+    "output_tokens": 1288,
+    "requests": 4,
+    "tool_calls": 3
+  },
+  "zero_answer": false
+}

@@ -1,0 +1,85 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": false,
+  "attempt_count": 5,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.05602187500335276,
+      "text": "select count(*), count(distinct link_id) from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key is not null and b.assignee_key is not null and a.assignee_key<>b.assignee_key and a.assignee_key<>'' and b.assignee_key<>''"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.07022949983365834,
+      "text": "select count(*) c, count(distinct link_id) d from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.4355900841765106,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where x.assignee_key<>y.assignee_key),\nd as (select link_id,a s,b t from e union all select link_id,b,a from e),\np as (select s, t, array[s,t] path, array[link_id] links, 1 n from d\n union all select p.s, d.t, path||d.t, links||d.link_id, n+1 from p join d on d.s=p.t where not d.t=any(p.path) and n<5)\nselect array_to_string(path,',') path, array_to_string(links,',') links from p\nwhere n<=5 and path[1]<path[array_length(path,1)]\nand not exists(select 1 from d where d.s=p.t and not d.t=any(p.path))\nand not exists(select 1 from d where d.s=p.s and not d.t=any(p.path))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.3681178749538958,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where x.assignee_key<>y.assignee_key),\nd as (select link_id,a s,b t from e union all select link_id,b,a from e),\np as (select s, t, array[s,t] path, array[link_id] links, 1 n from d\n union all select p.s, d.t, path||d.t, links||d.link_id, n+1 from p join d on d.s=p.t where not d.t=any(p.path) and n<5)\nselect path, links from p\nwhere n<=5 and path[1]<path[array_length(path,1)]\nand not exists(select 1 from d where d.s=p.t and not d.t=any(p.path))\nand not exists(select 1 from d where d.s=p.s and not d.t=any(p.path))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.36526862485334277,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key a, l.to_issue_key b from model.issue_link l join model.issue x on x.issue_key=l.from_issue_key join model.issue y on y.issue_key=l.to_issue_key where x.assignee_key<>y.assignee_key),\nd as (select link_id,a s,b t from e union all select link_id,b,a from e),\np as (select s, t, array[s,t] path, array[link_id] links, 1 n from d\n union all select p.s, d.t, path||d.t, links||d.link_id, n+1 from p join d on d.s=p.t where not d.t=any(p.path) and n<5)\nselect path, links, path[1:n] heads, path[2:n+1] tails from p\nwhere n<=5 and path[1]<path[array_length(path,1)]\nand not exists(select 1 from d where d.s=p.t and not d.t=any(p.path))\nand not exists(select 1 from d where d.s=p.s and not d.t=any(p.path))"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 21.967815041076392,
+  "source_match": false,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "04e70147daa7db7d40b41f6fabdc480c1d7629aa5188f1ef383dfa2ee097e78d",
+    "source_ids": [],
+    "value_items": 1481
+  },
+  "time": "2026-11-13T03:33:18+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0528896,
+    "input_tokens": 71726,
+    "output_tokens": 2415,
+    "requests": 8,
+    "tool_calls": 5
+  },
+  "zero_answer": false
+}

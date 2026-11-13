@@ -1,0 +1,89 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 58,
+      "seconds": 0.059914082987233996,
+      "text": "MATCH (c:Issue)-[:HAS_PARENT]->(p:Issue), (c)-[:IN_PROJECT]->(cp:Project), (p)-[:IN_PROJECT]->(pp:Project), (c)-[:ASSIGNED_TO]->(a:Person)\nWHERE cp.projectKey IN ['CLOUD','CLOV'] AND pp.projectKey IN ['CLOUD','CLOV']\nWITH p, collect(DISTINCT a.personKey) AS ppl, collect(DISTINCT c.issueKey) AS kids\nWHERE size(ppl)>=2\nRETURN p.issueKey AS id, ppl, kids"
+    },
+    {
+      "outcome": "ok",
+      "rows": 617,
+      "seconds": 0.06452270783483982,
+      "text": "MATCH (c:Issue)-[:HAS_PARENT]->(p:Issue), (c)-[:IN_PROJECT]->(cp:Project), (p)-[:IN_PROJECT]->(pp:Project), (c)-[:ASSIGNED_TO]->(a:Person)\nWHERE cp.projectKey IN ['CLOUD','CLOV'] AND pp.projectKey IN ['CLOUD','CLOV']\nWITH p, collect(DISTINCT a.personKey) AS ppl, collect(DISTINCT c) AS kids\nWHERE size(ppl)>=2\nUNWIND kids AS c\nMATCH (c)-[:ASSIGNED_TO]->(a:Person)\nRETURN p.issueKey AS id, c.issueKey AS child, a.personKey AS person"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q12",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 8.123790833866224,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 1269
+    },
+    {
+      "extra": 617,
+      "missing": 0
+    },
+    {
+      "extra": 35,
+      "missing": 0
+    },
+    {
+      "extra": 617,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "0adccbd23aa70b8eea3a97cfe1d6b657b17afbddf7985f2235e3326a612934d2",
+    "source_ids": [
+      617,
+      617,
+      617,
+      617
+    ],
+    "value_items": 58
+  },
+  "time": "2026-11-13T03:48:56+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.051088,
+    "input_tokens": 45076,
+    "output_tokens": 961,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

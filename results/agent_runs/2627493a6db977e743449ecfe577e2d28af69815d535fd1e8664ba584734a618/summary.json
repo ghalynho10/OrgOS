@@ -1,7 +1,7 @@
 [
   {
     "attempts_at_row_cap": 0,
-    "attempts_timed_out": 0,
+    "attempts_timed_out": 2,
     "by_data": {
       "real": {
         "correct": 9,
@@ -39,27 +39,6 @@
       "tool_calls": 0
     },
     "missing": [
-      "Q08-graph-1",
-      "Q08-graph-2",
-      "Q08-graph-3",
-      "Q09-graph-1",
-      "Q09-graph-2",
-      "Q09-graph-3",
-      "Q10-graph-1",
-      "Q10-graph-2",
-      "Q10-graph-3",
-      "Q11-graph-1",
-      "Q11-graph-2",
-      "Q11-graph-3",
-      "Q12-graph-1",
-      "Q12-graph-2",
-      "Q12-graph-3",
-      "Q13-graph-1",
-      "Q13-graph-2",
-      "Q13-graph-3",
-      "Q14-graph-1",
-      "Q14-graph-2",
-      "Q14-graph-3",
       "Q15-graph-1",
       "Q15-graph-2",
       "Q15-graph-3",
@@ -81,8 +60,9 @@
     ],
     "outcomes": {
       "correct": 9,
-      "not_tried": 39,
-      "wrong": 12
+      "no_answer": 1,
+      "not_tried": 18,
+      "wrong": 32
     },
     "partial": true,
     "per_question": {
@@ -122,37 +102,37 @@
         "runs": 3
       },
       "Q08": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 9,
+        "retries": 3,
         "runs": 3
       },
       "Q09": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 21,
+        "retries": 10,
         "runs": 3
       },
       "Q10": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 7,
+        "retries": 1,
         "runs": 3
       },
       "Q11": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 7,
+        "retries": 2,
         "runs": 3
       },
       "Q12": {
-        "attempts": 0,
+        "attempts": 7,
         "retries": 0,
         "runs": 3
       },
       "Q13": {
-        "attempts": 0,
+        "attempts": 3,
         "retries": 0,
         "runs": 3
       },
       "Q14": {
-        "attempts": 0,
+        "attempts": 8,
         "retries": 0,
         "runs": 3
       },
@@ -238,27 +218,6 @@
       "tool_calls": 0
     },
     "missing": [
-      "Q08-sql-1",
-      "Q08-sql-2",
-      "Q08-sql-3",
-      "Q09-sql-1",
-      "Q09-sql-2",
-      "Q09-sql-3",
-      "Q10-sql-1",
-      "Q10-sql-2",
-      "Q10-sql-3",
-      "Q11-sql-1",
-      "Q11-sql-2",
-      "Q11-sql-3",
-      "Q12-sql-1",
-      "Q12-sql-2",
-      "Q12-sql-3",
-      "Q13-sql-1",
-      "Q13-sql-2",
-      "Q13-sql-3",
-      "Q14-sql-1",
-      "Q14-sql-2",
-      "Q14-sql-3",
       "Q15-sql-1",
       "Q15-sql-2",
       "Q15-sql-3",
@@ -280,8 +239,9 @@
     ],
     "outcomes": {
       "correct": 10,
-      "not_tried": 39,
-      "wrong": 11
+      "no_answer": 1,
+      "not_tried": 18,
+      "wrong": 31
     },
     "partial": true,
     "per_question": {
@@ -321,37 +281,37 @@
         "runs": 3
       },
       "Q08": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 12,
+        "retries": 3,
         "runs": 3
       },
       "Q09": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 16,
+        "retries": 4,
         "runs": 3
       },
       "Q10": {
-        "attempts": 0,
+        "attempts": 5,
         "retries": 0,
         "runs": 3
       },
       "Q11": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 7,
+        "retries": 4,
         "runs": 3
       },
       "Q12": {
-        "attempts": 0,
-        "retries": 0,
+        "attempts": 8,
+        "retries": 1,
         "runs": 3
       },
       "Q13": {
-        "attempts": 0,
+        "attempts": 3,
         "retries": 0,
         "runs": 3
       },
       "Q14": {
-        "attempts": 0,
+        "attempts": 8,
         "retries": 0,
         "runs": 3
       },

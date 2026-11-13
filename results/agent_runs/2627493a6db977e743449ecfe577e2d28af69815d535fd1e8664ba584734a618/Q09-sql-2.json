@@ -1,0 +1,87 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": false,
+  "attempt_count": 6,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.0483842499088496,
+      "text": "select count(*), count(distinct link_id) from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key is not null and b.assignee_key is not null and a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.02226345892995596,
+      "text": "select count(*) c from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key is not null and b.assignee_key is not null and a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.01050883298739791,
+      "text": "with e as (select l.link_id, l.from_issue_key s, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key and a.assignee_key<>'' and b.assignee_key<>''),\nd as (select s a, t b from e union select t,s from e),\np as (select array[a,b] arr, 1 n from d\n union all select p.arr||d.b, n+1 from p join d on d.a=p.arr[array_length(p.arr,1)] where not d.b=any(p.arr) and n<5)\nselect array_to_string(arr,',') path from p where arr[1]<arr[array_length(arr,1)]\nand not exists(select 1 from d where d.a=p.arr[array_length(p.arr,1)] and not d.b=any(p.arr))\nand not exists(select 1 from d where d.a=p.arr[1] and not d.b=any(p.arr))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1437,
+      "seconds": 0.11376087507233024,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key s, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key and a.assignee_key<>'' and b.assignee_key<>''),\nd as (select s a, t b from e union select t,s from e),\np as (select array[a,b] arr, 1 n from d\n union all select p.arr||d.b, n+1 from p join d on d.a=p.arr[array_length(p.arr,1)] where not d.b=any(p.arr) and n<5)\nselect array_to_string(arr,',') path from p where arr[1]<arr[array_length(arr,1)]\nand not exists(select 1 from d where d.a=p.arr[array_length(p.arr,1)] and not d.b=any(p.arr))\nand not exists(select 1 from d where d.a=p.arr[1] and not d.b=any(p.arr))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1437,
+      "seconds": 0.1173841250129044,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key s, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key and a.assignee_key<>'' and b.assignee_key<>''),\nd as (select s a, t b from e union select t,s from e),\np as (select array[a,b] arr, 1 n from d\n union all select p.arr||d.b, n+1 from p join d on d.a=p.arr[array_length(p.arr,1)] where not d.b=any(p.arr) and n<5)\nselect arr path from p where arr[1]<arr[array_length(arr,1)]\nand not exists(select 1 from d where d.a=p.arr[array_length(p.arr,1)] and not d.b=any(p.arr))\nand not exists(select 1 from d where d.a=p.arr[1] and not d.b=any(p.arr))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.12842045910656452,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key s, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key and a.assignee_key<>'' and b.assignee_key<>''),\nd as (select s a, t b, link_id from e union select t,s,link_id from e),\np as (select array[a,b] arr, array[link_id] lk, 1 n from d\n union all select p.arr||d.b, p.lk||d.link_id, n+1 from p join d on d.a=p.arr[array_length(p.arr,1)] where not d.b=any(p.arr) and n<5)\nselect arr path, lk links, arr[1:array_length(arr,1)-1] hop_src from p where arr[1]<arr[array_length(arr,1)]\nand not exists(select 1 from d where d.a=p.arr[array_length(p.arr,1)] and not d.b=any(p.arr))\nand not exists(select 1 from d where d.a=p.arr[1] and not d.b=any(p.arr))"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "no_answer",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 2,
+  "run": 2,
+  "run_outcome": "no_answer",
+  "seconds": 26.177738791098818,
+  "source_match": false,
+  "steps": [],
+  "store": "sql",
+  "store_answer": null,
+  "time": "2026-11-13T03:33:44+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0527119,
+    "input_tokens": 77507,
+    "output_tokens": 2802,
+    "requests": 9,
+    "tool_calls": 6
+  },
+  "zero_answer": false
+}

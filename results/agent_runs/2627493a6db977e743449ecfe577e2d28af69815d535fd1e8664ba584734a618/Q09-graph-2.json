@@ -1,0 +1,97 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": false,
+  "attempt_count": 7,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.1697927499189973,
+      "text": "MATCH (i:Issue)-[:ASSIGNED_TO]->(p:Person) WITH i, p.personKey AS pk\nMATCH (i)-[r]-(j:Issue)-[:ASSIGNED_TO]->(q:Person) WHERE type(r)<>'HAS_PARENT' AND q.personKey<>pk\nWITH collect(DISTINCT [i.issueKey,j.issueKey,type(r),r.linkId]) AS e\nRETURN size(e)"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.005590334068983793,
+      "text": "MATCH p=(a:Issue)-[rs*1..5]-(b:Issue)\nWHERE all(r IN rs WHERE type(r)<>'HAS_PARENT')\nAND all(r IN rs WHERE EXISTS{(startNode(r))-[:ASSIGNED_TO]->(x) MATCH (endNode(r))-[:ASSIGNED_TO]->(y) WHERE x<>y})\nAND a.issueKey<b.issueKey AND size(apoc.coll.toSet(nodes(p)))=size(nodes(p))\nWITH p,a,b\nWHERE NOT EXISTS{(a)-[r2]-(c:Issue) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN nodes(p) AND EXISTS{(a)-[:ASSIGNED_TO]->(x)<-[:ASSIGNED_TO]-(:Issue)-[:ASSIGNED_TO]->(x) WHERE false} } \nRETURN count(*)"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.008280874928459525,
+      "text": "MATCH p=(a:Issue)-[rs*1..5]-(b:Issue)\nWHERE a.issueKey<b.issueKey AND all(r IN rs WHERE type(r)<>'HAS_PARENT')\nWITH p,a,b,nodes(p) AS ns, rs\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..])\nAND all(n IN ns WHERE EXISTS{(n)-[:ASSIGNED_TO]->()})\nAND all(i IN range(0,size(ns)-2) WHERE head([(ns[i])-[:ASSIGNED_TO]->(x)|x.personKey]) <> head([(ns[i+1])-[:ASSIGNED_TO]->(y)|y.personKey]))\nAND NOT EXISTS{(a)-[r2]-(c:Issue)-[:ASSIGNED_TO]->(z) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND z.personKey<>head([(a)-[:ASSIGNED_TO]->(x)|x.personKey])}\nAND NOT EXISTS{(b)-[r2]-(c:Issue)-[:ASSIGNED_TO]->(z) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND z.personKey<>head([(b)-[:ASSIGNED_TO]->(x)|x.personKey])}\nRETURN [n IN ns|n.issueKey] AS path, [r IN rs|r.linkId] AS links, [n IN ns|head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS people, [n IN ns|head([(n)-[:IN_PROJECT]->(x)|x.projectKey])] AS projects, [r IN rs|type(r)] AS types"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.038973000133410096,
+      "text": "MATCH (i:Issue)-[:ASSIGNED_TO]->(p:Person) WITH collect([i.issueKey,p.personKey]) AS prs\nWITH apoc.map.fromPairs(prs) AS m\nMATCH p=(a:Issue)-[rs*1..5]-(b:Issue)\nWHERE a.issueKey<b.issueKey AND all(r IN rs WHERE type(r)<>'HAS_PARENT')\nWITH m,p,a,b,nodes(p) AS ns, rs\nWHERE all(n IN ns WHERE m[n.issueKey] IS NOT NULL)\nAND all(i IN range(0,size(ns)-2) WHERE m[ns[i].issueKey]<>m[ns[i+1].issueKey])\nAND all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..])\nAND NOT EXISTS{(a)-[r2]-(c:Issue) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND m[c.issueKey] IS NOT NULL AND m[c.issueKey]<>m[a.issueKey]}\nAND NOT EXISTS{(b)-[r2]-(c:Issue) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND m[c.issueKey] IS NOT NULL AND m[c.issueKey]<>m[b.issueKey]}\nRETURN [n IN ns|n.issueKey] AS path, [r IN rs|r.linkId] AS links, [n IN ns|m[n.issueKey]] AS people, [n IN ns|head([(n)-[:IN_PROJECT]->(x)|x.projectKey])] AS projects, [r IN rs|type(r)] AS types"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.013183499919250607,
+      "text": "MATCH p=(a:Issue)((x:Issue)-[r]-(y:Issue) WHERE type(r)<>'HAS_PARENT' AND EXISTS{(x)-[:ASSIGNED_TO]->(u) MATCH (y)-[:ASSIGNED_TO]->(v) WHERE u<>v}){1,5}(b:Issue)\nWHERE a.issueKey<b.issueKey\nWITH p,a,b,nodes(p) AS ns, relationships(p) AS rs\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..])\nAND NOT EXISTS{(a)-[r2]-(c:Issue) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND EXISTS{(a)-[:ASSIGNED_TO]->(u) MATCH (c)-[:ASSIGNED_TO]->(v) WHERE u<>v}}\nAND NOT EXISTS{(b)-[r2]-(c:Issue) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND EXISTS{(b)-[:ASSIGNED_TO]->(u) MATCH (c)-[:ASSIGNED_TO]->(v) WHERE u<>v}}\nRETURN [n IN ns|n.issueKey] AS path, [r IN rs|r.linkId] AS links, [n IN ns|head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS people, [n IN ns|head([(n)-[:IN_PROJECT]->(x)|x.projectKey])] AS projects, [r IN rs|type(r)] AS types"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.6615596250630915,
+      "text": "MATCH p=(a:Issue)((x:Issue)-[r]-(y:Issue) WHERE type(r)<>'HAS_PARENT' AND EXISTS{(x)-[:ASSIGNED_TO]->(u), (y)-[:ASSIGNED_TO]->(v) WHERE u<>v}){1,5}(b:Issue)\nWHERE a.issueKey<b.issueKey\nWITH p,a,b,nodes(p) AS ns, relationships(p) AS rs\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..])\nAND NOT EXISTS{(a)-[r2]-(c:Issue), (a)-[:ASSIGNED_TO]->(u), (c)-[:ASSIGNED_TO]->(v) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND u<>v}\nAND NOT EXISTS{(b)-[r2]-(c:Issue), (b)-[:ASSIGNED_TO]->(u), (c)-[:ASSIGNED_TO]->(v) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND u<>v}\nRETURN [n IN ns|n.issueKey] AS path, [r IN rs|r.linkId] AS links, [n IN ns|head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS people, [n IN ns|head([(n)-[:IN_PROJECT]->(x)|x.projectKey])] AS projects, [r IN rs|type(r)] AS types"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.415530958911404,
+      "text": "MATCH p=(a:Issue)((x:Issue)-[r]-(y:Issue) WHERE type(r)<>'HAS_PARENT' AND EXISTS{(x)-[:ASSIGNED_TO]->(u), (y)-[:ASSIGNED_TO]->(v) WHERE u<>v}){1,5}(b:Issue)\nWHERE a.issueKey<b.issueKey\nWITH p,a,b,nodes(p) AS ns, relationships(p) AS rs\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..])\nAND NOT EXISTS{(a)-[r2]-(c:Issue), (a)-[:ASSIGNED_TO]->(u), (c)-[:ASSIGNED_TO]->(v) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND u<>v}\nAND NOT EXISTS{(b)-[r2]-(c:Issue), (b)-[:ASSIGNED_TO]->(u), (c)-[:ASSIGNED_TO]->(v) WHERE type(r2)<>'HAS_PARENT' AND NOT c IN ns AND u<>v}\nRETURN [n IN ns|n.issueKey] AS path, [i IN range(0,size(rs)-1)|ns[i].issueKey] AS src, [r IN rs|r.linkId] AS links"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 4,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 53.87991312495433,
+  "source_match": false,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "2ebce6d98710a1e5e04a220ddbf88da7b0dc3f3d91714d973259bb75f65ee521",
+    "source_ids": [],
+    "value_items": 1481
+  },
+  "time": "2026-11-13T03:36:00+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.1244624,
+    "input_tokens": 135642,
+    "output_tokens": 6913,
+    "requests": 10,
+    "tool_calls": 7
+  },
+  "zero_answer": false
+}

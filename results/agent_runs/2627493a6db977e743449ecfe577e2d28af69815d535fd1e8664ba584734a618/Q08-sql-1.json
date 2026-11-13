@@ -1,0 +1,134 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 4,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.009062540950253606,
+      "text": "select count(*), count(distinct from_issue_key) from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where l.outward_label='depends on' and coalesce(a.resolution_name,'')='' and coalesce(b.resolution_name,'')=''"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.01726216683164239,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where l.outward_label='depends on' and coalesce(a.resolution_name,'')='' and coalesce(b.resolution_name,'')=''),\np as (select array[f,t] nodes, array[link_id] links from e where f<>t\nunion all select p.nodes||e.t, p.links||e.link_id from p join e on e.f=p.nodes[array_length(p.nodes,1)] where not e.t=any(p.nodes) and array_length(p.nodes,1)<=5)\nselect array_to_string(nodes,',') path, nodes, links from p where array_length(nodes,1)<=6\nand not exists (select 1 from e where e.f=p.nodes[array_length(p.nodes,1)] and not e.t=any(p.nodes))\nand not exists (select 1 from e where e.t=p.nodes[1] and not e.f=any(p.nodes))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.005715625127777457,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where l.outward_label='depends on' and coalesce(a.resolution_name,'')='' and coalesce(b.resolution_name,'')=''),\np as (select array[f,t] nodes from e where f<>t\nunion all select p.nodes||e.t from p join e on e.f=p.nodes[array_length(p.nodes,1)] where not e.t=any(p.nodes) and array_length(p.nodes,1)<=5)\nselect nodes as path from p where not exists (select 1 from e where e.f=p.nodes[array_length(p.nodes,1)] and not e.t=any(p.nodes))\nand not exists (select 1 from e where e.t=p.nodes[1] and not e.f=any(p.nodes))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.0054696251172572374,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where l.outward_label='depends on' and coalesce(a.resolution_name,'')='' and coalesce(b.resolution_name,'')=''),\np as (select array[f,t] nodes, array[link_id] links from e where f<>t\nunion all select p.nodes||e.t, p.links||e.link_id from p join e on e.f=p.nodes[array_length(p.nodes,1)] where not e.t=any(p.nodes) and array_length(p.nodes,1)<=5)\nselect nodes as path, links from p where not exists (select 1 from e where e.f=p.nodes[array_length(p.nodes,1)] and not e.t=any(p.nodes))\nand not exists (select 1 from e where e.t=p.nodes[1] and not e.f=any(p.nodes))"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q08",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 16.14969962509349,
+  "source_match": false,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "path",
+      "sources": [],
+      "value": [
+        {
+          "path": [
+            "issue:JRASERVER-66870",
+            "issue:JRASERVER-37545"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "406801"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-66660"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382592"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-67462"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382591"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-68724",
+            "issue:CWD-5029"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382655"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "time": "2026-11-13T03:31:33+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0473626,
+    "input_tokens": 50938,
+    "output_tokens": 2144,
+    "requests": 7,
+    "tool_calls": 4
+  },
+  "zero_answer": false
+}

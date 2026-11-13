@@ -1,0 +1,128 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.011247833026573062,
+      "text": "MATCH (a:Issue)-[r:DEPENDS]->(b:Issue) WHERE coalesce(a.resolutionName,'')='' AND coalesce(b.resolutionName,'')='' RETURN count(r), count(DISTINCT r.outwardLabel)"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.014368125004693866,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue) WHERE all(n IN nodes(p) WHERE coalesce(n.resolutionName,'')='') AND size(apoc.coll.toSet(nodes(p)))=size(nodes(p))\nAND NOT EXISTS {MATCH (x:Issue)-[:DEPENDS]->(a) WHERE coalesce(x.resolutionName,'')='' AND NOT x IN nodes(p)}\nAND NOT EXISTS {MATCH (b)-[:DEPENDS]->(y:Issue) WHERE coalesce(y.resolutionName,'')='' AND NOT y IN nodes(p)}\nRETURN [n IN nodes(p)|n.issueKey] AS path, [r IN relationships(p)|r.linkId] AS links"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.13389449985697865,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue) WHERE all(n IN nodes(p) WHERE coalesce(n.resolutionName,'')='')\nAND NOT EXISTS {MATCH (x:Issue)-[:DEPENDS]->(a) WHERE coalesce(x.resolutionName,'')='' AND NOT x IN nodes(p)}\nAND NOT EXISTS {MATCH (b)-[:DEPENDS]->(y:Issue) WHERE coalesce(y.resolutionName,'')='' AND NOT y IN nodes(p)}\nRETURN [n IN nodes(p)|n.issueKey] AS path, [r IN relationships(p)|r.linkId] AS links"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q08",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 11.825479709077626,
+  "source_match": false,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "path",
+      "sources": [],
+      "value": [
+        {
+          "path": [
+            "issue:JRASERVER-66870",
+            "issue:JRASERVER-37545"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "406801"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-66660"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382592"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-67462"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382591"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-68724",
+            "issue:CWD-5029"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382655"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "time": "2026-11-13T03:32:26+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0190351,
+    "input_tokens": 33551,
+    "output_tokens": 1265,
+    "requests": 5,
+    "tool_calls": 3
+  },
+  "zero_answer": false
+}

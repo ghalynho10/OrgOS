@@ -1,0 +1,97 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": false,
+  "attempt_count": 7,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.03593316697515547,
+      "text": "MATCH (i:Issue)-[:ASSIGNED_TO]->(pp:Person) WITH i, pp.personKey AS a\nMATCH (i)-[:IN_PROJECT]->(pr:Project)\nWITH collect(i.issueKey) AS ks\nMATCH p=(x:Issue)-[rs:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]-(y:Issue)\nWHERE all(n IN nodes(p) WHERE n.issueKey IN ks) AND size(nodes(p))=size(apoc.coll.toSet(nodes(p)))\nRETURN count(p)"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.03878258401528001,
+      "text": "MATCH p=(x:Issue)-[rs:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]-(y:Issue)\nWHERE all(r IN rs WHERE EXISTS{(startNode(r))-[:ASSIGNED_TO]->(u)} AND EXISTS{(endNode(r))-[:ASSIGNED_TO]->(v)} AND NOT EXISTS{(startNode(r))-[:ASSIGNED_TO]->(u:Person)<-[:ASSIGNED_TO]-(endNode(r))})\nWITH p, nodes(p) AS ns, rs, x, y\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..]) AND x.issueKey < y.issueKey\nAND NOT EXISTS{ (y)-[r2:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(y)-[:ASSIGNED_TO]->(u)} AND EXISTS{(z)-[:ASSIGNED_TO]->(v)} AND NOT EXISTS{(y)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nAND NOT EXISTS{ (x)-[r2:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(x)-[:ASSIGNED_TO]->(u)} AND EXISTS{(z)-[:ASSIGNED_TO]->(v)} AND NOT EXISTS{(x)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nRETURN [n IN ns | n.issueKey] AS path, [r IN rs | r.linkId] AS links, size(rs) AS hops"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2631,
+      "seconds": 0.681530874921009,
+      "text": "MATCH p=(x:Issue) ((a:Issue)-[r:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(b:Issue) WHERE EXISTS{(a)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(b)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(a)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(b)}){1,5} (y:Issue)\nWITH p, nodes(p) AS ns, relationships(p) AS rs, x, y\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..]) AND x.issueKey < y.issueKey\nAND NOT EXISTS{ (y)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(y)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(y)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nAND NOT EXISTS{ (x)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(x)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(x)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nUNWIND range(0,size(rs)-1) AS k\nRETURN [n IN ns | n.issueKey] AS path, ns[k].issueKey AS issue, rs[k].linkId AS link, size(rs) AS hops"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.589398083044216,
+      "text": "MATCH p=(x:Issue) ((a:Issue)-[r:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(b:Issue) WHERE EXISTS{(a)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(b)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(a)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(b)}){1,5} (y:Issue)\nWITH p, nodes(p) AS ns, relationships(p) AS rs, x, y\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..]) AND x.issueKey < y.issueKey\nAND NOT EXISTS{ (y)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(y)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(y)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nAND NOT EXISTS{ (x)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(x)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(x)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nRETURN [n IN ns | n.issueKey] AS path, [r IN rs | r.linkId] AS links"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2316,
+      "seconds": 0.4144444160629064,
+      "text": "MATCH p=(x:Issue) ((a:Issue)-[r:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(b:Issue) WHERE EXISTS{(a)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(b)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(a)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(b)}){1,5} (y:Issue)\nWITH p, nodes(p) AS ns, relationships(p) AS rs, x, y\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..]) AND x.issueKey < y.issueKey\nAND NOT EXISTS{ (y)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(y)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(y)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nAND NOT EXISTS{ (x)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(x)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(x)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nUNWIND ns AS n RETURN DISTINCT n.issueKey AS issue"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1440,
+      "seconds": 0.36159775010310113,
+      "text": "MATCH p=(x:Issue) ((a:Issue)-[r:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(b:Issue) WHERE EXISTS{(a)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(b)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(a)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(b)}){1,5} (y:Issue)\nWITH p, nodes(p) AS ns, relationships(p) AS rs, x, y\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..]) AND x.issueKey < y.issueKey\nAND NOT EXISTS{ (y)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(y)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(y)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nAND NOT EXISTS{ (x)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(x)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(x)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nUNWIND rs AS r RETURN DISTINCT r.linkId AS link"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.4738939998205751,
+      "text": "MATCH p=(x:Issue) ((a:Issue)-[r:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(b:Issue) WHERE EXISTS{(a)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(b)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(a)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(b)}){1,5} (y:Issue)\nWITH p, nodes(p) AS ns, relationships(p) AS rs, x, y\nWHERE all(i IN range(0,size(ns)-2) WHERE NOT ns[i] IN ns[i+1..]) AND x.issueKey < y.issueKey\nAND NOT EXISTS{ (y)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(y)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(y)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nAND NOT EXISTS{ (x)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION]-(z:Issue) WHERE NOT z IN ns AND EXISTS{(z)-[:ASSIGNED_TO]->(:Person)} AND EXISTS{(x)-[:ASSIGNED_TO]->(:Person)} AND NOT EXISTS{(x)-[:ASSIGNED_TO]->(:Person)<-[:ASSIGNED_TO]-(z)} }\nRETURN [n IN ns | n.issueKey] AS path, [i IN range(0,size(rs)-1) | ns[i].issueKey] AS srcs, [r IN rs | r.linkId] AS links"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 2,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 60.31399325001985,
+  "source_match": false,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "2ebce6d98710a1e5e04a220ddbf88da7b0dc3f3d91714d973259bb75f65ee521",
+    "source_ids": [],
+    "value_items": 1481
+  },
+  "time": "2026-11-13T03:35:06+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.1384803,
+    "input_tokens": 109813,
+    "output_tokens": 8846,
+    "requests": 8,
+    "tool_calls": 7
+  },
+  "zero_answer": false
+}

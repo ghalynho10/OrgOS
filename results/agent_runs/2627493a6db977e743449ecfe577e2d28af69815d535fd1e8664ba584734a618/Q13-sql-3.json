@@ -1,0 +1,85 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.008511624997481704,
+      "text": "select i.issue_key id, i.assignee_key, i.status_name, coalesce(sum(l.seconds) filter (where l.seconds>0),0) secs, i.parent_key, string_agg(l.history_id,',') filter (where l.seconds>0) entries from model.issue i left join model.logged_time l on l.issue_key=i.issue_key where i.parent_key='CLOV-108' group by i.issue_key"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q13",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 2.676902167033404,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 2
+    },
+    {
+      "extra": 1,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "set",
+      "sources": [
+        {
+          "issue": [
+            "CLOV-109"
+          ]
+        },
+        {
+          "parent": [
+            "CLOV-109"
+          ]
+        }
+      ],
+      "value": [
+        "issue:CLOV-109"
+      ]
+    }
+  },
+  "time": "2026-11-13T03:49:31+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0047424,
+    "input_tokens": 12410,
+    "output_tokens": 349,
+    "requests": 2,
+    "tool_calls": 1
+  },
+  "zero_answer": false
+}

@@ -1,0 +1,89 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 617,
+      "seconds": 0.029037874890491366,
+      "text": "select c.parent_key as id, c.issue_key as child, c.assignee_key as person from model.issue c join model.issue p on p.issue_key=c.parent_key where p.project_key in ('CLOUD','CLOV') and c.project_key in ('CLOUD','CLOV') and c.assignee_key is not null and c.assignee_key<>'' and c.parent_key in (select parent_key from model.issue c2 where c2.project_key in ('CLOUD','CLOV') and assignee_key is not null and assignee_key<>'' group by parent_key having count(distinct assignee_key)>=2) order by 1"
+    },
+    {
+      "outcome": "ok",
+      "rows": 58,
+      "seconds": 0.008635125122964382,
+      "text": "select distinct id from (select c.parent_key id from model.issue c join model.issue p on p.issue_key=c.parent_key where p.project_key in ('CLOUD','CLOV') and c.project_key in ('CLOUD','CLOV') and c.assignee_key<>'' group by c.parent_key having count(distinct c.assignee_key)>=2) t"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q12",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 8.947496792068705,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 1269
+    },
+    {
+      "extra": 617,
+      "missing": 0
+    },
+    {
+      "extra": 617,
+      "missing": 0
+    },
+    {
+      "extra": 35,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "19c37b811b8b02b695f3d32c7d4a2ae6d6a9b9a8c173df985324f2ab46d73d8f",
+    "source_ids": [
+      58,
+      617,
+      617,
+      617
+    ],
+    "value_items": 58
+  },
+  "time": "2026-11-13T03:48:37+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0212258,
+    "input_tokens": 25218,
+    "output_tokens": 876,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}
