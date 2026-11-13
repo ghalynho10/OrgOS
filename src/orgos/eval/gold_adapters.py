@@ -216,6 +216,11 @@ def q15(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return single(answer, "seconds"), steps(sources)
 
 
+def q16(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q16, a `number`: one row, `issues`; its stage files are judged by `gold`, not here."""
+    return single(answer, "issues"), steps(sources)
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -232,4 +237,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q13": q13,
     "Q14": q14,
     "Q15": q15,
+    "Q16": q16,
 }
