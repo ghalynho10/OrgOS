@@ -211,6 +211,11 @@ def q14(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return single(answer, "resolved"), steps(sources)
 
 
+def q15(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q15, a `number` of seconds: one row, `seconds`."""
+    return single(answer, "seconds"), steps(sources)
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -226,4 +231,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q12": q12,
     "Q13": q13,
     "Q14": q14,
+    "Q15": q15,
 }
