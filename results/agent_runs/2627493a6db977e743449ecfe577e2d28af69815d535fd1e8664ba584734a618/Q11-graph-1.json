@@ -1,0 +1,80 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.07370637496933341,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,pr,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH i,pr,a+collect(DISTINCT q.personKey) AS ks\nUNWIND ks AS k\nWITH i,pr,collect(DISTINCT k) AS people WHERE size(people)>=2\nUNWIND people AS id\nRETURN DISTINCT id, 'person' AS kind\nUNION\nMATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,pr,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH i,pr,a+collect(DISTINCT q.personKey) AS ks\nUNWIND ks AS k\nWITH i,pr,collect(DISTINCT k) AS people WHERE size(people)>=2\nRETURN DISTINCT pr.projectKey AS id, 'project' AS kind"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4110,
+      "seconds": 0.8335784578230232,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,pr,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH i,pr,a,collect(DISTINCT q.personKey) AS b\nWITH i,pr,[x IN a+b WHERE x IS NOT NULL AND x<>''] AS ks\nUNWIND ks AS k\nWITH i,pr,collect(DISTINCT k) AS people WHERE size(people)>=2\nUNWIND people AS pid\nWITH collect(DISTINCT pid) AS ps, collect(DISTINCT pr.projectKey) AS prs\nUNWIND ps+prs AS id\nRETURN id"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4110,
+      "seconds": 0.5519191669300199,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(pr:Project)\nOPTIONAL MATCH (i)-[:ASSIGNED_TO|REPORTED_BY|CREATED_BY]->(p:Person)\nWITH i,pr,collect(DISTINCT p.personKey) AS a\nOPTIONAL MATCH (q:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH i,pr,a,collect(DISTINCT q.personKey) AS b\nWITH i,pr,[x IN a+b WHERE x IS NOT NULL AND x<>''] AS ks\nUNWIND ks AS k\nWITH i,pr,collect(DISTINCT k) AS people WHERE size(people)>=2\nUNWIND people AS pid\nWITH collect(DISTINCT pid) AS ps, collect(DISTINCT pr.projectKey) AS prs\nUNWIND ([x IN ps|{id:x,kind:'person'}]+[x IN prs|{id:x,kind:'project'}]) AS r\nRETURN r.id AS id, r.kind AS kind"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q11",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 14.13658337504603,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 8220,
+      "missing": 26987
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "67902ccd3524d6f7bcabfd34fdfe2cacb7e2e74d9449c11db8a63213f8cf882c",
+    "source_ids": [
+      8220
+    ],
+    "value_items": 4110
+  },
+  "time": "2026-11-13T03:47:04+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0400981,
+    "input_tokens": 44177,
+    "output_tokens": 1886,
+    "requests": 5,
+    "tool_calls": 3
+  },
+  "zero_answer": false
+}

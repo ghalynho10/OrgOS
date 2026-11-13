@@ -1,0 +1,72 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.005071250023320317,
+      "text": "create temp view x as select 1"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4110,
+      "seconds": 0.4732803332153708,
+      "text": "with r as (select issue_key i, assignee_key p from model.issue where coalesce(assignee_key,'')<>'' union select issue_key, reporter_key from model.issue where coalesce(reporter_key,'')<>'' union select issue_key, creator_key from model.issue where coalesce(creator_key,'')<>'' union select issue_key, person_key from model.logged_time where seconds>0 and coalesce(person_key,'')<>''), m as (select i from r group by i having count(distinct p)>=2) select p id, 'person' kind from r where i in (select i from m) group by p union select distinct project_key,'project' from model.issue where issue_key in (select i from m)"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q11",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 8.761523459106684,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 26987
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "e700dac817e33a3ffeaa79d46beb69a08682b97d899ad7bf04377af6c64b86c5",
+    "source_ids": [],
+    "value_items": 4110
+  },
+  "time": "2026-11-13T03:46:50+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.015203399999999999,
+    "input_tokens": 21086,
+    "output_tokens": 695,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

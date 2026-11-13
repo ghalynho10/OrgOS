@@ -1,0 +1,85 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.002449665917083621,
+      "text": "select c.parent_key as id, c.issue_key as child, c.assignee_key as person from model.issue c join model.issue p on p.issue_key=c.parent_key where p.project_key in ('CLOUD','CLOV') and c.project_key in ('CLOUD','CLOV') and c.assignee_key is not null and c.assignee_key<>'' and c.parent_key in (select parent_key from model.issue c2 join model.issue p2 on p2.issue_key=c2.parent_key where p2.project_key in ('CLOUD','CLOV') and c2.project_key in ('CLOUD','CLOV') and c2.assignee_key<>'' group by parent_key having count(distinct assignee_key)>=2)"
+    },
+    {
+      "outcome": "ok",
+      "rows": 617,
+      "seconds": 0.023303500143811107,
+      "text": "select c.parent_key as id, c.issue_key as child, c.assignee_key as person from model.issue c join model.issue p on p.issue_key=c.parent_key where p.project_key in ('CLOUD','CLOV') and c.project_key in ('CLOUD','CLOV') and c.assignee_key is not null and c.assignee_key<>'' and c.parent_key in (select c2.parent_key from model.issue c2 join model.issue p2 on p2.issue_key=c2.parent_key where p2.project_key in ('CLOUD','CLOV') and c2.project_key in ('CLOUD','CLOV') and c2.assignee_key<>'' group by c2.parent_key having count(distinct c2.assignee_key)>=2)"
+    },
+    {
+      "outcome": "ok",
+      "rows": 58,
+      "seconds": 0.019397666910663247,
+      "text": "select distinct id from (select c.parent_key as id from model.issue c join model.issue p on p.issue_key=c.parent_key where p.project_key in ('CLOUD','CLOV') and c.project_key in ('CLOUD','CLOV') and c.assignee_key<>'' group by c.parent_key having count(distinct c.assignee_key)>=2) t"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q12",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 9.969203375047073,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 1269
+    },
+    {
+      "extra": 710,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "848cbbb7f87cb0e4809c1fdb6400cf5917c108d2154714d25c9bfc5bc3d8b952",
+    "source_ids": [
+      58,
+      1851
+    ],
+    "value_items": 58
+  },
+  "time": "2026-11-13T03:48:18+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.025820700000000002,
+    "input_tokens": 32201,
+    "output_tokens": 1038,
+    "requests": 4,
+    "tool_calls": 3
+  },
+  "zero_answer": false
+}

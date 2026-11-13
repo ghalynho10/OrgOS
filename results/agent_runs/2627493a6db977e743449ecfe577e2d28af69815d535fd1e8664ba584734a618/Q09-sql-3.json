@@ -1,0 +1,85 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": false,
+  "attempt_count": 5,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.023681750055402517,
+      "text": "select count(*), count(distinct link_id) from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key is not null and b.assignee_key is not null and a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.04617749992758036,
+      "text": "select count(*) c from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key is not null and b.assignee_key is not null and a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.12827833299525082,
+      "text": "with recursive e as (\nselect l.link_id, l.from_issue_key f, l.to_issue_key t, l.outward_label lab from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key and a.assignee_key<>'' and b.assignee_key<>'' and l.from_issue_key<>l.to_issue_key\n), d as (select link_id,f s,t e2 from e union select link_id,t,f from e),\np as (\nselect array[s,e2] nodes, array[link_id] links, 1 n from d\nunion all\nselect p.nodes||d.e2, p.links||d.link_id, n+1 from p join d on d.s=p.nodes[array_length(p.nodes,1)] where not d.e2=any(p.nodes) and n<5)\nselect nodes, links, n from p where\nnot exists(select 1 from d where d.s=p.nodes[n+1] and not d.e2=any(p.nodes))\nand not exists(select 1 from d where d.s=p.nodes[1] and not d.e2=any(p.nodes))\nand nodes[1]<nodes[n+1]"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.12843766598962247,
+      "text": "with recursive e as (\nselect l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key and a.assignee_key<>'' and b.assignee_key<>'' and l.from_issue_key<>l.to_issue_key\n), d as (select link_id,f s,t e2 from e union select link_id,t,f from e),\np as (\nselect array[s,e2] nodes, array[link_id] links, 1 n from d\nunion all\nselect p.nodes||d.e2, p.links||d.link_id, n+1 from p join d on d.s=p.nodes[array_length(p.nodes,1)] where not d.e2=any(p.nodes) and n<5),\nr as (select nodes, links from p where\nnot exists(select 1 from d where d.s=p.nodes[n+1] and not d.e2=any(p.nodes))\nand not exists(select 1 from d where d.s=p.nodes[1] and not d.e2=any(p.nodes))\nand nodes[1]<nodes[n+1])\nselect nodes as path from r"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1481,
+      "seconds": 0.13101179199293256,
+      "text": "with recursive e as (\nselect l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key and a.assignee_key<>'' and b.assignee_key<>'' and l.from_issue_key<>l.to_issue_key\n), d as (select link_id,f s,t e2 from e union select link_id,t,f from e),\np as (\nselect array[s,e2] nodes, array[link_id] links, 1 n from d\nunion all\nselect p.nodes||d.e2, p.links||d.link_id, n+1 from p join d on d.s=p.nodes[array_length(p.nodes,1)] where not d.e2=any(p.nodes) and n<5)\nselect nodes as path, links as link from p where\nnot exists(select 1 from d where d.s=p.nodes[n+1] and not d.e2=any(p.nodes))\nand not exists(select 1 from d where d.s=p.nodes[1] and not d.e2=any(p.nodes))\nand nodes[1]<nodes[n+1]"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 21.476104374974966,
+  "source_match": false,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "96831e0bba3ee2efc984e208896233dbabb62dc842967d13e26ffc8a1cd03756",
+    "source_ids": [],
+    "value_items": 1481
+  },
+  "time": "2026-11-13T03:34:05+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0467432,
+    "input_tokens": 61680,
+    "output_tokens": 2536,
+    "requests": 7,
+    "tool_calls": 5
+  },
+  "zero_answer": false
+}

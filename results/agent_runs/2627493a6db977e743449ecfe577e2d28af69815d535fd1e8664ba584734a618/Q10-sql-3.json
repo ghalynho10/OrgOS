@@ -1,0 +1,89 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 258,
+      "seconds": 0.05510120885446668,
+      "text": "select l.link_id, s.issue_key src, t.issue_key tgt, s.assignee_key id, t.assignee_key tid from model.issue_link l join model.issue s on s.issue_key = case when l.outward_label in ('blocks','depends on','duplicates') then l.from_issue_key else l.to_issue_key end join model.issue t on t.issue_key = case when l.outward_label in ('blocks','depends on','duplicates') then l.to_issue_key else l.from_issue_key end where (l.outward_label in ('blocks','depends on','duplicates') or l.inward_label='supersedes') and coalesce(s.assignee_key,'')<>'' and coalesce(t.assignee_key,'')<>'' and s.assignee_key<>t.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 114,
+      "seconds": 0.0340698747895658,
+      "text": "select distinct s.assignee_key id from model.issue_link l join model.issue s on s.issue_key = case when l.outward_label in ('blocks','depends on','duplicates') then l.from_issue_key else l.to_issue_key end join model.issue t on t.issue_key = case when l.outward_label in ('blocks','depends on','duplicates') then l.to_issue_key else l.from_issue_key end where (l.outward_label in ('blocks','depends on','duplicates') or l.inward_label='supersedes') and coalesce(s.assignee_key,'')<>'' and coalesce(t.assignee_key,'')<>'' and s.assignee_key<>t.assignee_key"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q10",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 9.627216292079538,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 645
+    },
+    {
+      "extra": 242,
+      "missing": 0
+    },
+    {
+      "extra": 258,
+      "missing": 0
+    },
+    {
+      "extra": 96,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "057973eefd1cb7b3fab742eb31bf08914c1dc9b4049c1411a81899e7f1bdb2db",
+    "source_ids": [
+      258,
+      258,
+      258,
+      258
+    ],
+    "value_items": 114
+  },
+  "time": "2026-11-13T03:45:36+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0347888,
+    "input_tokens": 32508,
+    "output_tokens": 1143,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

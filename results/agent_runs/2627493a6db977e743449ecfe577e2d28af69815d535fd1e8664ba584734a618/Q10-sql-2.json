@@ -1,0 +1,83 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 258,
+      "seconds": 0.06762245902791619,
+      "text": "with q as (select l.link_id, case when l.outward_label in ('blocks','depends on','duplicates') then l.from_issue_key else l.to_issue_key end s, case when l.outward_label in ('blocks','depends on','duplicates') then l.to_issue_key else l.from_issue_key end t from model.issue_link l where l.outward_label in ('blocks','depends on','duplicates') or l.inward_label='supersedes')\nselect distinct a.assignee_key id, q.s source_issue, q.t target_issue, q.link_id, b.assignee_key target_person from q join model.issue a on a.issue_key=q.s join model.issue b on b.issue_key=q.t where a.assignee_key<>'' and b.assignee_key<>'' and a.assignee_key<>b.assignee_key"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q10",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 7.7781126669142395,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 645
+    },
+    {
+      "extra": 242,
+      "missing": 0
+    },
+    {
+      "extra": 258,
+      "missing": 0
+    },
+    {
+      "extra": 96,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "2061b788b1fcd763e1bda829674bb496789b563e8d0dd5dd18ee674f6f20113e",
+    "source_ids": [
+      258,
+      258,
+      258,
+      258
+    ],
+    "value_items": 258
+  },
+  "time": "2026-11-13T03:45:26+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.025691099999999998,
+    "input_tokens": 18181,
+    "output_tokens": 932,
+    "requests": 2,
+    "tool_calls": 1
+  },
+  "zero_answer": false
+}

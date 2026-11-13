@@ -1,0 +1,97 @@
+{
+  "agent_version": "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.0041086249984800816,
+      "text": "select issue_key, parent_key, resolution_name, issue_type_name from model.issue where parent_key='CLOV-538' or issue_key='CLOV-538'"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.008271832950413227,
+      "text": "select (count(*)>0 and count(*) filter (where coalesce(resolution_name,'')='')=0) as value, count(*) from model.issue where parent_key='CLOV-538'"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "03f73c6a8ee6bfabe0ce9936c79e0bd9f0568f06",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q14",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 4.015740582952276,
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 4
+    },
+    {
+      "extra": 5,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "boolean",
+      "sources": [
+        {
+          "issue": [
+            "CLOV-538",
+            "CLOV-679",
+            "CLOV-682",
+            "CLOV-691",
+            "CLOV-694"
+          ]
+        },
+        {
+          "parent": [
+            "CLOV-538",
+            "CLOV-679",
+            "CLOV-682",
+            "CLOV-691",
+            "CLOV-694"
+          ]
+        }
+      ],
+      "value": true
+    }
+  },
+  "time": "2026-11-13T03:50:00+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0060523,
+    "input_tokens": 18075,
+    "output_tokens": 386,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}
