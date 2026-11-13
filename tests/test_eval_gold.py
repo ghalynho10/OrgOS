@@ -10,6 +10,7 @@ import dataclasses
 import inspect
 import json
 import math
+import re
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -51,6 +52,13 @@ from orgos.eval.gold_adapters import (
     q05,
     q06,
     q07,
+    q08,
+    q09,
+    q10,
+    q11,
+    q12,
+    q13,
+    q14,
     single,
     step,
 )
@@ -314,6 +322,95 @@ def test_a_pairs_adapter_names_a_missing_column(
         adapter(result(columns, ("x", 1)), ())
 
 
+# --- The Q08 to Q14 adapters (AC-12) ---
+
+
+@pytest.mark.parametrize("adapter", [q08, q09], ids=["Q08", "Q09"])
+def test_a_path_adapter_types_each_chain_and_keeps_top_level_sources_empty(
+    adapter: Adapter,
+) -> None:
+    answer = result(
+        ("path", "issue_link", "issue"),
+        (["A-1", "A-2", "A-3"], [["l1"], ["l2", "l3"]], [["A-1", "A-2"], ["A-2", "A-3"]]),
+        (["A-3", "A-2", "A-1"], [["l2", "l3"], ["l1"]], [["A-3", "A-2"], ["A-2", "A-1"]]),
+    )
+    value, sources = adapter(answer, ())
+    assert value == [
+        (
+            ["issue:A-1", "issue:A-2", "issue:A-3"],
+            [
+                {"issue_link": ["l1"], "issue": ["A-1", "A-2"]},
+                {"issue_link": ["l2", "l3"], "issue": ["A-2", "A-3"]},
+            ],
+        ),
+        (
+            ["issue:A-3", "issue:A-2", "issue:A-1"],
+            [
+                {"issue_link": ["l2", "l3"], "issue": ["A-3", "A-2"]},
+                {"issue_link": ["l1"], "issue": ["A-2", "A-1"]},
+            ],
+        ),
+    ]
+    assert sources == []
+
+
+def test_the_q10_adapter_types_each_assignee_as_a_person() -> None:
+    answer = result(("person_key",), ("zed",), ("amy",))
+    step_1 = result(("issue", "issue_link", "person"), ("A-1", "l1", "zed"), ("B-2", "l1", "amy"))
+    value, sources = q10(answer, (step_1,))
+    assert value == ["person:zed", "person:amy"]
+    assert sources == [
+        {"issue": ["A-1", "B-2"], "issue_link": ["l1", "l1"], "person": ["zed", "amy"]}
+    ]
+
+
+def test_the_q11_adapter_types_each_member_by_its_kind_column() -> None:
+    answer = result(("kind", "id"), ("person", "zed"), ("project", "AAA"))
+    value, sources = q11(answer, (result(("issue", "time_entry"), ("A-1", "h1"), ("A-2", None)),))
+    assert value == ["person:zed", "project:AAA"]
+    assert sources == [{"issue": ["A-1", "A-2"], "time_entry": ["h1"]}]
+
+
+@pytest.mark.parametrize("adapter", [q12, q13], ids=["Q12", "Q13"])
+def test_an_issue_set_adapter_types_each_key_as_an_issue(adapter: Adapter) -> None:
+    answer = result(("issue_key",), ("A-9",), ("A-2",))
+    step_1 = result(("issue", "parent", "person"), ("A-9", None, None), ("A-10", "A-10", "zed"))
+    value, sources = adapter(answer, (step_1,))
+    assert value == ["issue:A-9", "issue:A-2"]
+    assert sources == [{"issue": ["A-9", "A-10"], "parent": ["A-10"], "person": ["zed"]}]
+
+
+@pytest.mark.parametrize("resolved", [True, False])
+def test_the_q14_adapter_takes_the_one_boolean(resolved: bool) -> None:
+    step_1 = result(("issue", "parent"), ("A-1", None), ("A-2", "A-2"))
+    value, sources = q14(result(("resolved",), (resolved,)), (step_1,))
+    assert value is resolved
+    assert sources == [{"issue": ["A-1", "A-2"], "parent": ["A-2"]}]
+
+
+def test_the_q14_adapter_refuses_more_than_one_row() -> None:
+    with pytest.raises(EvalError, match="returns 2 rows, not 1"):
+        q14(result(("resolved",), (True,), (False,)), ())
+
+
+@pytest.mark.parametrize(
+    ("adapter", "columns", "missing"),
+    [
+        (q10, ("assignee_key", "x"), "person_key"),
+        (q11, ("kind", "key"), "id"),
+        (q12, ("parent_key", "x"), "issue_key"),
+        (q13, ("child_key", "x"), "issue_key"),
+        (q14, ("done", "x"), "resolved"),
+    ],
+    ids=["Q10", "Q11", "Q12", "Q13", "Q14"],
+)
+def test_a_q10_to_q14_adapter_names_a_missing_column(
+    adapter: Adapter, columns: tuple[str, ...], missing: str
+) -> None:
+    with pytest.raises(EvalError, match=f"no column {missing}"):
+        adapter(result(columns, ("x", 1)), ())
+
+
 # --- Empty cells in a sources step (AC-12, amended 2026-11-12) ---
 
 
@@ -394,7 +491,7 @@ def test_path_rows_through_the_adapter_keep_top_level_sources_empty() -> None:
         (
             ("path", "issue_link"),
             (["SEC-1", "SEC-2", "SEC-3"], ["SEC-9"]),
-            "holds 1 items for a path of 3 IDs, it needs 2",
+            "holds 1 item(s) for a path of 3 IDs, it needs 2",
         ),
         (
             ("path", "issue_link"),
@@ -414,9 +511,22 @@ def test_path_rows_through_the_adapter_keep_top_level_sources_empty() -> None:
 def test_path_rows_refuse_a_malformed_row_with_no_value(
     columns: tuple[str, ...], row: tuple[Any, ...], message: str
 ) -> None:
-    with pytest.raises(EvalError, match=message) as excinfo:
+    with pytest.raises(EvalError, match=re.escape(message)) as excinfo:
         path_rows(result(columns, row), "issue")
     assert "SEC-" not in str(excinfo.value)
+
+
+def test_path_rows_refuse_a_wrong_length_with_the_whole_message() -> None:
+    answer = result(
+        ("path", "issue_link"),
+        (["SEC-1", "SEC-2"], ["SEC-9"]),
+        (["SEC-1", "SEC-2", "SEC-3"], ["SEC-9"]),
+    )
+    with pytest.raises(EvalError) as excinfo:
+        path_rows(answer, "issue")
+    assert str(excinfo.value) == (
+        "row 2: column issue_link holds 1 item(s) for a path of 3 IDs, it needs 2"
+    )
 
 
 # --- The layout message of a path pair (AC-11, AC-13, amended 2026-11-12) ---

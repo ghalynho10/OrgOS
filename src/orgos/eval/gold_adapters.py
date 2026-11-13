@@ -75,7 +75,9 @@ def steps(results: tuple[QueryResult, ...]) -> Sources:
 
 
 def _hop(item: object) -> list[object]:
-    # One hop's IDs of one kind: a single ID is wrapped, a NULL is no ID.
+    # One hop's IDs of one kind: a single ID is wrapped, a NULL is no ID. A list
+    # nested inside the hop's list is kept as one item on purpose, not flattened:
+    # the adapter only reshapes (AC-12), so a malformed hop reaches compare as is.
     if item is None:
         return []
     if isinstance(item, list | tuple):
@@ -105,7 +107,7 @@ def path_rows(answer: QueryResult, node: str) -> list[tuple[list[str], Sources]]
                 raise EvalError(f"row {number}: column {kind} is NULL or not a list")
             if len(cell) != len(path) - 1:
                 raise EvalError(
-                    f"row {number}: column {kind} holds {len(cell)} items for a path of"
+                    f"row {number}: column {kind} holds {len(cell)} item(s) for a path of"
                     f" {len(path)} IDs, it needs {len(path) - 1}"
                 )
         hops = [{kind: _hop(row[kind][hop]) for kind in kinds} for hop in range(len(path) - 1)]
