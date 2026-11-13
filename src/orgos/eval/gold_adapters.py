@@ -239,6 +239,15 @@ def q18(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     )
 
 
+def q19(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q19, a `ranking` of projects by `issues`: rows in the query's rank order, cut included."""
+    keys = column(answer, "project_key")
+    counts = column(answer, "issues")
+    return [(f"project:{key}", count) for key, count in zip(keys, counts, strict=True)], steps(
+        sources
+    )
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -258,4 +267,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q16": q16,
     "Q17": q17,
     "Q18": q18,
+    "Q19": q19,
 }
