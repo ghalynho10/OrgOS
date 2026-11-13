@@ -6,19 +6,33 @@ difference cannot come from different words (AC-3, AC-7). The schema
 description is a second instructions entry, rendered by `describe_sql` and
 `describe_graph`. `render_question_block` is the one rule for what the model
 sees of a question (AC-4); `render_plain_block` is the block of `orgos ask`,
-which holds only the question text (AC-5).
+which holds only the question text (AC-5). Spec 0015 adds one `Sources layout`
+line after the reading note, from `layouts.toml` by question id, so the plain
+block never holds one (AC-1 to AC-3).
 """
 
 from __future__ import annotations
 
+import tomllib
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any
 
+from orgos.agent.answer import SOURCE_KINDS, Layout
+from orgos.agent.errors import AgentError
 from orgos.eval.handoff import Store
-from orgos.eval.models import Question
+from orgos.eval.models import Question, Shape
 
 # A reading note line with this prefix is never shown to the agent (AC-4).
 HIDDEN_LINE_PREFIX = "If empty:"
+LAYOUTS_FILE = Path(__file__).with_name("layouts.toml")
+# The one layout a path question may have, and its line (spec 0015 AC-1, AC-2).
+PATH_LAYOUT: Layout = (("issue", "issue_link"),)
+PATH_LAYOUT_LINE = (
+    "Sources layout: 1 step, one item per hop: issue, issue_link. In each hop, issue holds"
+    " both issues of the hop, issue_link holds every link between them."
+)
 
 
 @dataclass(frozen=True)
@@ -141,19 +155,86 @@ def visible_reading(reading: str) -> str:
     )
 
 
-def render_question_block(question: Question) -> str:
-    """What the model sees of a scored question (AC-4).
+def _step_problems(qid: str, steps: Any) -> list[str]:
+    if not isinstance(steps, list) or not steps:
+        return [f"{qid}: the layout must be a list of one or more steps"]
+    problems = []
+    for number, step in enumerate(steps, start=1):
+        where = f"{qid}, step {number}"
+        if not isinstance(step, list) or not all(isinstance(kind, str) for kind in step):
+            problems.append(f"{where}: a step must be a list of kinds")
+            continue
+        if not step:
+            problems.append(f"{where}: the step is empty")
+        problems.extend(
+            f"{where}: {kind!r} is not one of {', '.join(SOURCE_KINDS)}"
+            for kind in step
+            if kind not in SOURCE_KINDS
+        )
+        if len(set(step)) != len(step):
+            problems.append(f"{where}: a kind is listed twice")
+        elif step != sorted(step):
+            problems.append(f"{where}: the kinds are not in alphabetical order")
+    return problems
+
+
+def parse_layouts(text: str, shapes: Mapping[str, Shape]) -> Mapping[str, Layout]:
+    """The layout of each question in `layouts.toml` text; raises `AgentError` naming every problem.
+
+    `shapes` maps each of the 20 question ids to its shape. Every question
+    needs an entry and no other id may have one; each step is a non empty,
+    alphabetical list of distinct source kinds; a `path` question's layout is
+    exactly one step `issue, issue_link` (spec 0015 AC-1).
+    """
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as error:
+        raise AgentError(f"{LAYOUTS_FILE.name} is not valid TOML: {error}") from None
+    problems = [f"{qid}: no layout" for qid in sorted(shapes) if qid not in data]
+    problems.extend(
+        f"{qid}: not one of the 20 questions" for qid in sorted(data) if qid not in shapes
+    )
+    for qid in sorted(set(data) & set(shapes)):
+        step_problems = _step_problems(qid, data[qid])
+        problems.extend(step_problems)
+        is_path = not step_problems and shapes[qid] == "path"
+        if is_path and tuple(tuple(step) for step in data[qid]) != PATH_LAYOUT:
+            problems.append(f"{qid}: a path question's layout is exactly [[issue, issue_link]]")
+    if problems:
+        raise AgentError(f"{LAYOUTS_FILE.name} is not usable:\n  " + "\n  ".join(problems))
+    return {qid: tuple(tuple(step) for step in data[qid]) for qid in sorted(shapes)}
+
+
+def render_layout_line(layout: Layout, shape: Shape) -> str:
+    """The `Sources layout` line of a scored question block (spec 0015 AC-2)."""
+    if shape == "path":
+        return PATH_LAYOUT_LINE
+    if len(layout) == 1:
+        return f"Sources layout: 1 step: {', '.join(layout[0])}"
+    steps = "; ".join(f"({n}) {', '.join(kinds)}" for n, kinds in enumerate(layout, start=1))
+    return f"Sources layout: {len(layout)} steps: {steps}"
+
+
+def render_question_block(question: Question, layout: Layout) -> str:
+    """What the model sees of a scored question (AC-4, amended by spec 0015 AC-2).
 
     The text, the shape, the unit unless it is `none`, the hop limit only for a
-    `variable` question, and the reading note without its `If empty:` lines.
-    Never `type`, `hops`, `data`, `tracer` or `fields`.
+    `variable` question, the reading note without its `If empty:` lines, and
+    last the question's `Sources layout` line. Never `type`, `hops`, `data`,
+    `tracer` or `fields`.
     """
     lines = [f"Question: {question.text}", f"Answer shape: {question.shape}"]
     if question.unit != "none":
         lines.append(f"Unit: {question.unit}")
     if question.hop_mode == "variable" and question.max_hops is not None:
         lines.append(f"Hop limit: {question.max_hops}")
-    lines.extend(("Reading note:", visible_reading(question.reading)))
+    lines.extend(
+        (
+            "Reading note:",
+            visible_reading(question.reading),
+            render_layout_line(layout, question.shape),
+        )
+    )
     return "\n".join(lines)
 
 

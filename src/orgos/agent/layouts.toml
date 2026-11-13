@@ -1,0 +1,30 @@
+# The evidence layout of each scored question (spec 0015 AC-1, AC-5): its source
+# steps in order, each the kinds it holds in alphabetical order. The lines come
+# from the known answers and the engineer's rulings (commits 2ecf29c, b13f405,
+# 1d793bd, 25e339a; Q03 and Q16 ruled on 2026-11-13), never from a run file.
+# The layout depends on the question only, never on the store, the run or an
+# answer value. A path question (Q08, Q09) has exactly one step: issue,
+# issue_link. `render_question_block` prints each as the block's last line; the
+# soft check in `orgos.agent.answer` sends the model back while output retries
+# are left, and a layout problem alone never ends a run.
+
+Q01 = [["issue"]]
+Q02 = [["issue"]]
+Q03 = [["issue"]]
+Q04 = [["issue", "time_entry"]]
+Q05 = [["issue", "time_entry"]]
+Q06 = [["issue", "time_entry"]]
+Q07 = [["issue", "person", "time_entry"]]
+Q08 = [["issue", "issue_link"]]
+Q09 = [["issue", "issue_link"]]
+Q10 = [["issue", "issue_link", "person"]]
+Q11 = [["issue", "time_entry"]]
+Q12 = [["issue", "parent", "person"]]
+Q13 = [["issue", "parent", "time_entry"]]
+Q14 = [["issue", "parent"]]
+Q15 = [["issue", "parent", "time_entry"]]
+Q16 = [["issue", "issue_link"]]
+Q17 = [["issue", "issue_link"], ["person", "time_entry"]]
+Q18 = [["issue", "person", "project"]]
+Q19 = [["issue", "issue_link", "project"]]
+Q20 = [["issue", "person", "project", "time_entry"]]

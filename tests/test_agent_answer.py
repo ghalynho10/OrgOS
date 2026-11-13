@@ -12,7 +12,14 @@ from typing import Any
 
 import pytest
 
-from orgos.agent.answer import FinalAnswer, SourceRef, answer_problems, assemble
+from orgos.agent.answer import (
+    FinalAnswer,
+    SourceRef,
+    answer_problems,
+    assemble,
+    layout_problems,
+    layout_send_back,
+)
 from orgos.agent.outcome import RunEnd, run_outcome
 from orgos.agent.tools import StoredResult
 from orgos.eval.compare import store_answer
@@ -347,3 +354,117 @@ def test_each_end_maps_to_one_outcome(
     end: RunEnd, attempts: tuple[QueryAttempt, ...], outcome: str
 ) -> None:
     assert run_outcome(end, attempts) == outcome
+
+
+# --- The soft layout check (spec 0015 AC-8, AC-9) ---
+
+ENTRIES = _rows(("id",), (7,), (8,))
+TWO_KINDS = {"r1": _rows(("value",), (2,)), "r2": ISSUES, "r3": ENTRIES}
+ONE_STEP = (("issue", "time_entry"),)
+RIGHT = _answer("number", sources=[{"time_entry": ("r3", "id"), "issue": ("r2", "id")}])
+
+
+def test_a_layout_that_matches_has_no_problem_whatever_the_kind_order() -> None:
+    assert answer_problems(RIGHT, TWO_KINDS, "number") == ()
+    assert layout_problems(RIGHT, TWO_KINDS, ONE_STEP) == ()
+
+
+@pytest.mark.parametrize(
+    ("sources", "layout", "reasons"),
+    [
+        (
+            [{"issue": ("r2", "id")}, {"time_entry": ("r3", "id")}],
+            ONE_STEP,
+            (
+                "the layout asks for 1 step, the answer has 2",
+                "step 1 holds issue; the layout asks for issue, time_entry",
+            ),
+        ),
+        (
+            [{"parent": ("r2", "id"), "issue": ("r2", "id")}],
+            ONE_STEP,
+            ("step 1 holds issue, parent; the layout asks for issue, time_entry",),
+        ),
+        (
+            [{"issue": ("r2", "id"), "time_entry": ("r3", "id")}],
+            (("issue", "issue_link"), ("person", "time_entry")),
+            (
+                "the layout asks for 2 steps, the answer has 1",
+                "step 1 holds issue, time_entry; the layout asks for issue, issue_link",
+            ),
+        ),
+        ([], ONE_STEP, ("the layout asks for 1 step, the answer has 0",)),
+    ],
+    ids=["split step", "wrong kind", "too few steps", "no sources"],
+)
+def test_each_layout_problem_names_counts_and_kinds_only(
+    sources: list[dict[str, tuple[str, str]]], layout: Any, reasons: tuple[str, ...]
+) -> None:
+    answer = _answer("number", sources=sources)
+    assert answer_problems(answer, TWO_KINDS, "number") == ()
+    found = layout_problems(answer, TWO_KINDS, layout)
+    assert found == reasons
+    for reason in found:
+        for word in ("r1", "r2", "r3", "id", "CLOUD", "7", "8"):
+            assert word not in reason.replace("time_entry", "").replace("issue", ""), word
+
+
+@pytest.mark.parametrize(
+    ("shape", "result"),
+    [
+        ("number", _rows(("value",), (0,))),
+        ("number", _rows(("value",), (Decimal("0.0"),))),
+        ("boolean", _rows(("value",), (False,))),
+        ("set", _rows(("id",))),
+        ("path", _rows(("path", "links", "issues"))),
+    ],
+    ids=["zero", "zero decimal", "false", "empty set", "no paths"],
+)
+def test_an_empty_zero_or_false_answer_is_not_checked_even_with_sources(
+    shape: str, result: StoredResult
+) -> None:
+    sources = (
+        [{"issue_link": ("r1", "links"), "issue": ("r1", "issues")}]
+        if shape == "path"
+        else [{"project": ("r2", "id")}, {"person": ("r2", "id")}]
+    )
+    answer = _answer(
+        shape, id_kind=None if shape in ("number", "boolean") else "issue", sources=sources
+    )
+    results = {"r1": result, "r2": ISSUES}
+    assert answer_problems(answer, results, shape) == ()  # type: ignore[arg-type]
+    assert layout_problems(answer, results, ONE_STEP) == ()
+
+
+def test_no_layout_is_not_checked() -> None:
+    answer = _answer("number", sources=[{"project": ("r2", "id")}])
+    assert layout_problems(answer, TWO_KINDS, None) == ()
+
+
+def test_a_path_with_the_hop_kinds_matches_and_one_without_issue_does_not() -> None:
+    layout = (("issue", "issue_link"),)
+    assert layout_problems(PATH_ANSWER, PATHS, layout) == ()
+    links_only = _answer("path", id_kind="issue", sources=[{"issue_link": ("r1", "links")}])
+    assert answer_problems(links_only, PATHS, "path") == ()
+    assert layout_problems(links_only, PATHS, layout) == (
+        "step 1 holds issue_link; the layout asks for issue, issue_link",
+    )
+
+
+@pytest.mark.parametrize(("retry", "sent_back"), [(0, True), (1, True), (2, False), (3, False)])
+def test_a_layout_send_back_happens_only_while_retries_are_left(
+    retry: int, sent_back: bool
+) -> None:
+    wrong = _answer("number", sources=[{"issue": ("r2", "id")}])
+    reasons = layout_send_back(wrong, TWO_KINDS, ONE_STEP, retry, 2)
+    assert bool(reasons) is sent_back
+    assert layout_send_back(RIGHT, TWO_KINDS, ONE_STEP, retry, 2) == ()
+
+
+def test_assemble_is_unchanged_by_a_layout_problem() -> None:
+    wrong = _answer("number", sources=[{"issue": ("r2", "id")}, {"time_entry": ("r3", "id")}])
+    assert layout_problems(wrong, TWO_KINDS, ONE_STEP)
+    assert assemble(wrong, TWO_KINDS) == (
+        2,
+        ({"issue": ("CLOUD-1", "CLOUD-2")}, {"time_entry": ("7", "8")}),
+    )
