@@ -194,6 +194,11 @@ def q11(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     return [f"{kind}:{key}" for kind, key in zip(kinds, ids, strict=True)], steps(sources)
 
 
+def q12(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q12, a `set` of parent issues: one row per qualifying parent, `issue_key`."""
+    return [f"issue:{key}" for key in column(answer, "issue_key")], steps(sources)
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -206,4 +211,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q09": q09,
     "Q10": q10,
     "Q11": q11,
+    "Q12": q12,
 }
