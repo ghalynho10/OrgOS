@@ -230,6 +230,15 @@ def q17(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sou
     )
 
 
+def q18(answer: QueryResult, sources: tuple[QueryResult, ...]) -> tuple[Any, Sources]:
+    """Q18, a `map` of person to project count: one row per person, `person_key` and `projects`."""
+    keys = column(answer, "person_key")
+    counts = column(answer, "projects")
+    return [(f"person:{key}", count) for key, count in zip(keys, counts, strict=True)], steps(
+        sources
+    )
+
+
 ADAPTERS: Mapping[str, Adapter] = {
     "Q01": q01,
     "Q02": q02,
@@ -248,4 +257,5 @@ ADAPTERS: Mapping[str, Adapter] = {
     "Q15": q15,
     "Q16": q16,
     "Q17": q17,
+    "Q18": q18,
 }
