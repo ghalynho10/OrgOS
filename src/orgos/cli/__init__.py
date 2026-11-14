@@ -9,6 +9,7 @@ feature adds its command and one line there.
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
@@ -20,12 +21,13 @@ from orgos.agent.ask import render_run, usage_line
 from orgos.agent.errors import AgentError
 from orgos.config import ConfigError, Settings, load_settings
 from orgos.eval import EvalError
-from orgos.eval.answers import answers
+from orgos.eval.answers import answers, read_questions
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
 from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
 from orgos.eval.handoff import RunStopped
 from orgos.eval.preflight import preflight, summary
+from orgos.eval.report import rule_lines
 from orgos.eval.runs import (
     estimate,
     estimate_plain,
@@ -441,6 +443,29 @@ def eval_run_command(
             max_run=max_run,
         )
     for line in lines:
+        typer.echo(line)
+
+
+@eval_app.command("report")
+def eval_report_command(
+    rule: Annotated[
+        bool,
+        typer.Option(
+            "--rule", help="Print the frozen rule and the reach table only; read no run file."
+        ),
+    ] = False,
+) -> None:
+    """Print the findings report from the finished run files (spec 0014).
+
+    `--rule` prints the rule fixed before the runs, its thresholds, the primary
+    family and the reach table, and reads no run file, no store and no known
+    answer. Calls no model and opens no store.
+    """
+    root = Path.cwd()
+    if not rule:
+        raise EvalError("the full report is not built yet; run `orgos eval report --rule`")
+    counts = Counter(str(question.type) for question in read_questions(root))
+    for line in rule_lines(counts):
         typer.echo(line)
 
 
