@@ -1176,13 +1176,6 @@ def test_noted_beside_plain_names_the_questions_not_compared_with_reasons() -> N
     assert line.endswith("; not compared: Q05 (other load)")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=KeyError,
-    reason="bug found by /test: score._matched reads f['answer_match'], so an absent field"
-    " crashes the noted beside plain table instead of counting false (AC-11); fix in its own"
-    " session, then drop this mark",
-)
 def test_an_absent_answer_match_in_the_plain_series_counts_false() -> None:
     plain = list(files(graph_ahead_on(*AGGREGATE), plain=True))
     index = next(
@@ -1271,3 +1264,103 @@ def test_rule_in_a_folder_with_only_the_questions_opens_only_them(
     ]
     out = capsys.readouterr().out.splitlines()
     assert "questions per type: aggregate 7, path_connection 7, mixed 6" in out
+
+
+# Run files missing a field (/debug, spec 0014 AC-11 to AC-13, AC-20, AC-21)
+
+
+def _drop(
+    found: tuple[dict[str, Any], ...], name: str, **change: Any
+) -> tuple[dict[str, Any], ...]:
+    """The files with `name` (`Qnn-store-n`) changed: a field set, or removed when `...`."""
+    out = []
+    for f in found:
+        if f"{f['question']}-{f['store']}-{f['run']}" == name:
+            f = {k: v for k, v in (f | change).items() if v is not ...}
+        out.append(f)
+    return tuple(out)
+
+
+def test_an_absent_answer_match_in_the_noted_series_counts_false_beside_plain() -> None:
+    noted = _drop(files(lambda q, s, n: True), "Q01-graph-1", answer_match=...)
+    made = make(VersionFiles(V2, SeriesFiles(RUNS, noted), SeriesFiles(RUNS, files(plain=True))))
+    assert "  aggregate, graph: noted 20/21, plain 0/21 (lower bound)" in "\n".join(made.lines)
+
+
+@pytest.mark.parametrize("value", [..., None])
+def test_a_noted_file_with_no_load_id_is_not_compared(value: Any) -> None:
+    noted = _drop(files(), "Q05-sql-1", load_id=value)
+    made = make(VersionFiles(V2, SeriesFiles(RUNS, noted), SeriesFiles(RUNS, files(plain=True))))
+    assert made.record["not_compared"]["noted"] == {"Q05": "other load ID"}
+    line = next(x for x in made.lines if x.startswith("  aggregate, SQL: noted"))
+    assert line.endswith("; not compared: Q05 (other load)")
+
+
+@pytest.mark.parametrize("value", [..., None])
+def test_a_plain_file_with_no_load_id_leaves_the_plain_series_out(value: Any) -> None:
+    plain = _drop(files(plain=True), "Q05-sql-1", load_id=value)
+    made = make(VersionFiles(V2, version(V2).noted, SeriesFiles(RUNS, plain)))
+    assert made.record["plain"]["left_out"] == "other load ID"
+
+
+@pytest.mark.parametrize("field", ["attempt_count", "retries", "attempts"])
+@pytest.mark.parametrize("value", [..., None])
+def test_a_noted_file_missing_a_counted_field_refuses_naming_the_file(
+    field: str, value: Any
+) -> None:
+    noted = _drop(files(), "Q01-graph-2", **{field: value})
+    with pytest.raises(EvalError, match=rf"{V2}/Q01-graph-2\.json holds no {field}"):
+        make(VersionFiles(V2, SeriesFiles(RUNS, noted)))
+
+
+def test_an_older_version_missing_a_counted_field_refuses_too() -> None:
+    older = _drop(files(version=V1), "Q01-sql-1", retries=...)
+    with pytest.raises(EvalError, match=rf"{V1}/Q01-sql-1\.json holds no retries"):
+        make(VersionFiles(V1, SeriesFiles(RUNS, older)), version(V2))
+
+
+def test_an_attempt_with_no_outcome_refuses_naming_the_file() -> None:
+    noted = _drop(files(), "Q01-graph-2", attempts=[{"rows": 3, "seconds": 0.25, "text": "x"}])
+    with pytest.raises(
+        EvalError, match=rf"{V2}/Q01-graph-2\.json holds an attempt with no outcome"
+    ):
+        make(VersionFiles(V2, SeriesFiles(RUNS, noted)))
+
+
+def test_a_plain_file_missing_a_counted_field_is_not_refused() -> None:
+    plain = _drop(files(plain=True), "Q01-graph-2", attempt_count=..., retries=None)
+    made = make(VersionFiles(V2, version(V2).noted, SeriesFiles(RUNS, plain)))
+    assert made.record["plain"]["left_out"] is None
+
+
+def test_an_absent_limit_reads_as_no_limit_hit() -> None:
+    noted = _drop(files(), "Q15-sql-1", limit=...)
+    made = make(VersionFiles(V2, SeriesFiles(RUNS, noted)))
+    assert made.record["tables"]["full form"]["sql"]["mixed"]["agent"]["limit_hit"] == {
+        "requests": 0,
+        "tool_calls": 0,
+        "tokens": 0,
+    }
+
+
+def test_the_command_turns_a_missing_field_into_the_eval_error_code(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = _shell_root(tmp_path)
+    path = root / "results/agent_runs" / V2 / "Q01-sql-1.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps({k: v for k, v in data.items() if k != "attempt_count"}))
+    monkeypatch.chdir(root)
+    from orgos.cli import run
+
+    with pytest.raises(SystemExit) as exit_info:
+        run(["eval", "report"])
+    assert exit_info.value.code == 4
+    assert f"{V2}/Q01-sql-1.json holds no attempt_count" in capsys.readouterr().err
+
+
+def test_a_noted_file_with_no_agent_version_is_not_compared_beside_plain() -> None:
+    noted = _drop(files(), "Q05-sql-1", agent_version=...)
+    made = make(VersionFiles(V2, SeriesFiles(RUNS, noted), SeriesFiles(RUNS, files(plain=True))))
+    line = next(x for x in made.lines if x.startswith("  aggregate, SQL: noted"))
+    assert line.endswith("; not compared: Q05 (other version)")

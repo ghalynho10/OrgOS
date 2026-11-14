@@ -316,20 +316,28 @@ def _series_of(version: VersionFiles) -> tuple[tuple[Series, SeriesFiles], ...]:
     return noted if version.plain is None else (*noted, ("plain", version.plain))
 
 
+COUNTED_FIELDS: Final = ("attempt_count", "retries", "attempts")
+
+
 def check_fields(versions: Sequence[VersionFiles]) -> frozenset[str]:
     """Every run file holds `type` and `zero_answer`, the same across a question (AC-13).
 
     Returns the questions whose files carry `zero_answer` true; a missing field
     or a disagreement refuses, naming the file. A missing field is never false.
+    Noted files also hold the fields the tables count (AC-20, AC-21), each attempt
+    with its outcome, so a missing one refuses here and is never counted as 0.
     """
     seen: dict[str, tuple[str, object, object]] = {}
     for version in versions:
         for series, found in _series_of(version):
+            required = ("type", "zero_answer", *(COUNTED_FIELDS if series == "noted" else ()))
             for data in found.files:
                 name = file_name(version.version, series, data)
-                for field in ("type", "zero_answer"):
+                for field in required:
                     if field not in data or data[field] is None:
                         raise EvalError(f"{name} holds no {field}; a missing field is never read")
+                if series == "noted" and any("outcome" not in a for a in data["attempts"]):
+                    raise EvalError(f"{name} holds an attempt with no outcome")
                 question = str(data["question"])
                 first = seen.setdefault(question, (name, data["type"], data["zero_answer"]))
                 if (first[1], first[2]) != (data["type"], data["zero_answer"]):
@@ -476,7 +484,7 @@ def pair(
         if any(key not in present for key in keys):
             not_compared.append((question, "missing files"))
             continue
-        if any(present[key]["load_id"] != load_id for key in keys):
+        if any(present[key].get("load_id") != load_id for key in keys):
             not_compared.append((question, "other load ID"))
             continue
         counts = {
@@ -549,7 +557,7 @@ def run_cell(
         "attempts_at_row_cap": sum(
             1 for data in files for a in data["attempts"] if a["outcome"] == "row_cap"
         ),
-        "limit_hit": {limit: sum(1 for d in files if d["limit"] == limit) for limit in LIMITS},
+        "limit_hit": {limit: sum(1 for d in files if d.get("limit") == limit) for limit in LIMITS},
     }
 
 
@@ -1222,7 +1230,7 @@ def _plain_status(
     present, missing = planned_files(plain, question_ids)
     if missing:
         return f"missing files ({len(missing)} planned plain run files)", []
-    if any(data["load_id"] != load_id for data in present.values()):
+    if any(data.get("load_id") != load_id for data in present.values()):
         return "other load ID", []
     return None, []
 
