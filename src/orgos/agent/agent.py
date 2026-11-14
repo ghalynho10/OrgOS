@@ -8,7 +8,9 @@ so tests give it a `FunctionModel` and fake executors and nothing reaches a
 model or a store. Each run is a fresh conversation with its own `RunTrace`
 (AC-6); the run ends through `final_answer` or plain text (AC-16), its outcome
 comes from the pure map in `outcome`, and its value and sources from
-`assemble`, never from what the model typed.
+`assemble`, never from what the model typed. `run_plain` is the same run on
+the plain block of spec 0013, with no layout, and `plain_blocks_sha256` pins
+that block, which is outside the version hash.
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ import hashlib
 import json
 import logging
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
@@ -75,6 +77,7 @@ from orgos.agent.prompt import (
     parse_layouts,
     render_instructions,
     render_plain_block,
+    render_plain_run_block,
     render_question_block,
 )
 from orgos.agent.session import check_sessions, read_graph_session, read_sql_session
@@ -213,6 +216,11 @@ def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def blocks_sha256(blocks: Sequence[str]) -> str:
+    """The sha256 of rendered question blocks in order: the `question_blocks` part (AC-24)."""
+    return _sha256(json.dumps(list(blocks)))
+
+
 def tool_definitions() -> list[dict[str, Any]]:
     """The tool and answer definitions as sent to the model, in a stable form."""
     query = QUERY_TOOL.tool_def
@@ -260,7 +268,7 @@ def version_parts(
     }
     return {
         "instructions": _sha256(json.dumps({s: list(instructions[s]) for s in STORES})),
-        "question_blocks": _sha256(json.dumps(list(question_blocks))),
+        "question_blocks": blocks_sha256(question_blocks),
         "tools": _sha256(tools_text),
         "description_sql": _sha256(descriptions["sql"].text),
         "description_graph": _sha256(descriptions["graph"].text),
@@ -281,7 +289,7 @@ def _response_model(messages: list[ModelMessage]) -> str | None:
 
 
 class OrgosQueryAgent:
-    """The agent the runner and `orgos ask` use: `describe`, `run` and `ask`.
+    """The agent the runner and `orgos ask` use: `describe`, `run`, `run_plain` and `ask`.
 
     `run` and `ask` are plain methods (AC-1); the open store connections live
     as long as the object, for the one command that built it.
@@ -347,6 +355,18 @@ class OrgosQueryAgent:
             raise AgentError(f"{LAYOUTS_FILE.name} has no layout for {question.id}")
         block = render_question_block(question, layout)
         return self._run(block, store, question.shape, question.id, layout)
+
+    def run_plain(self, question: Question, store: Store) -> AgentRun:
+        """Answer one question from its plain block, scored by the runner (spec 0013 AC-4).
+
+        The same agent as `run`, and the answer check enforces the question's
+        shape, but with no question id and no layout, so no layout check runs.
+        """
+        return self._run(render_plain_run_block(question), store, question.shape, None, None)
+
+    def plain_blocks_sha256(self, questions: Sequence[Question]) -> str:
+        """The hash of the plain blocks of `questions` in id order (spec 0013 AC-7)."""
+        return blocks_sha256(read_plain_blocks(questions))
 
     def ask(self, text: str, store: Store) -> AgentRun:
         """Answer a plain question: the same agent with the question text only (AC-5)."""
@@ -459,6 +479,13 @@ def read_question_blocks(
 ) -> tuple[str, ...]:
     """The 20 rendered question blocks in id order, each with its layout, for the version hash."""
     return tuple(render_question_block(question, layouts[question.id]) for question in questions)
+
+
+def read_plain_blocks(questions: Sequence[Question]) -> tuple[str, ...]:
+    """The plain block of each question, in id order whatever order they are given in."""
+    return tuple(
+        render_plain_run_block(question) for question in sorted(questions, key=lambda q: q.id)
+    )
 
 
 def build_agent(settings: Settings) -> OrgosQueryAgent:

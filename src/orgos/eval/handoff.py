@@ -4,14 +4,15 @@ The runner talks to the agent only through these types, so the agent (feature
 13, `orgos.agent`) imports this module and the runner never imports the agent;
 it loads one by a dotted path at run time (AC-38). The agent receives the
 `Question` model and a store name. No type here holds a known answer.
-`QueryAgent.run` is a plain method, not a coroutine (spec 0012 AC-1).
+`QueryAgent.run` is a plain method, not a coroutine (spec 0012 AC-1). An agent
+with a plain mode is also a `PlainQueryAgent` (spec 0013 AC-6).
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol, Self
+from typing import Any, Literal, Protocol, Self, runtime_checkable
 
 from orgos.eval import EvalError
 from orgos.eval.models import Question, Shape
@@ -113,6 +114,19 @@ class QueryAgent(Protocol):
 
     def run(self, question: Question, store: Store) -> AgentRun:
         """Answer one question against one store; a plain method, not a coroutine."""
+        ...
+
+
+@runtime_checkable
+class PlainQueryAgent(QueryAgent, Protocol):
+    """A `QueryAgent` that can also run a question without its reading note (spec 0013 AC-6)."""
+
+    def run_plain(self, question: Question, store: Store) -> AgentRun:
+        """Answer one question from its plain block against one store; a plain method."""
+        ...
+
+    def plain_blocks_sha256(self, questions: Sequence[Question]) -> str:
+        """The hash of the plain blocks of `questions`, sorted by id (spec 0013 AC-7)."""
         ...
 
 
