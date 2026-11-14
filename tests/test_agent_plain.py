@@ -48,6 +48,12 @@ PLAIN_BLOCKS_SHA256 = "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d2131987517
 CURRENT_VERSION = "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
 
 
+@pytest.fixture(autouse=True)
+def no_model_requests(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Any real model request in this file fails at once (spec 0013 AC-28)."""
+    monkeypatch.setattr("pydantic_ai.models.ALLOW_MODEL_REQUESTS", False)
+
+
 def _scored(question: Question) -> str:
     return render_question_block(question, LAYOUTS[question.id])
 

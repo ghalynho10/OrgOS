@@ -19,6 +19,8 @@ import pytest
 from orgos.config import Settings, load_settings
 from orgos.eval import EvalError
 from orgos.eval.answers import read_questions
+from orgos.eval.frozen import sha256_file
+from orgos.eval.gold import COMPARE_CODE
 from orgos.eval.handoff import AgentRun, PlainQueryAgent, QueryAttempt, Store, Usage
 from orgos.eval.models import Question
 from orgos.eval.runs import (
@@ -710,3 +712,103 @@ def test_a_plain_run_prints_and_stores_the_summary_and_the_statement(
     assert [g["layer"] for g in stored["groups"]] == ["plain", "plain"]
     assert stored["statement"]["graph_against_sql"]["verdict"] == "tied"
     assert not (noted / "summary.json").exists()
+
+
+# --- The command (AC-9, AC-11) ---
+
+
+def cli(root: Path, monkeypatch: pytest.MonkeyPatch, *args: str) -> list[str]:
+    from orgos.cli import app
+
+    printed: list[str] = []
+    monkeypatch.chdir(root)
+    monkeypatch.setattr("orgos.cli.load_settings", settings)
+    monkeypatch.setattr("typer.echo", printed.append)
+    app(args=["eval", "run", *args], standalone_mode=False)
+    return printed
+
+
+def test_plain_estimate_on_the_command_line_runs_no_preflight(
+    root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def no_preflight(settings: Settings, root: Path) -> None:
+        raise AssertionError("--estimate runs no preflight")
+
+    monkeypatch.setattr("orgos.eval.runs.preflight", no_preflight)
+    agent = "tests.test_eval_plain:plain_factory"
+    printed = cli(root, monkeypatch, "--plain", "--estimate", "--agent", agent)
+    assert printed[0] == "wrote results/agent_runs/v1/plain/PLAN.json for version v1, series plain"
+    assert read_plain_plan(plain_dir(root, "v1")) is not None
+
+
+def test_plain_go_on_the_command_line_runs_the_preflight_and_the_plain_mode(
+    root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    agent = PlainStub()
+    calls = use(monkeypatch, agent)
+    estimated(root)
+    options = ("--go", "--max-cost-usd", "1", "--only", "Q01", "--store", "graph", "--max-run", "1")
+    printed = cli(root, monkeypatch, "--plain", "--agent", "x:y", *options)
+    assert calls == ["preflight"] and agent.plain_calls == ["Q01-graph"]
+    assert "wrote 1 run files under results/agent_runs/v1/plain/" in printed
+    assert read_run_files(version_dir(root, "v1")) == ()
+
+
+def test_plain_replay_on_the_command_line_is_refused(
+    root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    use(monkeypatch, PlainStub())
+    with pytest.raises(EvalError, match="replay has no plain mode"):
+        cli(root, monkeypatch, "--plain", "--agent", "replay", "--go", "--max-cost-usd", "1")
+    with pytest.raises(EvalError, match="replay has no plain mode"):
+        cli(root, monkeypatch, "--plain", "--estimate", "--agent", "replay")
+
+
+# --- The guards (AC-26 to AC-28) ---
+
+REPO = Path(__file__).resolve().parents[1]
+# The comparison rule as merged on main; spec 0005 says it never changes after results.
+COMPARE_SHA256 = "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12"
+PLANTED: dict[str, Any] = {
+    "shape": "map",
+    "value": [{"id": "project:PLANTZQ", "value": {"int": 987654321}}],
+    "sources": [{"issue": ["PLANTZQ-77"]}],
+}
+PLANTED_TEXT = ("PLANTZQ", "987654321", "987,654,321", "987654320", "PLANTZQ-77")
+
+
+@pytest.fixture(autouse=True)
+def no_model_requests(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Any real model request in this file fails at once (AC-28)."""
+    monkeypatch.setattr("pydantic_ai.models.ALLOW_MODEL_REQUESTS", False)
+
+
+def test_the_comparison_rule_is_unchanged() -> None:
+    assert sha256_file(REPO / COMPARE_CODE) == COMPARE_SHA256
+
+
+def test_no_planted_known_value_reaches_the_output_or_the_log(
+    root: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    answers = {"amendments_sha256": None, "answers": {"Q01": PLANTED}, "questions_sha256": "x"}
+    (root / "eval/answers.json").write_text(json.dumps(answers))
+    right = answered(value=[("project:PLANTZQ", 987654321)], sources=({"issue": ("PLANTZQ-77",)},))
+    wrong = answered(value=[("project:PLANTZQ", 987654320)], sources=({"issue": ("PLANTZQ-78",)},))
+    empty = replace(answered(), outcome="no_answer", shape=None, value=None, sources=())
+    broken = replace(right, attempts=(QueryAttempt(object(), "ok", 0.1, 3),))  # type: ignore[arg-type]
+    caplog.set_level("DEBUG")
+    printed = list(
+        estimate_plain(settings(), root, "tests.test_eval_plain:plain_factory", only=None)
+    )
+    use(monkeypatch, PlainStub(script=(right,)))
+    printed += run_plain(root)
+    use(monkeypatch, PlainStub(script=(wrong, empty, right)))
+    printed += run_plain(root, store=None, max_run=2)
+    use(monkeypatch, PlainStub(script=(broken,)))
+    with pytest.raises(EvalError) as raised:
+        run_plain(root, max_run=3)
+    printed.append(str(raised.value))
+    shown = "\n".join([*printed, caplog.text, (plain_dir(root, "v1") / "summary.json").read_text()])
+    assert "plain v1 sql, lower bound:" in shown and "failed after the model call" in shown
+    for text in PLANTED_TEXT:
+        assert text not in shown, text
