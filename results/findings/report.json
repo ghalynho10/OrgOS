@@ -1,0 +1,1956 @@
+{
+  "chance": {
+    "all_type_tests": "at most 12 x 0.05",
+    "primary_family": "at most 3 x 0.05 = 0.15"
+  },
+  "limitations": [
+    {
+      "group": 1,
+      "id": "G1-1",
+      "source": "scope feature 17, Done when",
+      "text": "known answers and dbt share one reading of the Jira fields"
+    },
+    {
+      "group": 1,
+      "id": "G1-2",
+      "source": "scope feature 17, Done when",
+      "text": "the gold queries were model drafted blind to the answers, Q01 as a teaching pass, with counts only feedback, and Q01's pattern shaped the rest"
+    },
+    {
+      "group": 1,
+      "id": "G1-3",
+      "source": "scope feature 17, Done when",
+      "text": "`model_int` is written in SQL, so the graph may lean relational."
+    },
+    {
+      "group": 2,
+      "id": "G2-1",
+      "source": "spec 0014 AC-4, AC-6 and the reach table",
+      "text": "n is 20, with 6 or 7 questions per type, so a test with fewer than 6 untied questions can never read `real`, and `did not detect a gap` is not `equal`"
+    },
+    {
+      "group": 2,
+      "id": "G2-2",
+      "source": "spec 0014 AC-4 and AC-7",
+      "text": "the family bound of AC-4 and the chance line of AC-7"
+    },
+    {
+      "group": 2,
+      "id": "G2-3",
+      "source": "spec 0014 rationale, Context (the literature look back, no longer in docs/session-notes.md)",
+      "text": "the known answer code, the gold queries and the agent come from one model family, a shared blind spot and not a bias between stores"
+    },
+    {
+      "group": 2,
+      "id": "G2-4",
+      "source": "spec 0014 rationale, Context; spec 0013 References (BIRD execution accuracy)",
+      "text": "the strict score is all or nothing and not comparable to published execution accuracy"
+    },
+    {
+      "group": 2,
+      "id": "G2-5",
+      "source": "spec 0011 AC-24",
+      "text": "query and run times are recorded but never compared or ranked, because both stores run untuned in Docker on one laptop on a small dataset (spec 0011 AC-24)"
+    },
+    {
+      "group": 2,
+      "id": "G2-6",
+      "source": "spec 0013 Follow-up",
+      "text": "every scored run got the reading note, and plain runs are a lower bound that still carried shape, unit and hop limit (spec 0013 Follow-up)."
+    },
+    {
+      "group": 3,
+      "id": "G3-1",
+      "source": "eval/data-description.md, Negative time entries (the 70 entries); docs/session-notes.md, Ruled out (about 1.5%); the CLOV 12% is in no file read (spec 0014 Follow-up)",
+      "text": "hours count positive entries only, 70 negative entries left out (about 1.5% of counted seconds, CLOV about 12%)"
+    },
+    {
+      "group": 3,
+      "id": "G3-2",
+      "source": "docs/session-notes.md, Q03 zero and Q16 zero; spec 0014 AC-14",
+      "text": "Q03 and Q16 are zero answers, shown both ways"
+    },
+    {
+      "group": 3,
+      "id": "G3-3",
+      "source": "scope, feature 17 candidates; not confirmed from any file read (spec 0014 Follow-up)",
+      "text": "Q08 is one hop"
+    },
+    {
+      "group": 3,
+      "id": "G3-4",
+      "source": "spec 0012 AC-7",
+      "text": "Q10 is scored through its sources, and was told to return entities, not pairs, in both stores"
+    },
+    {
+      "group": 3,
+      "id": "G3-5",
+      "source": "spec 0008",
+      "text": "categories are properties, not labels (spec 0008)"
+    },
+    {
+      "group": 3,
+      "id": "G3-6",
+      "source": "spec 0012 AC-17, AC-18",
+      "text": "Q11 mixes people and projects in one set, and the sources of an empty, zero or false answer are `[]` (spec 0012 AC-17, AC-18)"
+    },
+    {
+      "group": 3,
+      "id": "G3-7",
+      "source": "spec 0011 Follow-up",
+      "text": "the literal check misses small numbers (spec 0011 Follow-up)."
+    },
+    {
+      "group": 4,
+      "id": "G4-1",
+      "source": "spec 0012 Follow-up",
+      "text": "the reading note's definitions and the list of source kinds were given"
+    },
+    {
+      "group": 4,
+      "id": "G4-2",
+      "source": "spec 0012 Follow-up",
+      "text": "temperature, `top_p` and `top_k` were the provider default and thinking was adaptive at effort low"
+    },
+    {
+      "group": 4,
+      "id": "G4-3",
+      "source": "spec 0012 Follow-up",
+      "text": "a run's label follows spec 0011 AC-10 as amended"
+    },
+    {
+      "group": 4,
+      "id": "G4-4",
+      "source": "spec 0012 Follow-up",
+      "text": "cap hits, timeouts and `limit_hit` per limit are shown beside every headline"
+    },
+    {
+      "group": 4,
+      "id": "G4-5",
+      "source": "spec 0012 Follow-up",
+      "text": "the agent was given the answer shape and unit of each question"
+    },
+    {
+      "group": 4,
+      "id": "G4-6",
+      "source": "spec 0012 Follow-up",
+      "text": "the 400,000 token limit was chosen so the 15 call limit binds first"
+    },
+    {
+      "group": 4,
+      "id": "G4-7",
+      "source": "spec 0012 Follow-up",
+      "text": "and if a real bug is found in the agent when no agent version is left (the cap is three), the runs are reported as they are and the bug is named here."
+    },
+    {
+      "group": 5,
+      "id": "G5-1",
+      "source": "spec 0015 Consequences and Follow-up, 2026-11-13; `docs/session-notes.md`, \"How others do it\", 2026-11-13",
+      "text": "From agent version 2 the agent was told the evidence layout of each scored question, which version 1 had to infer, so version 1 and version 2 source scores are not compared, and the move from version 1 to version 2 is reported as a format change (spec 0015 changes format only)."
+    },
+    {
+      "group": 5,
+      "id": "G5-2",
+      "source": "spec 0015 Consequences, 2026-11-13",
+      "text": "Noted runs can get a layout send back that plain runs cannot, because plain has no layout line; send backs appear in the log lines and are not recorded in run files."
+    },
+    {
+      "group": 5,
+      "id": "G5-3",
+      "source": "spec 0015 Consequences and Follow-up, 2026-11-13",
+      "text": "Change C4 applies to Q09 only, with identical text in both stores; version 1 and version 2 Q09 counts are shown on their own line."
+    },
+    {
+      "group": 5,
+      "id": "G5-4",
+      "source": "spec 0015 Consequences and Follow-up, 2026-11-13",
+      "text": "The layout check is soft, so a layout miss shows as `source_match` false and never as a lost answer by the layout alone; a send back can still lead the model into a structural slip, so the `no_answer` count of each version is printed (AC-33); a send back also spends model requests, so a run can end as `limit_hit` because of the layout check, and the `limit_hit` count of each version is printed beside it."
+    },
+    {
+      "group": 5,
+      "id": "G5-5",
+      "source": "spec 0015 Consequences, 2026-11-13, added after its review",
+      "text": "Two sentences of the shared Sources text, \"Each kind may point at its own result.\" and \"A source column holds no NULL, so query a kind separately when some rows lack it.\", tell the agent how to shape its result tables, with identical text for every question and both stores; spec 0015 says they edge toward method."
+    },
+    {
+      "group": 5,
+      "id": "G5-6",
+      "source": "spec 0013 Consequences, 2026-11-11, and its Follow-up (undated); spec 0015 `index.md` line 100, 2026-11-13",
+      "text": "The shared instruction text still speaks of a reading note in plain runs, in both stores, so the plain series is called \"without the reading note\", never \"cold\"."
+    },
+    {
+      "group": 5,
+      "id": "G5-7",
+      "source": "`docs/session-notes.md`, Q03 zero, 2026-11-11",
+      "text": "Q03 is a zero answer with empty evidence, not a real zero, so a query that finds nothing scores correct and the zero says nothing about lateness; the stage reading is in the note."
+    },
+    {
+      "group": 5,
+      "id": "G5-8",
+      "source": "`docs/session-notes.md`, Q13 limitation, 2026-11-12",
+      "text": "Q13 is scored as which sub-tasks of one issue (shape set, frozen); the score checks the sub-task IDs and, in the sources, every positive time entry on them, and does not check the summed hours, the assignee or the status."
+    },
+    {
+      "group": 5,
+      "id": "G5-9",
+      "source": "`docs/session-notes.md`, Q16 zero, 2026-11-13",
+      "text": "Q16 is a real zero but a weak test: part of its filter never removes anything, so a query that gets that part wrong still scores correct; the stage reading is in the note."
+    },
+    {
+      "group": 5,
+      "id": "G5-10",
+      "source": "`docs/OrgOS-carry-forward.md`, \"Findings report (feature 17), additions\", file dated 2026-11-03",
+      "text": "`eval/data-description.md`, already published, holds real looking names and emails taken from changelog display strings of the public CC BY 4.0 dataset, and `tests/fixtures/corpus/` possibly does too (not checked); they are not newly exposed and the file is not edited."
+    },
+    {
+      "group": 5,
+      "id": "G5-11",
+      "source": "`docs/OrgOS-carry-forward.md`, that section and its date; this spec's Consequences, 2026-11-11",
+      "text": "The accuracy numbers hold only for this dataset, one model family and one load."
+    },
+    {
+      "group": 5,
+      "id": "G5-12",
+      "source": "the `time` field of the run files, the git tag `rule-frozen`, checked 2026-11-14",
+      "text": "The commit tagged `rule-frozen` is dated 2026-11-11 at 23:57 UTC. The six version 1 Q01 runs (2026-11-11, 16:46 to 17:02 UTC) came before it; every other agent run came after it (version 1 from 2026-11-12, version 2 from 2026-11-13, the plain series from 2026-11-14). Replay files are not agent results."
+    },
+    {
+      "group": 5,
+      "id": "G5-13",
+      "source": "this amendment, 2026-11-14; spec 0015 commit `20d2486`, 2026-11-13 20:59 UTC",
+      "text": "The measure of the version 1 against version 2 block (`answer_match`, Q09 apart) and the `no_answer` cells were set on 2026-11-14, after the version 1, version 2 and plain results had been seen; the measure follows spec 0015 line 165, written before the first version 2 run. The first form of AC-17 (a disagreement line) was replaced on 2026-11-14, also after the results were seen, by side by side counts, justified only by the cross check's list of decisions the disagreement rule needed."
+    },
+    {
+      "group": 5,
+      "id": "G5-14",
+      "source": "spec 0015 `rationale.md` \"How others do it\" (SWE-bench row), 2026-11-13",
+      "text": "The layout line reveals the structure of the evidence grading, which is the kinds and the step count, never IDs."
+    },
+    {
+      "group": 5,
+      "id": "G5-15",
+      "source": "spec 0015 `rationale.md` \"How others do it\", last row, 2026-11-13",
+      "text": "The layout line is new: no benchmark read tells the model which record kinds to cite per question."
+    }
+  ],
+  "load_id": "1794178447.229884",
+  "missing": [],
+  "no_answer_cells": {
+    "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618": {
+      "graph": {
+        "limit_hit": 0,
+        "limit_hit_by_limit": {
+          "requests": 0,
+          "tokens": 0,
+          "tool_calls": 0
+        },
+        "missing": 0,
+        "no_answer": 1,
+        "no_label": 0,
+        "total": 60
+      },
+      "sql": {
+        "limit_hit": 0,
+        "limit_hit_by_limit": {
+          "requests": 0,
+          "tokens": 0,
+          "tool_calls": 0
+        },
+        "missing": 0,
+        "no_answer": 1,
+        "no_label": 0,
+        "total": 60
+      }
+    },
+    "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e": {
+      "graph": {
+        "limit_hit": 0,
+        "limit_hit_by_limit": {
+          "requests": 0,
+          "tokens": 0,
+          "tool_calls": 0
+        },
+        "missing": 0,
+        "no_answer": 0,
+        "no_label": 0,
+        "total": 60
+      },
+      "sql": {
+        "limit_hit": 0,
+        "limit_hit_by_limit": {
+          "requests": 0,
+          "tokens": 0,
+          "tool_calls": 0
+        },
+        "missing": 0,
+        "no_answer": 1,
+        "no_label": 0,
+        "total": 60
+      }
+    }
+  },
+  "not_compared": {
+    "noted": {},
+    "plain": {}
+  },
+  "not_used": {},
+  "null_counts": {
+    "noted": 0,
+    "plain": 0
+  },
+  "older_versions": {
+    "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618": {
+      "full form": {
+        "graph": {
+          "aggregate": {
+            "agent": {
+              "attempts": 46,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 9,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 0,
+              "total": 21
+            }
+          },
+          "all questions": {
+            "agent": {
+              "attempts": 149,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 2,
+              "correct": 12,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 11,
+              "total": 60
+            }
+          },
+          "mixed": {
+            "agent": {
+              "attempts": 41,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 3,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 2,
+              "total": 18
+            }
+          },
+          "path_connection": {
+            "agent": {
+              "attempts": 62,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 2,
+              "correct": 0,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 9,
+              "total": 21
+            }
+          }
+        },
+        "sql": {
+          "aggregate": {
+            "agent": {
+              "attempts": 45,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 10,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 0,
+              "total": 21
+            }
+          },
+          "all questions": {
+            "agent": {
+              "attempts": 142,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 13,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 11,
+              "total": 60
+            }
+          },
+          "mixed": {
+            "agent": {
+              "attempts": 38,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 3,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 1,
+              "total": 18
+            }
+          },
+          "path_connection": {
+            "agent": {
+              "attempts": 59,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 0,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 10,
+              "total": 21
+            }
+          }
+        }
+      },
+      "second form": {
+        "graph": {
+          "aggregate": {
+            "agent": {
+              "attempts": 40,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 6,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 0,
+              "total": 18
+            }
+          },
+          "all questions": {
+            "agent": {
+              "attempts": 138,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 2,
+              "correct": 6,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 11,
+              "total": 54
+            }
+          },
+          "mixed": {
+            "agent": {
+              "attempts": 36,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 0,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 2,
+              "total": 15
+            }
+          },
+          "path_connection": {
+            "agent": {
+              "attempts": 62,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 2,
+              "correct": 0,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 9,
+              "total": 21
+            }
+          }
+        },
+        "sql": {
+          "aggregate": {
+            "agent": {
+              "attempts": 39,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 7,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 0,
+              "total": 18
+            }
+          },
+          "all questions": {
+            "agent": {
+              "attempts": 130,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 7,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 11,
+              "total": 54
+            }
+          },
+          "mixed": {
+            "agent": {
+              "attempts": 32,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 0,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 1,
+              "total": 15
+            }
+          },
+          "path_connection": {
+            "agent": {
+              "attempts": 59,
+              "attempts_at_row_cap": 0,
+              "attempts_timed_out": 0,
+              "correct": 0,
+              "limit_hit": {
+                "requests": 0,
+                "tokens": 0,
+                "tool_calls": 0
+              },
+              "missing": 0,
+              "runs_with_a_retry": 10,
+              "total": 21
+            }
+          }
+        }
+      }
+    }
+  },
+  "partial": false,
+  "pass_k": {
+    "noted": {
+      "graph": {
+        "aggregate": {
+          "every_run": 6,
+          "no_run": 0,
+          "questions": 7
+        },
+        "mixed": {
+          "every_run": 6,
+          "no_run": 0,
+          "questions": 6
+        },
+        "path_connection": {
+          "every_run": 4,
+          "no_run": 1,
+          "questions": 7
+        }
+      },
+      "sql": {
+        "aggregate": {
+          "every_run": 6,
+          "no_run": 1,
+          "questions": 7
+        },
+        "mixed": {
+          "every_run": 6,
+          "no_run": 0,
+          "questions": 6
+        },
+        "path_connection": {
+          "every_run": 4,
+          "no_run": 1,
+          "questions": 7
+        }
+      }
+    },
+    "plain": {
+      "graph": {
+        "aggregate": {
+          "every_run": 6,
+          "no_run": 1,
+          "questions": 7
+        },
+        "mixed": {
+          "every_run": 5,
+          "no_run": 0,
+          "questions": 6
+        },
+        "path_connection": {
+          "every_run": 3,
+          "no_run": 3,
+          "questions": 7
+        }
+      },
+      "sql": {
+        "aggregate": {
+          "every_run": 6,
+          "no_run": 1,
+          "questions": 7
+        },
+        "mixed": {
+          "every_run": 6,
+          "no_run": 0,
+          "questions": 6
+        },
+        "path_connection": {
+          "every_run": 3,
+          "no_run": 3,
+          "questions": 7
+        }
+      }
+    }
+  },
+  "plain": {
+    "drop": {
+      "graph": {
+        "noted": {
+          "answer_match": 57,
+          "total": 60
+        },
+        "plain": {
+          "answer_match": 44,
+          "total": 60
+        }
+      },
+      "sql": {
+        "noted": {
+          "answer_match": 59,
+          "total": 60
+        },
+        "plain": {
+          "answer_match": 47,
+          "total": 60
+        }
+      }
+    },
+    "left_out": null,
+    "noted_beside_plain": {
+      "aggregate": [
+        {
+          "compared": [
+            "Q01",
+            "Q02",
+            "Q03",
+            "Q04",
+            "Q05",
+            "Q06",
+            "Q07"
+          ],
+          "full": {
+            "noted": {
+              "answer_match": 21,
+              "total": 21
+            },
+            "plain": {
+              "answer_match": 18,
+              "total": 21
+            }
+          },
+          "not_compared": {},
+          "store": "graph",
+          "without_zero_guarded": {
+            "noted": {
+              "answer_match": 18,
+              "total": 18
+            },
+            "plain": {
+              "answer_match": 15,
+              "total": 18
+            }
+          }
+        },
+        {
+          "compared": [
+            "Q01",
+            "Q02",
+            "Q03",
+            "Q04",
+            "Q05",
+            "Q06",
+            "Q07"
+          ],
+          "full": {
+            "noted": {
+              "answer_match": 21,
+              "total": 21
+            },
+            "plain": {
+              "answer_match": 18,
+              "total": 21
+            }
+          },
+          "not_compared": {},
+          "store": "sql",
+          "without_zero_guarded": {
+            "noted": {
+              "answer_match": 18,
+              "total": 18
+            },
+            "plain": {
+              "answer_match": 15,
+              "total": 18
+            }
+          }
+        }
+      ],
+      "mixed": [
+        {
+          "compared": [
+            "Q15",
+            "Q16",
+            "Q17",
+            "Q18",
+            "Q19",
+            "Q20"
+          ],
+          "full": {
+            "noted": {
+              "answer_match": 18,
+              "total": 18
+            },
+            "plain": {
+              "answer_match": 16,
+              "total": 18
+            }
+          },
+          "not_compared": {},
+          "store": "graph",
+          "without_zero_guarded": {
+            "noted": {
+              "answer_match": 15,
+              "total": 15
+            },
+            "plain": {
+              "answer_match": 13,
+              "total": 15
+            }
+          }
+        },
+        {
+          "compared": [
+            "Q15",
+            "Q16",
+            "Q17",
+            "Q18",
+            "Q19",
+            "Q20"
+          ],
+          "full": {
+            "noted": {
+              "answer_match": 18,
+              "total": 18
+            },
+            "plain": {
+              "answer_match": 18,
+              "total": 18
+            }
+          },
+          "not_compared": {},
+          "store": "sql",
+          "without_zero_guarded": {
+            "noted": {
+              "answer_match": 15,
+              "total": 15
+            },
+            "plain": {
+              "answer_match": 15,
+              "total": 15
+            }
+          }
+        }
+      ],
+      "path_connection": [
+        {
+          "compared": [
+            "Q08",
+            "Q09",
+            "Q10",
+            "Q11",
+            "Q12",
+            "Q13",
+            "Q14"
+          ],
+          "full": {
+            "noted": {
+              "answer_match": 18,
+              "total": 21
+            },
+            "plain": {
+              "answer_match": 10,
+              "total": 21
+            }
+          },
+          "not_compared": {},
+          "store": "graph",
+          "without_zero_guarded": {
+            "noted": {
+              "answer_match": 18,
+              "total": 21
+            },
+            "plain": {
+              "answer_match": 10,
+              "total": 21
+            }
+          }
+        },
+        {
+          "compared": [
+            "Q08",
+            "Q09",
+            "Q10",
+            "Q11",
+            "Q12",
+            "Q13",
+            "Q14"
+          ],
+          "full": {
+            "noted": {
+              "answer_match": 20,
+              "total": 21
+            },
+            "plain": {
+              "answer_match": 11,
+              "total": 21
+            }
+          },
+          "not_compared": {},
+          "store": "sql",
+          "without_zero_guarded": {
+            "noted": {
+              "answer_match": 20,
+              "total": 21
+            },
+            "plain": {
+              "answer_match": 11,
+              "total": 21
+            }
+          }
+        }
+      ]
+    },
+    "stale": []
+  },
+  "schema_version": 1,
+  "source_diagnostic": {
+    "questions": {
+      "graph": {
+        "Q01": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q02": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q03": null,
+        "Q04": {
+          "extra": 0,
+          "missing": 321
+        },
+        "Q05": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q06": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q07": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q08": null,
+        "Q09": null,
+        "Q10": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q11": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q12": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q13": {
+          "extra": 0,
+          "missing": 2
+        },
+        "Q14": {
+          "extra": 1,
+          "missing": 6
+        },
+        "Q15": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q16": null,
+        "Q17": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q18": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q19": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q20": {
+          "extra": 0,
+          "missing": 0
+        }
+      },
+      "sql": {
+        "Q01": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q02": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q03": null,
+        "Q04": {
+          "extra": 0,
+          "missing": 5383
+        },
+        "Q05": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q06": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q07": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q08": null,
+        "Q09": null,
+        "Q10": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q11": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q12": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q13": {
+          "extra": 0,
+          "missing": 3
+        },
+        "Q14": {
+          "extra": 1,
+          "missing": 4
+        },
+        "Q15": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q16": null,
+        "Q17": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q18": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q19": {
+          "extra": 0,
+          "missing": 0
+        },
+        "Q20": {
+          "extra": 0,
+          "missing": 0
+        }
+      }
+    },
+    "types": {
+      "graph": {
+        "aggregate": {
+          "counts": {
+            "extra": 0,
+            "missing": 321
+          },
+          "not_recorded": [
+            "Q03"
+          ]
+        },
+        "mixed": {
+          "counts": {
+            "extra": 0,
+            "missing": 0
+          },
+          "not_recorded": [
+            "Q16"
+          ]
+        },
+        "path_connection": {
+          "counts": {
+            "extra": 1,
+            "missing": 8
+          },
+          "not_recorded": [
+            "Q08",
+            "Q09"
+          ]
+        }
+      },
+      "sql": {
+        "aggregate": {
+          "counts": {
+            "extra": 0,
+            "missing": 5383
+          },
+          "not_recorded": [
+            "Q03"
+          ]
+        },
+        "mixed": {
+          "counts": {
+            "extra": 0,
+            "missing": 0
+          },
+          "not_recorded": [
+            "Q16"
+          ]
+        },
+        "path_connection": {
+          "counts": {
+            "extra": 1,
+            "missing": 7
+          },
+          "not_recorded": [
+            "Q08",
+            "Q09"
+          ]
+        }
+      }
+    }
+  },
+  "tables": {
+    "full form": {
+      "graph": {
+        "aggregate": {
+          "agent": {
+            "attempts": 59,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 20,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 5,
+            "total": 21
+          },
+          "gold": {
+            "correct": 7,
+            "correct_not_reviewed": 0,
+            "total": 7
+          }
+        },
+        "all questions": {
+          "agent": {
+            "attempts": 201,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 3,
+            "correct": 52,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 14,
+            "total": 60
+          },
+          "gold": {
+            "correct": 20,
+            "correct_not_reviewed": 0,
+            "total": 20
+          }
+        },
+        "mixed": {
+          "agent": {
+            "attempts": 53,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 18,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 1,
+            "total": 18
+          },
+          "gold": {
+            "correct": 6,
+            "correct_not_reviewed": 0,
+            "total": 6
+          }
+        },
+        "path_connection": {
+          "agent": {
+            "attempts": 89,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 3,
+            "correct": 14,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 8,
+            "total": 21
+          },
+          "gold": {
+            "correct": 7,
+            "correct_not_reviewed": 0,
+            "total": 7
+          }
+        }
+      },
+      "sql": {
+        "aggregate": {
+          "agent": {
+            "attempts": 50,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 18,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 3,
+            "total": 21
+          },
+          "gold": {
+            "correct": 7,
+            "correct_not_reviewed": 0,
+            "total": 7
+          }
+        },
+        "all questions": {
+          "agent": {
+            "attempts": 199,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 52,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 20,
+            "total": 60
+          },
+          "gold": {
+            "correct": 20,
+            "correct_not_reviewed": 0,
+            "total": 20
+          }
+        },
+        "mixed": {
+          "agent": {
+            "attempts": 55,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 18,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 7,
+            "total": 18
+          },
+          "gold": {
+            "correct": 6,
+            "correct_not_reviewed": 0,
+            "total": 6
+          }
+        },
+        "path_connection": {
+          "agent": {
+            "attempts": 94,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 16,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 10,
+            "total": 21
+          },
+          "gold": {
+            "correct": 7,
+            "correct_not_reviewed": 0,
+            "total": 7
+          }
+        }
+      }
+    },
+    "second form": {
+      "graph": {
+        "aggregate": {
+          "agent": {
+            "attempts": 53,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 17,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 5,
+            "total": 18
+          },
+          "gold": {
+            "correct": 6,
+            "correct_not_reviewed": 0,
+            "total": 6
+          }
+        },
+        "all questions": {
+          "agent": {
+            "attempts": 189,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 3,
+            "correct": 46,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 14,
+            "total": 54
+          },
+          "gold": {
+            "correct": 18,
+            "correct_not_reviewed": 0,
+            "total": 18
+          }
+        },
+        "mixed": {
+          "agent": {
+            "attempts": 47,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 15,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 1,
+            "total": 15
+          },
+          "gold": {
+            "correct": 5,
+            "correct_not_reviewed": 0,
+            "total": 5
+          }
+        },
+        "path_connection": {
+          "agent": {
+            "attempts": 89,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 3,
+            "correct": 14,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 8,
+            "total": 21
+          },
+          "gold": {
+            "correct": 7,
+            "correct_not_reviewed": 0,
+            "total": 7
+          }
+        }
+      },
+      "sql": {
+        "aggregate": {
+          "agent": {
+            "attempts": 44,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 15,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 3,
+            "total": 18
+          },
+          "gold": {
+            "correct": 6,
+            "correct_not_reviewed": 0,
+            "total": 6
+          }
+        },
+        "all questions": {
+          "agent": {
+            "attempts": 184,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 46,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 18,
+            "total": 54
+          },
+          "gold": {
+            "correct": 18,
+            "correct_not_reviewed": 0,
+            "total": 18
+          }
+        },
+        "mixed": {
+          "agent": {
+            "attempts": 46,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 15,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 5,
+            "total": 15
+          },
+          "gold": {
+            "correct": 5,
+            "correct_not_reviewed": 0,
+            "total": 5
+          }
+        },
+        "path_connection": {
+          "agent": {
+            "attempts": 94,
+            "attempts_at_row_cap": 0,
+            "attempts_timed_out": 0,
+            "correct": 16,
+            "limit_hit": {
+              "requests": 0,
+              "tokens": 0,
+              "tool_calls": 0
+            },
+            "missing": 0,
+            "runs_with_a_retry": 10,
+            "total": 21
+          },
+          "gold": {
+            "correct": 7,
+            "correct_not_reviewed": 0,
+            "total": 7
+          }
+        }
+      }
+    }
+  },
+  "tests": {
+    "full form": [
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        "direction": "graph",
+        "graph_ahead": 1,
+        "m": 1,
+        "n": 7,
+        "name": "noted, full form, aggregate",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "primary",
+        "smallest_p": "1",
+        "sql_ahead": 0,
+        "tied": 6
+      },
+      {
+        "differences": [
+          1,
+          -3,
+          0,
+          0,
+          0,
+          1,
+          -1
+        ],
+        "direction": "sql",
+        "graph_ahead": 2,
+        "m": 4,
+        "n": 7,
+        "name": "noted, full form, path_connection",
+        "p": "7/8",
+        "partial": false,
+        "real": false,
+        "role": "primary",
+        "smallest_p": "1/8",
+        "sql_ahead": 2,
+        "tied": 3
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "direction": "none",
+        "graph_ahead": 0,
+        "m": 0,
+        "n": 6,
+        "name": "noted, full form, mixed",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "primary",
+        "smallest_p": "1",
+        "sql_ahead": 0,
+        "tied": 6
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "direction": "none",
+        "graph_ahead": 3,
+        "m": 5,
+        "n": 20,
+        "name": "noted, full form, all questions",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "context",
+        "smallest_p": "1/16",
+        "sql_ahead": 2,
+        "tied": 15
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "direction": "none",
+        "graph_ahead": 0,
+        "m": 0,
+        "n": 7,
+        "name": "plain, full form, aggregate",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1",
+        "sql_ahead": 0,
+        "tied": 7
+      },
+      {
+        "differences": [
+          1,
+          0,
+          0,
+          -2,
+          0,
+          0,
+          0
+        ],
+        "direction": "sql",
+        "graph_ahead": 1,
+        "m": 2,
+        "n": 7,
+        "name": "plain, full form, path_connection",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1/2",
+        "sql_ahead": 1,
+        "tied": 5
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          -2
+        ],
+        "direction": "sql",
+        "graph_ahead": 0,
+        "m": 1,
+        "n": 6,
+        "name": "plain, full form, mixed",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1",
+        "sql_ahead": 1,
+        "tied": 5
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -2
+        ],
+        "direction": "sql",
+        "graph_ahead": 1,
+        "m": 3,
+        "n": 20,
+        "name": "plain, full form, all questions",
+        "p": "1/2",
+        "partial": false,
+        "real": false,
+        "role": "context",
+        "smallest_p": "1/4",
+        "sql_ahead": 2,
+        "tied": 17
+      }
+    ],
+    "second form": [
+      {
+        "differences": [
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        "direction": "graph",
+        "graph_ahead": 1,
+        "m": 1,
+        "n": 6,
+        "name": "noted, second form, aggregate",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1",
+        "sql_ahead": 0,
+        "tied": 5
+      },
+      {
+        "differences": [
+          1,
+          -3,
+          0,
+          0,
+          0,
+          1,
+          -1
+        ],
+        "direction": "sql",
+        "graph_ahead": 2,
+        "m": 4,
+        "n": 7,
+        "name": "noted, second form, path_connection",
+        "p": "7/8",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1/8",
+        "sql_ahead": 2,
+        "tied": 3
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "direction": "none",
+        "graph_ahead": 0,
+        "m": 0,
+        "n": 5,
+        "name": "noted, second form, mixed",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1",
+        "sql_ahead": 0,
+        "tied": 5
+      },
+      {
+        "differences": [
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "direction": "none",
+        "graph_ahead": 3,
+        "m": 5,
+        "n": 18,
+        "name": "noted, second form, all questions",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "context",
+        "smallest_p": "1/16",
+        "sql_ahead": 2,
+        "tied": 13
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "direction": "none",
+        "graph_ahead": 0,
+        "m": 0,
+        "n": 6,
+        "name": "plain, second form, aggregate",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1",
+        "sql_ahead": 0,
+        "tied": 6
+      },
+      {
+        "differences": [
+          1,
+          0,
+          0,
+          -2,
+          0,
+          0,
+          0
+        ],
+        "direction": "sql",
+        "graph_ahead": 1,
+        "m": 2,
+        "n": 7,
+        "name": "plain, second form, path_connection",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1/2",
+        "sql_ahead": 1,
+        "tied": 5
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          0,
+          -2
+        ],
+        "direction": "sql",
+        "graph_ahead": 0,
+        "m": 1,
+        "n": 5,
+        "name": "plain, second form, mixed",
+        "p": "1",
+        "partial": false,
+        "real": false,
+        "role": "secondary",
+        "smallest_p": "1",
+        "sql_ahead": 1,
+        "tied": 4
+      },
+      {
+        "differences": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -2
+        ],
+        "direction": "sql",
+        "graph_ahead": 1,
+        "m": 3,
+        "n": 18,
+        "name": "plain, second form, all questions",
+        "p": "1/2",
+        "partial": false,
+        "real": false,
+        "role": "context",
+        "smallest_p": "1/4",
+        "sql_ahead": 2,
+        "tied": 15
+      }
+    ]
+  },
+  "version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "version_comparison": {
+    "cells": {
+      "aggregate": {
+        "graph": {
+          "2627493a": {
+            "answer_match": 20,
+            "total": 21
+          },
+          "cae2a674": {
+            "answer_match": 21,
+            "total": 21
+          }
+        },
+        "sql": {
+          "2627493a": {
+            "answer_match": 20,
+            "total": 21
+          },
+          "cae2a674": {
+            "answer_match": 21,
+            "total": 21
+          }
+        }
+      },
+      "mixed": {
+        "graph": {
+          "2627493a": {
+            "answer_match": 17,
+            "total": 18
+          },
+          "cae2a674": {
+            "answer_match": 18,
+            "total": 18
+          }
+        },
+        "sql": {
+          "2627493a": {
+            "answer_match": 17,
+            "total": 18
+          },
+          "cae2a674": {
+            "answer_match": 18,
+            "total": 18
+          }
+        }
+      },
+      "path_connection": {
+        "graph": {
+          "2627493a": {
+            "answer_match": 18,
+            "total": 18
+          },
+          "cae2a674": {
+            "answer_match": 18,
+            "total": 18
+          }
+        },
+        "sql": {
+          "2627493a": {
+            "answer_match": 18,
+            "total": 18
+          },
+          "cae2a674": {
+            "answer_match": 17,
+            "total": 18
+          }
+        }
+      }
+    },
+    "not_compared": {},
+    "partial": {
+      "2627493a": false,
+      "cae2a674": false
+    },
+    "versions": [
+      "2627493a6db977e743449ecfe577e2d28af69815d535fd1e8664ba584734a618",
+      "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+    ]
+  },
+  "version_comparison_q09": {
+    "graph": {
+      "2627493a": {
+        "answer_match": 0,
+        "total": 3
+      },
+      "cae2a674": {
+        "answer_match": 0,
+        "total": 3
+      }
+    },
+    "sql": {
+      "2627493a": {
+        "answer_match": 0,
+        "total": 3
+      },
+      "cae2a674": {
+        "answer_match": 3,
+        "total": 3
+      }
+    }
+  },
+  "version_comparison_sentence": "Agent versions 2627493a and cae2a674: source scores are not compared, because only cae2a674 was told the evidence layout.",
+  "zero_answer_questions": [
+    "Q03",
+    "Q16"
+  ]
+}
