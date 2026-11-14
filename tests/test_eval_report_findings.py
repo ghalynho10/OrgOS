@@ -1049,3 +1049,225 @@ def test_the_command_prints_no_planted_value_and_writes_only_the_report(
 def test_the_report_module_never_imports_the_agent() -> None:
     source = Path(report_module.__file__).read_text(encoding="utf-8")
     assert "orgos.agent" not in source
+
+
+# Gaps closed by /test: version choice and plans (AC-16 to AC-19)
+
+
+def test_a_plan_made_with_store_is_not_complete() -> None:
+    sql_only = tuple(f for f in files() if f["store"] == "sql")
+    made = make(version(V1), VersionFiles(V2, SeriesFiles(RUNS, sql_only)))
+    assert made.record["version"] == V1
+    assert made.record["not_used"] == {V2: 60}
+
+
+def test_the_plain_series_is_not_counted_for_completeness() -> None:
+    plain = SeriesFiles(RUNS, without(files(plain=True), "Q20-graph-3"))
+    made = make(version(V1), VersionFiles(V2, version(V2).noted, plain))
+    assert made.record["version"] == V2
+    assert not made.record["partial"]
+
+
+def test_a_version_with_no_plan_is_partial_and_names_its_plan() -> None:
+    made = make(VersionFiles(V2, SeriesFiles(None, files())))
+    assert made.record["partial"]
+    assert made.record["missing"] == [f"results/agent_runs/{V2}/PLAN.json"]
+    assert set(made.record["not_compared"]["noted"].values()) == {"no PLAN.json"}
+    assert not any("real," in x for x in made.lines)
+
+
+def test_an_older_version_with_no_plan_prints_no_counts() -> None:
+    made = make(VersionFiles(V1, SeriesFiles(None, files(version=V1))), version(V2))
+    assert made.record["older_versions"] == {V1: {"left_out": "no PLAN.json"}}
+    assert "older version 2627493a: no PLAN.json, no counts" in made.lines
+    assert made.record["no_answer_cells"][V1] == {"left_out": "no PLAN.json"}
+
+
+def test_a_plain_series_with_no_plan_is_left_out() -> None:
+    plain = SeriesFiles(None, files(plain=True))
+    made = make(VersionFiles(V2, version(V2).noted, plain))
+    assert made.record["plain"]["left_out"] == "no plain PLAN.json"
+    assert "the plain tables are left out: no plain PLAN.json" in made.lines
+
+
+# Gaps closed by /test: the version comparison (AC-17)
+
+
+def test_the_block_prints_when_the_older_version_is_chosen() -> None:
+    newer = VersionFiles(V2, SeriesFiles(RUNS, without(files(), "Q01-sql-1")))
+    made = make(version(V1), newer)
+    assert made.record["version"] == V1
+    block = made.record["version_comparison"]
+    assert block["partial"] == {"2627493a": False, "cae2a674": True}
+    assert block["not_compared"] == {"Q01": "missing files in cae2a674"}
+    assert made.lines.count(VERSION_SENTENCE) == 1
+
+
+def test_q09_not_compared_in_one_version_is_named_on_its_line() -> None:
+    v1 = VersionFiles(V1, SeriesFiles(RUNS, without(files(version=V1), "Q09-sql-2")))
+    made = make(v1, version(V2))
+    assert made.record["version_comparison_q09"] == {"not_compared": "missing files in 2627493a"}
+    assert "  Q09: not compared (missing files in 2627493a)" in made.lines
+    assert made.lines.count(VERSION_SENTENCE) == 1
+
+
+# Gaps closed by /test: the tables (AC-11, AC-20, AC-22 to AC-24)
+
+
+def _summed(cells: list[Mapping[str, Any]]) -> dict[str, Any]:
+    total: dict[str, Any] = {}
+    for cell in cells:
+        for name, value in cell.items():
+            total[name] = (
+                _summed([total.get(name, {}), value])
+                if isinstance(value, dict)
+                else (total.get(name, 0) + value)
+            )
+    return total
+
+
+def test_every_all_question_cell_is_the_sum_of_its_type_cells() -> None:
+    found = files(lambda q, s, n: (q, n) in {("Q01", 1), ("Q09", 2), ("Q17", 3)})
+    found = tuple(
+        f | {"retries": 1, "attempt_count": 2, "run_outcome": "limit_hit", "limit": "tokens"}
+        if f["question"] in ("Q04", "Q12")
+        else f
+        for f in found
+    )
+    made = make(VersionFiles(V2, SeriesFiles(RUNS, found)))
+    for form, by_store in made.record["tables"].items():
+        for store, cells in by_store.items():
+            types = [cells[kind] for kind in ("aggregate", "path_connection", "mixed")]
+            for part in ("agent", "gold"):
+                assert cells["all questions"][part] == _summed([c[part] for c in types]), (
+                    form,
+                    store,
+                    part,
+                )
+
+
+def test_plain_pass_k_reads_answer_match_not_correct() -> None:
+    plain = tuple(f | {"answer_match": f["question"] == "Q01"} for f in files(plain=True))
+    made = make(VersionFiles(V2, version(V2).noted, SeriesFiles(RUNS, plain)))
+    assert made.record["pass_k"]["plain"]["sql"]["aggregate"]["every_run"] == 1
+    assert made.record["pass_k"]["noted"]["sql"]["aggregate"]["every_run"] == 0
+
+
+def test_a_question_with_one_run_holding_no_steps_is_not_recorded() -> None:
+    found = tuple(
+        {k: v for k, v in f.items() if k != "steps"}
+        if (f["question"], f["store"], f["run"]) == ("Q01", "sql", 2)
+        else f
+        for f in files()
+    )
+    made = make(VersionFiles(V2, SeriesFiles(RUNS, found)))
+    assert made.record["source_diagnostic"]["questions"]["sql"]["Q01"] is None
+    assert made.record["source_diagnostic"]["questions"]["graph"]["Q01"] == {
+        "missing": 0,
+        "extra": 0,
+    }
+
+
+def test_noted_beside_plain_names_the_questions_not_compared_with_reasons() -> None:
+    noted = tuple(f | {"load_id": OTHER_LOAD} if f["question"] == "Q05" else f for f in files())
+    made = make(VersionFiles(V2, SeriesFiles(RUNS, noted), SeriesFiles(RUNS, files(plain=True))))
+    assert made.record["plain"]["left_out"] is None
+    line = next(x for x in made.lines if x.startswith("  aggregate, SQL: noted"))
+    assert line.endswith("; not compared: Q05 (other load)")
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=KeyError,
+    reason="bug found by /test: score._matched reads f['answer_match'], so an absent field"
+    " crashes the noted beside plain table instead of counting false (AC-11); fix in its own"
+    " session, then drop this mark",
+)
+def test_an_absent_answer_match_in_the_plain_series_counts_false() -> None:
+    plain = list(files(graph_ahead_on(*AGGREGATE), plain=True))
+    index = next(
+        i
+        for i, f in enumerate(plain)
+        if (f["question"], f["store"], f["run"]) == ("Q01", "graph", 1)
+    )
+    plain[index] = {k: v for k, v in plain[index].items() if k != "answer_match"}
+    made = make(VersionFiles(V2, version(V2).noted, SeriesFiles(RUNS, tuple(plain))))
+    assert made.record["null_counts"]["plain"] == 1
+    assert "  aggregate, graph: noted 0/21, plain 20/21 (lower bound)" in "\n".join(made.lines)
+
+
+# Gaps closed by /test: the output and the command (AC-10, AC-27, AC-29, AC-32)
+
+
+def test_a_failed_write_keeps_the_last_report_and_leaves_no_temporary_file(
+    tmp_path: Path,
+) -> None:
+    path = write_report(tmp_path, {"schema_version": 1})
+    before = path.read_bytes()
+    with pytest.raises(TypeError):
+        write_report(tmp_path, {"schema_version": 1, "cell": object()})
+    assert path.read_bytes() == before
+    assert [p.name for p in path.parent.iterdir()] == ["report.json"]
+
+
+def test_a_partial_report_from_the_command_exits_zero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = _shell_root(tmp_path)
+    for name in (V1, V2):
+        (root / "results/agent_runs" / name / "Q01-sql-1.json").unlink()
+    monkeypatch.chdir(root)
+    with pytest.raises(SystemExit) as exit_info:
+        app(args=["eval", "report"])
+    assert exit_info.value.code == 0
+    out = capsys.readouterr().out.splitlines()
+    assert out[0] == f"findings report, version cae2a674, partial, load ID {LOAD}"
+    assert json.loads((root / REPORT_FILE).read_text(encoding="utf-8"))["partial"] is True
+
+
+def test_the_command_logs_no_planted_value(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    root = _shell_root(tmp_path)
+    monkeypatch.chdir(root)
+    caplog.set_level("DEBUG")
+    from orgos.cli import run
+
+    with pytest.raises(SystemExit) as exit_info:
+        run(["eval", "report"])
+    assert exit_info.value.code == 0
+    assert PLANTED not in caplog.text
+    assert str(PLANTED_NUMBER) not in caplog.text
+
+
+def test_rule_in_a_folder_with_only_the_questions_opens_only_them(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "eval").mkdir()
+    (tmp_path / "eval/questions.toml").write_text(
+        "".join(QUESTION.format(id=q, type=kind) for q, kind in TYPES.items()), encoding="utf-8"
+    )
+    opened: list[str] = []
+    real_read_text = Path.read_text
+    real_open = Path.open
+
+    def read_text(self: Path, *args: Any, **kwargs: Any) -> str:
+        opened.append(self.resolve().relative_to(tmp_path.resolve()).as_posix())
+        return real_read_text(self, *args, **kwargs)
+
+    def path_open(self: Path, *args: Any, **kwargs: Any) -> Any:
+        opened.append(self.resolve().relative_to(tmp_path.resolve()).as_posix())
+        return real_open(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read_text)
+    monkeypatch.setattr(Path, "open", path_open)
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit) as exit_info:
+        app(args=["eval", "report", "--rule"])
+    assert exit_info.value.code == 0
+    assert set(opened) <= {"eval/questions.toml", "eval/amendments.toml"}
+    assert [p.relative_to(tmp_path).as_posix() for p in tmp_path.rglob("*") if p.is_file()] == [
+        "eval/questions.toml"
+    ]
+    out = capsys.readouterr().out.splitlines()
+    assert "questions per type: aggregate 7, path_connection 7, mixed 6" in out
