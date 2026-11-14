@@ -619,6 +619,24 @@ def test_no_complete_version_uses_the_newest_partial_with_no_verdict() -> None:
     assert made.record["not_compared"]["noted"] == {"Q01": "missing files"}
 
 
+def test_a_complete_plain_series_of_a_partial_version_gets_no_verdict() -> None:
+    noted = without(files(graph_ahead_on(*AGGREGATE)), "Q01-sql-1")
+    plain = files(graph_ahead_on(*AGGREGATE), plain=True)
+    made = make(VersionFiles(V2, SeriesFiles(RUNS, noted), SeriesFiles(RUNS, plain)))
+    assert made.record["partial"]
+    assert made.record["plain"]["left_out"] is None
+    plain_tests = [
+        t
+        for form in ("full form", "second form")
+        for t in made.record["tests"][form]
+        if t["name"].startswith("plain")
+    ]
+    assert plain_tests and all(t["partial"] and not t["real"] for t in plain_tests)
+    verdicts = [x for x in made.lines if x.startswith("    secondary, descriptive, plain")]
+    assert verdicts and all(x.endswith("partial, no verdict") for x in verdicts)
+    assert not any("real," in x for x in made.lines)
+
+
 def test_no_version_at_all_refuses_and_exits_with_the_eval_error_code(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -637,7 +655,7 @@ def test_a_plain_series_of_an_older_version_is_left_out_with_the_stale_line() ->
     assert made.record["plain"]["left_out"] == "other version (the plain series is under 2627493a)"
     assert any(x.startswith(f"the plain series of version {V1} is stale") for x in made.lines)
     assert made.record["plain"]["noted_beside_plain"] is None
-    assert not any(x.startswith("    secondary, plain") for x in made.lines)
+    assert not any(x.startswith("    secondary, descriptive, plain") for x in made.lines)
 
 
 def test_a_plain_series_with_missing_files_or_another_load_is_left_out() -> None:

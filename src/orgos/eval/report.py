@@ -1454,7 +1454,7 @@ def findings(
     plain_reason, stale = _plain_status(choice, versions, ids, load_id)
     series: list[SeriesRow] = [("noted", chosen.noted, choice.partial)]
     if plain_reason is None and chosen.plain is not None:
-        series.append(("plain", chosen.plain, False))
+        series.append(("plain", chosen.plain, choice.partial))
     pairings = {
         name: pair(found, question_types, COLUMNS[name], load_id) for name, found, _ in series
     }
