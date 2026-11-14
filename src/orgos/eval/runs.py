@@ -59,7 +59,17 @@ from orgos.eval.literal import mask
 from orgos.eval.models import QUESTION_COUNT, Question
 from orgos.eval.preflight import preflight
 from orgos.eval.replay import REPLAY, ReplayAgent
-from orgos.eval.score import Entry, Layer, Scored, failed, groups, score, summary_lines
+from orgos.eval.score import (
+    Entry,
+    Layer,
+    Scored,
+    failed,
+    groups,
+    plain_statement,
+    plain_statement_lines,
+    score,
+    summary_lines,
+)
 from orgos.eval.tries import git_record, now
 
 log = logging.getLogger(__name__)
@@ -610,9 +620,13 @@ def run_entries(
     version: str,
     questions: Sequence[Question],
     runs: int | None,
+    series: Literal["noted", "plain"] = "noted",
 ) -> tuple[Entry, ...]:
-    """One entry per finished run, and per planned run with no file when `runs` is given."""
-    layer: Layer = "replay" if version == REPLAY else "agent"
+    """One entry per finished run, and per planned run with no file when `runs` is given.
+
+    The series picks the layer: `plain` for the plain series (spec 0013 AC-20).
+    """
+    layer: Layer = "plain" if series == "plain" else "replay" if version == REPLAY else "agent"
     found = {(f["question"], f["store"], f["run"]): f for f in files}
     by_id = {question.id: question for question in questions}
     entries = [
@@ -629,10 +643,12 @@ def run_entries(
             timeouts=sum(1 for a in f["attempts"] if a["outcome"] == "store_timeout"),
             row_caps=sum(1 for a in f["attempts"] if a["outcome"] == "row_cap"),
             limit=f["limit"],
+            answer_match=f["answer_match"],
+            source_match=f["source_match"],
         )
         for f in files
     ]
-    if runs is not None and layer == "agent":
+    if runs is not None and layer in ("agent", "plain"):
         entries.extend(
             Entry(
                 layer=layer,
@@ -1046,18 +1062,40 @@ def run_plain_agent(
         cap=max_cost_usd,
     )
     lines.extend(stopped)
+
     files = read_run_files(folder)
+    questions = read_questions(root)
+    runs = plain.plan.runs
+    zero = zero_guarded_ids(known)
+    found = groups(run_entries(files, version, questions, runs, series="plain"), zero)
+    statement = plain_statement(
+        read_run_files(version_dir(root, version)),
+        files,
+        found,
+        version=version,
+        question_ids=[question.id for question in questions],
+        runs=runs,
+        zero_guarded=zero,
+        versions=[str(entry["version_hash"]) for entry in read_versions(root)],
+    )
+    write_summary(folder, {"groups": [group.record() for group in found], "statement": statement})
     total = sum(float(f["usage"]["cost_usd"]) for f in files)
     lines.append(f"wrote {written} run files under {folder.relative_to(root)}/")
     lines.append(
         f"cost this invocation ${spent:.4f}; cumulative for the plain series of version"
         f" {version} ${total:.4f}"
     )
-    return tuple(lines)
+    group_lines = [line for group in found for line in group.lines()]
+    return (*lines, "", *group_lines, *plain_statement_lines(statement))
 
 
-def write_summary(folder: Path, summary: Sequence[Mapping[str, Any]]) -> None:
-    """The summary record of a version or its plain series, rewritten after each `run` (AC-23)."""
+def write_summary(folder: Path, summary: Sequence[Mapping[str, Any]] | Mapping[str, Any]) -> None:
+    """The summary record of a version or its plain series, rewritten after each `run` (AC-23).
+
+    A noted summary is the list of group records; a plain one holds its groups
+    and the statement against noted (spec 0013 AC-23).
+    """
     path = folder / SUMMARY
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(list(summary), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    record = dict(summary) if isinstance(summary, Mapping) else list(summary)
+    path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
