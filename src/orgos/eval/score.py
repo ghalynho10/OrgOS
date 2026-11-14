@@ -334,18 +334,18 @@ def _not_compared(
     runs: int,
 ) -> str | None:
     both = [*noted, *plain]
-    if any(f["agent_version"] != version for f in both):
+    if any(f.get("agent_version") != version for f in both):
         return "other version"
     if len({f["run"] for f in noted}) < runs or len({f["run"] for f in plain}) < runs:
         return "missing files"
-    if len({f["load_id"] for f in both}) > 1:
+    if len({f.get("load_id") for f in both}) > 1:
         return "other load"
     return None
 
 
 def _matched(files: Iterable[Mapping[str, Any]], kept: Iterable[str]) -> int:
     ids = set(kept)
-    return sum(1 for f in files if f["question"] in ids and f["answer_match"] is True)
+    return sum(1 for f in files if f["question"] in ids and f.get("answer_match") is True)
 
 
 def _store_statement(
@@ -473,9 +473,14 @@ def plain_statement_lines(statement: Mapping[str, Any]) -> list[str]:
         f" SQL {_shown(against['sql'], 'answer_match')} answer_match; {verdict}"
     )
     if statement["stale"]:
-        lines.append(
-            f"the plain series of version {statement['version']} is stale, a lower bound of an"
-            f" older version: {VERSIONS_NAME} holds the later {', '.join(statement['stale'])};"
-            " nothing is rerun"
-        )
+        lines.append(stale_line(statement["version"], statement["stale"]))
     return lines
+
+
+def stale_line(version: str, later: Sequence[str]) -> str:
+    """The line for a plain series of a version that `versions.jsonl` has a later one of (AC-25)."""
+    return (
+        f"the plain series of version {version} is stale, a lower bound of an"
+        f" older version: {VERSIONS_NAME} holds the later {', '.join(later)};"
+        " nothing is rerun"
+    )
