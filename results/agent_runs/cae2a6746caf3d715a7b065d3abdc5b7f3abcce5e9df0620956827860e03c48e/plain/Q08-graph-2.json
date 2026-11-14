@@ -1,0 +1,140 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 4,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.033701415872201324,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue) WHERE all(n IN nodes(p) WHERE n.resolutionDate IS NULL AND n.resolutionName IS NULL) AND size(nodes(p))=size(apoc.coll.toSet([x IN nodes(p)|x.issueKey])) RETURN [n IN nodes(p)|n.issueKey] AS path, [r IN relationships(p)|r.linkId] AS links"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.010204582940787077,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue) WHERE all(n IN nodes(p) WHERE n.resolutionDate IS NULL AND n.resolutionName IS NULL) AND size(apoc.coll.toSet([x IN nodes(p)|x.issueKey]))=size(nodes(p)) RETURN 1"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.11902454192750156,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue) WHERE all(n IN nodes(p) WHERE n.resolutionDate IS NULL AND n.resolutionName IS NULL) AND NOT EXISTS { MATCH (a)<-[:DEPENDS]-(x:Issue) WHERE x.resolutionDate IS NULL AND x.resolutionName IS NULL AND NOT x IN nodes(p) } AND NOT EXISTS { MATCH (b)-[:DEPENDS]->(y:Issue) WHERE y.resolutionDate IS NULL AND y.resolutionName IS NULL AND NOT y IN nodes(p) } RETURN [n IN nodes(p)|n.issueKey] AS path, [r IN relationships(p)|r.linkId] AS links"
+    },
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.11298320814967155,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue) WHERE all(n IN nodes(p) WHERE n.resolutionDate IS NULL AND n.resolutionName IS NULL) AND NOT EXISTS { MATCH (a)<-[:DEPENDS]-(x:Issue) WHERE x.resolutionDate IS NULL AND x.resolutionName IS NULL AND NOT x IN nodes(p) } AND NOT EXISTS { MATCH (b)-[:DEPENDS]->(y:Issue) WHERE y.resolutionDate IS NULL AND y.resolutionName IS NULL AND NOT y IN nodes(p) } UNWIND nodes(p) AS n RETURN DISTINCT n.issueKey AS issue"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q08",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 2,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 18.903027374995872,
+  "series": "plain",
+  "source_match": false,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "path",
+      "sources": [],
+      "value": [
+        {
+          "path": [
+            "issue:JRASERVER-66870",
+            "issue:JRASERVER-37545"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "406801"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-66660"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382592"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-67462"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382591"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-68724",
+            "issue:CWD-5029"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382655"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "time": "2026-11-14T05:57:07+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0326871,
+    "input_tokens": 42501,
+    "output_tokens": 2152,
+    "requests": 6,
+    "tool_calls": 4
+  },
+  "zero_answer": false
+}

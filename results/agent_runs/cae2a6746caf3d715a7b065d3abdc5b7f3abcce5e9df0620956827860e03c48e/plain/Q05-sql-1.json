@@ -1,0 +1,668 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 84,
+      "seconds": 0.053145833080634475,
+      "text": "select l.person_key as id, sum(l.seconds) as value from model.logged_time l join model.issue i on i.issue_key=l.issue_key where l.seconds>0 and i.assignee_key is not null and i.assignee_key<>l.person_key group by l.person_key order by 1"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q05",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 3.985599000006914,
+  "series": "plain",
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 84,
+      "missing": 2492
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "map",
+      "sources": [
+        {
+          "person": [
+            "<<|author_key|009ba4ae-4d1c-482e-8eac-15eb0b881a0e|>>",
+            "<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+            "<<|author_key|0c821119-5204-4f9d-8006-c7afdd23efcd|>>",
+            "<<|author_key|0db9d411-ef6b-4982-b4a5-35804f301d3f|>>",
+            "<<|author_key|16290ecc-6980-4ee3-915c-bda8e07efe8f|>>",
+            "<<|author_key|184b4daa-2780-423e-b785-a643b7829cdf|>>",
+            "<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+            "<<|author_key|20efeef5-06e0-413f-a842-0488ee5c0340|>>",
+            "<<|author_key|24571bac-d3a7-4ed0-b896-df2c8bd533c5|>>",
+            "<<|author_key|26bb7c57-7292-43fb-9018-0cf2ad1491b1|>>",
+            "<<|author_key|27f5cf44-db91-42e2-b42b-a57e48f9c207|>>",
+            "<<|author_key|286941f8-a7f1-42fd-b7df-b92796544084|>>",
+            "<<|author_key|29e55996-769f-4a53-b661-dea04e803b52|>>",
+            "<<|author_key|2b6140ba-347f-454f-9b81-381343465a59|>>",
+            "<<|author_key|2b9c21b8-b5ac-402e-896f-a92fa6afa53e|>>",
+            "<<|author_key|2baa5bd2-b4e3-4e0b-b100-829b3071f2cd|>>",
+            "<<|author_key|2bc96026-5a5d-4f98-a075-3f5ecf4a7a63|>>",
+            "<<|author_key|31c78c47-1586-4ff0-bd58-119a75daf4dc|>>",
+            "<<|author_key|33b8d774-5ee4-4c31-aa5e-22e85793e88b|>>",
+            "<<|author_key|349dc406-8a15-48c9-a487-750342e84a4b|>>",
+            "<<|author_key|399755a9-c33f-4b76-a339-edf4127321e1|>>",
+            "<<|author_key|419e3391-9a59-4450-8f6a-8e58aeba3281|>>",
+            "<<|author_key|44d7c370-e462-436d-a562-c9cbed80c74c|>>",
+            "<<|author_key|496f6d40-47dc-465e-9e7a-4c7b00ec2685|>>",
+            "<<|author_key|4c3cc199-07a3-4aee-8c13-b9226b4b5ec7|>>",
+            "<<|author_key|4ef12813-a1a7-4713-bc1b-2de494a85150|>>",
+            "<<|author_key|504ef1d8-bb91-48da-9fd8-f9e87fe6acc2|>>",
+            "<<|author_key|50dbebaf-354b-4741-bb6a-fe447f456a59|>>",
+            "<<|author_key|51091f61-6937-49c2-b2db-9220174e6363|>>",
+            "<<|author_key|524ba4ac-04db-4428-b660-d3b42f757a52|>>",
+            "<<|author_key|56859503-a5ae-4c70-8e2e-ea35d82b0338|>>",
+            "<<|author_key|59314ef4-0ec7-4cf6-a433-76f88279c9b2|>>",
+            "<<|author_key|5bf891a1-634d-4f38-b153-46ccb8deb6ad|>>",
+            "<<|author_key|5f880716-c81d-4820-9fbb-9d9f4514482f|>>",
+            "<<|author_key|60ec8634-2027-4ef8-8882-fb6cd94a9f6f|>>",
+            "<<|author_key|615abac3-c966-4076-a721-62fc4cdb29c7|>>",
+            "<<|author_key|632907fb-2d09-4b60-bb5d-6e042c9a1d89|>>",
+            "<<|author_key|6bf6e3f3-d29f-4f02-b9b7-162203b1c4ef|>>",
+            "<<|author_key|6e839ab6-baf3-49eb-8b74-c8b010c05e66|>>",
+            "<<|author_key|730af639-f744-44f5-b0f3-30de1b51ae73|>>",
+            "<<|author_key|76712b32-b67e-4d3f-83b4-e87231854c2d|>>",
+            "<<|author_key|77c5e1ef-d297-48ee-a831-a52555808775|>>",
+            "<<|author_key|79a7bf00-2bb0-49b3-bc54-c2f850ce2963|>>",
+            "<<|author_key|7a9f36ef-871c-4097-9418-2752b6683d88|>>",
+            "<<|author_key|7c93c5ba-d823-42b8-931d-782abb277f83|>>",
+            "<<|author_key|7d12fc76-9b8a-4981-9a39-2201fe9063da|>>",
+            "<<|author_key|815a736b-99dd-4cd4-be1c-75349e12d1bc|>>",
+            "<<|author_key|8436a38c-8d74-4ace-ad0a-b2c3f6030079|>>",
+            "<<|author_key|875d5c8d-2ea8-4638-b965-66829bd9766c|>>",
+            "<<|author_key|9077f8c0-8bd9-4a3d-8a87-644347328358|>>",
+            "<<|author_key|908498f0-bd78-48e8-9ad6-f941bb1d1e4f|>>",
+            "<<|author_key|91c1d8fa-b01a-4e65-a9a1-b60f37c6875f|>>",
+            "<<|author_key|943ade37-dfb1-4f31-9c83-ffc77f4e9ee2|>>",
+            "<<|author_key|9ca95ccb-dde0-4f5a-bafd-68be662485cb|>>",
+            "<<|author_key|a1b9a9c9-75c2-4488-9fa2-77bd10c61464|>>",
+            "<<|author_key|a2c2bbfb-ecfd-4bd1-ac7d-f44cf25c94c6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a8e5feb9-feb1-4482-b162-96043c7ccfaa|>>",
+            "<<|author_key|a8f11345-08a8-42bc-975a-b49d4caaaef7|>>",
+            "<<|author_key|aa204125-267e-40f0-aab3-b01ec5eef52f|>>",
+            "<<|author_key|ab0651e7-300d-4d3e-bc67-90ffe6fae570|>>",
+            "<<|author_key|ac10f709-ac5b-4904-b9db-cd5eeec74509|>>",
+            "<<|author_key|b7badc07-6a08-4da7-bd38-fc8e14f9a950|>>",
+            "<<|author_key|b7e79d96-cedd-436c-8997-e551618d11f4|>>",
+            "<<|author_key|bafd6f67-8e23-4cb5-912e-657c209c79d2|>>",
+            "<<|author_key|c015eb41-1df1-407e-ad72-208c2d2ff9f4|>>",
+            "<<|author_key|c077d763-980b-44af-9d6d-b81efe511dab|>>",
+            "<<|author_key|c1b09447-b327-4443-9599-be6b35b737c3|>>",
+            "<<|author_key|c395f24b-fbb9-4778-91f0-6d9d66d81c03|>>",
+            "<<|author_key|c492a878-322d-4100-93ad-0beb2b30aaa9|>>",
+            "<<|author_key|cb040ae9-07a1-4ddc-88c8-4a90574bd16a|>>",
+            "<<|author_key|cbe56e38-416d-44c5-aed1-65e8671b85ca|>>",
+            "<<|author_key|cd4b1971-2cf0-4f67-8d18-5f6392d82ec2|>>",
+            "<<|author_key|cf2d7c50-54e2-4466-ba2d-ce223fb1d48e|>>",
+            "<<|author_key|d214c253-8a04-4375-a0c5-2a9a8a9ed6cb|>>",
+            "<<|author_key|d42c5770-f14a-447a-aa19-3557b6fe3c6b|>>",
+            "<<|author_key|d9352216-f01c-4323-8dda-70c81ff9ab13|>>",
+            "<<|author_key|db05c09d-d67e-44fc-84f7-8c9ac9352f18|>>",
+            "<<|author_key|db2510b3-630a-4ed2-9d56-627353d2c2ac|>>",
+            "<<|author_key|dbdfc729-45a0-4ce5-a083-482a3f237684|>>",
+            "<<|author_key|e4d4422c-f56e-4dd1-9c3d-9dbe3e11e813|>>",
+            "<<|author_key|e6187184-32b8-4b73-bd18-5d08593dffb4|>>",
+            "<<|author_key|f19ab069-1457-4812-bbdd-b8018826082f|>>",
+            "<<|author_key|fcd2f742-9ade-4c18-b841-778410cd381f|>>"
+          ]
+        }
+      ],
+      "value": [
+        {
+          "id": "person:<<|author_key|009ba4ae-4d1c-482e-8eac-15eb0b881a0e|>>",
+          "value": {
+            "int": 180
+          }
+        },
+        {
+          "id": "person:<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+          "value": {
+            "int": 245760
+          }
+        },
+        {
+          "id": "person:<<|author_key|0c821119-5204-4f9d-8006-c7afdd23efcd|>>",
+          "value": {
+            "int": 30420
+          }
+        },
+        {
+          "id": "person:<<|author_key|0db9d411-ef6b-4982-b4a5-35804f301d3f|>>",
+          "value": {
+            "int": 18000
+          }
+        },
+        {
+          "id": "person:<<|author_key|16290ecc-6980-4ee3-915c-bda8e07efe8f|>>",
+          "value": {
+            "int": 50400
+          }
+        },
+        {
+          "id": "person:<<|author_key|184b4daa-2780-423e-b785-a643b7829cdf|>>",
+          "value": {
+            "int": 66600
+          }
+        },
+        {
+          "id": "person:<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+          "value": {
+            "int": 298020
+          }
+        },
+        {
+          "id": "person:<<|author_key|20efeef5-06e0-413f-a842-0488ee5c0340|>>",
+          "value": {
+            "int": 12600
+          }
+        },
+        {
+          "id": "person:<<|author_key|24571bac-d3a7-4ed0-b896-df2c8bd533c5|>>",
+          "value": {
+            "int": 14400
+          }
+        },
+        {
+          "id": "person:<<|author_key|26bb7c57-7292-43fb-9018-0cf2ad1491b1|>>",
+          "value": {
+            "int": 12780
+          }
+        },
+        {
+          "id": "person:<<|author_key|27f5cf44-db91-42e2-b42b-a57e48f9c207|>>",
+          "value": {
+            "int": 67860
+          }
+        },
+        {
+          "id": "person:<<|author_key|286941f8-a7f1-42fd-b7df-b92796544084|>>",
+          "value": {
+            "int": 232620
+          }
+        },
+        {
+          "id": "person:<<|author_key|29e55996-769f-4a53-b661-dea04e803b52|>>",
+          "value": {
+            "int": 306000
+          }
+        },
+        {
+          "id": "person:<<|author_key|2b6140ba-347f-454f-9b81-381343465a59|>>",
+          "value": {
+            "int": 72000
+          }
+        },
+        {
+          "id": "person:<<|author_key|2b9c21b8-b5ac-402e-896f-a92fa6afa53e|>>",
+          "value": {
+            "int": 3600
+          }
+        },
+        {
+          "id": "person:<<|author_key|2baa5bd2-b4e3-4e0b-b100-829b3071f2cd|>>",
+          "value": {
+            "int": 54000
+          }
+        },
+        {
+          "id": "person:<<|author_key|2bc96026-5a5d-4f98-a075-3f5ecf4a7a63|>>",
+          "value": {
+            "int": 1320
+          }
+        },
+        {
+          "id": "person:<<|author_key|31c78c47-1586-4ff0-bd58-119a75daf4dc|>>",
+          "value": {
+            "int": 6480
+          }
+        },
+        {
+          "id": "person:<<|author_key|33b8d774-5ee4-4c31-aa5e-22e85793e88b|>>",
+          "value": {
+            "int": 7200
+          }
+        },
+        {
+          "id": "person:<<|author_key|349dc406-8a15-48c9-a487-750342e84a4b|>>",
+          "value": {
+            "int": 14400
+          }
+        },
+        {
+          "id": "person:<<|author_key|399755a9-c33f-4b76-a339-edf4127321e1|>>",
+          "value": {
+            "int": 3840
+          }
+        },
+        {
+          "id": "person:<<|author_key|419e3391-9a59-4450-8f6a-8e58aeba3281|>>",
+          "value": {
+            "int": 115500
+          }
+        },
+        {
+          "id": "person:<<|author_key|44d7c370-e462-436d-a562-c9cbed80c74c|>>",
+          "value": {
+            "int": 61080
+          }
+        },
+        {
+          "id": "person:<<|author_key|496f6d40-47dc-465e-9e7a-4c7b00ec2685|>>",
+          "value": {
+            "int": 600
+          }
+        },
+        {
+          "id": "person:<<|author_key|4c3cc199-07a3-4aee-8c13-b9226b4b5ec7|>>",
+          "value": {
+            "int": 58500
+          }
+        },
+        {
+          "id": "person:<<|author_key|4ef12813-a1a7-4713-bc1b-2de494a85150|>>",
+          "value": {
+            "int": 23400
+          }
+        },
+        {
+          "id": "person:<<|author_key|504ef1d8-bb91-48da-9fd8-f9e87fe6acc2|>>",
+          "value": {
+            "int": 225120
+          }
+        },
+        {
+          "id": "person:<<|author_key|50dbebaf-354b-4741-bb6a-fe447f456a59|>>",
+          "value": {
+            "int": 434340
+          }
+        },
+        {
+          "id": "person:<<|author_key|51091f61-6937-49c2-b2db-9220174e6363|>>",
+          "value": {
+            "int": 28800
+          }
+        },
+        {
+          "id": "person:<<|author_key|524ba4ac-04db-4428-b660-d3b42f757a52|>>",
+          "value": {
+            "int": 900
+          }
+        },
+        {
+          "id": "person:<<|author_key|56859503-a5ae-4c70-8e2e-ea35d82b0338|>>",
+          "value": {
+            "int": 13980
+          }
+        },
+        {
+          "id": "person:<<|author_key|59314ef4-0ec7-4cf6-a433-76f88279c9b2|>>",
+          "value": {
+            "int": 7200
+          }
+        },
+        {
+          "id": "person:<<|author_key|5bf891a1-634d-4f38-b153-46ccb8deb6ad|>>",
+          "value": {
+            "int": 28800
+          }
+        },
+        {
+          "id": "person:<<|author_key|5f880716-c81d-4820-9fbb-9d9f4514482f|>>",
+          "value": {
+            "int": 300
+          }
+        },
+        {
+          "id": "person:<<|author_key|60ec8634-2027-4ef8-8882-fb6cd94a9f6f|>>",
+          "value": {
+            "int": 4260
+          }
+        },
+        {
+          "id": "person:<<|author_key|615abac3-c966-4076-a721-62fc4cdb29c7|>>",
+          "value": {
+            "int": 17220
+          }
+        },
+        {
+          "id": "person:<<|author_key|632907fb-2d09-4b60-bb5d-6e042c9a1d89|>>",
+          "value": {
+            "int": 230460
+          }
+        },
+        {
+          "id": "person:<<|author_key|6bf6e3f3-d29f-4f02-b9b7-162203b1c4ef|>>",
+          "value": {
+            "int": 29220
+          }
+        },
+        {
+          "id": "person:<<|author_key|6e839ab6-baf3-49eb-8b74-c8b010c05e66|>>",
+          "value": {
+            "int": 7200
+          }
+        },
+        {
+          "id": "person:<<|author_key|730af639-f744-44f5-b0f3-30de1b51ae73|>>",
+          "value": {
+            "int": 22500
+          }
+        },
+        {
+          "id": "person:<<|author_key|76712b32-b67e-4d3f-83b4-e87231854c2d|>>",
+          "value": {
+            "int": 7200
+          }
+        },
+        {
+          "id": "person:<<|author_key|77c5e1ef-d297-48ee-a831-a52555808775|>>",
+          "value": {
+            "int": 18300
+          }
+        },
+        {
+          "id": "person:<<|author_key|79a7bf00-2bb0-49b3-bc54-c2f850ce2963|>>",
+          "value": {
+            "int": 7200
+          }
+        },
+        {
+          "id": "person:<<|author_key|7a9f36ef-871c-4097-9418-2752b6683d88|>>",
+          "value": {
+            "int": 36840
+          }
+        },
+        {
+          "id": "person:<<|author_key|7c93c5ba-d823-42b8-931d-782abb277f83|>>",
+          "value": {
+            "int": 174000
+          }
+        },
+        {
+          "id": "person:<<|author_key|7d12fc76-9b8a-4981-9a39-2201fe9063da|>>",
+          "value": {
+            "int": 83580
+          }
+        },
+        {
+          "id": "person:<<|author_key|815a736b-99dd-4cd4-be1c-75349e12d1bc|>>",
+          "value": {
+            "int": 540
+          }
+        },
+        {
+          "id": "person:<<|author_key|8436a38c-8d74-4ace-ad0a-b2c3f6030079|>>",
+          "value": {
+            "int": 25200
+          }
+        },
+        {
+          "id": "person:<<|author_key|875d5c8d-2ea8-4638-b965-66829bd9766c|>>",
+          "value": {
+            "int": 9600
+          }
+        },
+        {
+          "id": "person:<<|author_key|9077f8c0-8bd9-4a3d-8a87-644347328358|>>",
+          "value": {
+            "int": 3540
+          }
+        },
+        {
+          "id": "person:<<|author_key|908498f0-bd78-48e8-9ad6-f941bb1d1e4f|>>",
+          "value": {
+            "int": 110760
+          }
+        },
+        {
+          "id": "person:<<|author_key|91c1d8fa-b01a-4e65-a9a1-b60f37c6875f|>>",
+          "value": {
+            "int": 12060
+          }
+        },
+        {
+          "id": "person:<<|author_key|943ade37-dfb1-4f31-9c83-ffc77f4e9ee2|>>",
+          "value": {
+            "int": 335400
+          }
+        },
+        {
+          "id": "person:<<|author_key|9ca95ccb-dde0-4f5a-bafd-68be662485cb|>>",
+          "value": {
+            "int": 46800
+          }
+        },
+        {
+          "id": "person:<<|author_key|a1b9a9c9-75c2-4488-9fa2-77bd10c61464|>>",
+          "value": {
+            "int": 355440
+          }
+        },
+        {
+          "id": "person:<<|author_key|a2c2bbfb-ecfd-4bd1-ac7d-f44cf25c94c6|>>",
+          "value": {
+            "int": 7200
+          }
+        },
+        {
+          "id": "person:<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+          "value": {
+            "int": 196560
+          }
+        },
+        {
+          "id": "person:<<|author_key|a8e5feb9-feb1-4482-b162-96043c7ccfaa|>>",
+          "value": {
+            "int": 36000
+          }
+        },
+        {
+          "id": "person:<<|author_key|a8f11345-08a8-42bc-975a-b49d4caaaef7|>>",
+          "value": {
+            "int": 6300
+          }
+        },
+        {
+          "id": "person:<<|author_key|aa204125-267e-40f0-aab3-b01ec5eef52f|>>",
+          "value": {
+            "int": 48300
+          }
+        },
+        {
+          "id": "person:<<|author_key|ab0651e7-300d-4d3e-bc67-90ffe6fae570|>>",
+          "value": {
+            "int": 28800
+          }
+        },
+        {
+          "id": "person:<<|author_key|ac10f709-ac5b-4904-b9db-cd5eeec74509|>>",
+          "value": {
+            "int": 5520
+          }
+        },
+        {
+          "id": "person:<<|author_key|b7badc07-6a08-4da7-bd38-fc8e14f9a950|>>",
+          "value": {
+            "int": 495060
+          }
+        },
+        {
+          "id": "person:<<|author_key|b7e79d96-cedd-436c-8997-e551618d11f4|>>",
+          "value": {
+            "int": 7200
+          }
+        },
+        {
+          "id": "person:<<|author_key|bafd6f67-8e23-4cb5-912e-657c209c79d2|>>",
+          "value": {
+            "int": 20700
+          }
+        },
+        {
+          "id": "person:<<|author_key|c015eb41-1df1-407e-ad72-208c2d2ff9f4|>>",
+          "value": {
+            "int": 300
+          }
+        },
+        {
+          "id": "person:<<|author_key|c077d763-980b-44af-9d6d-b81efe511dab|>>",
+          "value": {
+            "int": 18000
+          }
+        },
+        {
+          "id": "person:<<|author_key|c1b09447-b327-4443-9599-be6b35b737c3|>>",
+          "value": {
+            "int": 212700
+          }
+        },
+        {
+          "id": "person:<<|author_key|c395f24b-fbb9-4778-91f0-6d9d66d81c03|>>",
+          "value": {
+            "int": 32400
+          }
+        },
+        {
+          "id": "person:<<|author_key|c492a878-322d-4100-93ad-0beb2b30aaa9|>>",
+          "value": {
+            "int": 36000
+          }
+        },
+        {
+          "id": "person:<<|author_key|cb040ae9-07a1-4ddc-88c8-4a90574bd16a|>>",
+          "value": {
+            "int": 93600
+          }
+        },
+        {
+          "id": "person:<<|author_key|cbe56e38-416d-44c5-aed1-65e8671b85ca|>>",
+          "value": {
+            "int": 138120
+          }
+        },
+        {
+          "id": "person:<<|author_key|cd4b1971-2cf0-4f67-8d18-5f6392d82ec2|>>",
+          "value": {
+            "int": 60
+          }
+        },
+        {
+          "id": "person:<<|author_key|cf2d7c50-54e2-4466-ba2d-ce223fb1d48e|>>",
+          "value": {
+            "int": 60
+          }
+        },
+        {
+          "id": "person:<<|author_key|d214c253-8a04-4375-a0c5-2a9a8a9ed6cb|>>",
+          "value": {
+            "int": 1080
+          }
+        },
+        {
+          "id": "person:<<|author_key|d42c5770-f14a-447a-aa19-3557b6fe3c6b|>>",
+          "value": {
+            "int": 2220
+          }
+        },
+        {
+          "id": "person:<<|author_key|d9352216-f01c-4323-8dda-70c81ff9ab13|>>",
+          "value": {
+            "int": 51000
+          }
+        },
+        {
+          "id": "person:<<|author_key|db05c09d-d67e-44fc-84f7-8c9ac9352f18|>>",
+          "value": {
+            "int": 11400
+          }
+        },
+        {
+          "id": "person:<<|author_key|db2510b3-630a-4ed2-9d56-627353d2c2ac|>>",
+          "value": {
+            "int": 2340
+          }
+        },
+        {
+          "id": "person:<<|author_key|dbdfc729-45a0-4ce5-a083-482a3f237684|>>",
+          "value": {
+            "int": 1800
+          }
+        },
+        {
+          "id": "person:<<|author_key|e4d4422c-f56e-4dd1-9c3d-9dbe3e11e813|>>",
+          "value": {
+            "int": 1140
+          }
+        },
+        {
+          "id": "person:<<|author_key|e6187184-32b8-4b73-bd18-5d08593dffb4|>>",
+          "value": {
+            "int": 43980
+          }
+        },
+        {
+          "id": "person:<<|author_key|f19ab069-1457-4812-bbdd-b8018826082f|>>",
+          "value": {
+            "int": 226800
+          }
+        },
+        {
+          "id": "person:<<|author_key|fcd2f742-9ade-4c18-b841-778410cd381f|>>",
+          "value": {
+            "int": 43200
+          }
+        }
+      ]
+    }
+  },
+  "time": "2026-11-14T05:46:13+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.010871200000000001,
+    "input_tokens": 13446,
+    "output_tokens": 352,
+    "requests": 2,
+    "tool_calls": 1
+  },
+  "zero_answer": false
+}

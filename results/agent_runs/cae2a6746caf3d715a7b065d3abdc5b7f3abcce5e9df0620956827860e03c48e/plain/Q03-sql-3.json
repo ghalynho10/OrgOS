@@ -1,0 +1,77 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.012795167043805122,
+      "text": "select count(*) as value from model.issue where project_key='FE' and resolution_date>='2012-04-01 00:00:00+00' and resolution_date<'2012-07-01 00:00:00+00' and due_at is not null and resolution_date>due_at"
+    },
+    {
+      "outcome": "ok",
+      "rows": 0,
+      "seconds": 0.01168545801192522,
+      "text": "select issue_key as id from model.issue where project_key='FE' and resolution_date>='2012-04-01 00:00:00+00' and resolution_date<'2012-07-01 00:00:00+00' and due_at is not null and resolution_date>due_at"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q03",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 3.92437241692096,
+  "series": "plain",
+  "source_match": true,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "number",
+      "sources": [],
+      "value": {
+        "int": 0
+      }
+    }
+  },
+  "time": "2026-11-14T05:54:48+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.0056602,
+    "input_tokens": 17078,
+    "output_tokens": 357,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": true
+}

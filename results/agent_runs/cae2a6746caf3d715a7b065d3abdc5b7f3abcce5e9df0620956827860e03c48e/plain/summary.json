@@ -1,0 +1,439 @@
+{
+  "groups": [
+    {
+      "attempts_at_row_cap": 0,
+      "attempts_timed_out": 1,
+      "by_data": {
+        "real": {
+          "answer_match": 44,
+          "total": 60
+        },
+        "synthetic": {
+          "answer_match": 0,
+          "total": 0
+        }
+      },
+      "by_type": {
+        "aggregate": {
+          "answer_match": 18,
+          "total": 21
+        },
+        "mixed": {
+          "answer_match": 16,
+          "total": 18
+        },
+        "path_connection": {
+          "answer_match": 10,
+          "total": 21
+        }
+      },
+      "correct": 8,
+      "correct_not_reviewed": 0,
+      "discrepancies": 0,
+      "headline": {
+        "answer_match": 44,
+        "total": 60
+      },
+      "layer": "plain",
+      "limit_hit": {
+        "requests": 0,
+        "tokens": 0,
+        "tool_calls": 0
+      },
+      "missing": [],
+      "outcomes": {
+        "correct": 8,
+        "wrong": 52
+      },
+      "partial": false,
+      "per_question": {
+        "Q01": {
+          "attempts": 4,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q02": {
+          "attempts": 5,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q03": {
+          "attempts": 5,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q04": {
+          "attempts": 4,
+          "retries": 1,
+          "runs": 3
+        },
+        "Q05": {
+          "attempts": 7,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q06": {
+          "attempts": 5,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q07": {
+          "attempts": 7,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q08": {
+          "attempts": 8,
+          "retries": 4,
+          "runs": 3
+        },
+        "Q09": {
+          "attempts": 22,
+          "retries": 9,
+          "runs": 3
+        },
+        "Q10": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q11": {
+          "attempts": 11,
+          "retries": 4,
+          "runs": 3
+        },
+        "Q12": {
+          "attempts": 6,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q13": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q14": {
+          "attempts": 7,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q15": {
+          "attempts": 7,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q16": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q17": {
+          "attempts": 7,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q18": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q19": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q20": {
+          "attempts": 5,
+          "retries": 0,
+          "runs": 3
+        }
+      },
+      "source_match": 8,
+      "store": "graph",
+      "version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+      "without_zero_guarded": {
+        "answer_match": 38,
+        "total": 54
+      },
+      "zero_guarded": [
+        "Q03",
+        "Q16"
+      ]
+    },
+    {
+      "attempts_at_row_cap": 0,
+      "attempts_timed_out": 0,
+      "by_data": {
+        "real": {
+          "answer_match": 47,
+          "total": 60
+        },
+        "synthetic": {
+          "answer_match": 0,
+          "total": 0
+        }
+      },
+      "by_type": {
+        "aggregate": {
+          "answer_match": 18,
+          "total": 21
+        },
+        "mixed": {
+          "answer_match": 18,
+          "total": 18
+        },
+        "path_connection": {
+          "answer_match": 11,
+          "total": 21
+        }
+      },
+      "correct": 10,
+      "correct_not_reviewed": 0,
+      "discrepancies": 0,
+      "headline": {
+        "answer_match": 47,
+        "total": 60
+      },
+      "layer": "plain",
+      "limit_hit": {
+        "requests": 0,
+        "tokens": 0,
+        "tool_calls": 0
+      },
+      "missing": [],
+      "outcomes": {
+        "correct": 10,
+        "no_answer": 1,
+        "wrong": 49
+      },
+      "partial": false,
+      "per_question": {
+        "Q01": {
+          "attempts": 4,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q02": {
+          "attempts": 6,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q03": {
+          "attempts": 4,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q04": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q05": {
+          "attempts": 4,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q06": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q07": {
+          "attempts": 7,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q08": {
+          "attempts": 13,
+          "retries": 2,
+          "runs": 3
+        },
+        "Q09": {
+          "attempts": 29,
+          "retries": 6,
+          "runs": 3
+        },
+        "Q10": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q11": {
+          "attempts": 4,
+          "retries": 1,
+          "runs": 3
+        },
+        "Q12": {
+          "attempts": 7,
+          "retries": 1,
+          "runs": 3
+        },
+        "Q13": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q14": {
+          "attempts": 9,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q15": {
+          "attempts": 6,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q16": {
+          "attempts": 4,
+          "retries": 1,
+          "runs": 3
+        },
+        "Q17": {
+          "attempts": 6,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q18": {
+          "attempts": 3,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q19": {
+          "attempts": 4,
+          "retries": 0,
+          "runs": 3
+        },
+        "Q20": {
+          "attempts": 4,
+          "retries": 0,
+          "runs": 3
+        }
+      },
+      "source_match": 10,
+      "store": "sql",
+      "version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+      "without_zero_guarded": {
+        "answer_match": 41,
+        "total": 54
+      },
+      "zero_guarded": [
+        "Q03",
+        "Q16"
+      ]
+    }
+  ],
+  "statement": {
+    "graph_against_sql": {
+      "graph": {
+        "answer_match": 44,
+        "total": 60
+      },
+      "sql": {
+        "answer_match": 47,
+        "total": 60
+      },
+      "verdict": "SQL ahead"
+    },
+    "runs": 3,
+    "stale": [],
+    "stores": [
+      {
+        "compared": [
+          "Q01",
+          "Q02",
+          "Q03",
+          "Q04",
+          "Q05",
+          "Q06",
+          "Q07",
+          "Q08",
+          "Q09",
+          "Q10",
+          "Q11",
+          "Q12",
+          "Q13",
+          "Q14",
+          "Q15",
+          "Q16",
+          "Q17",
+          "Q18",
+          "Q19",
+          "Q20"
+        ],
+        "full": {
+          "noted": {
+            "answer_match": 57,
+            "total": 60
+          },
+          "plain": {
+            "answer_match": 44,
+            "total": 60
+          }
+        },
+        "not_compared": {},
+        "store": "graph",
+        "without_zero_guarded": {
+          "noted": {
+            "answer_match": 51,
+            "total": 54
+          },
+          "plain": {
+            "answer_match": 38,
+            "total": 54
+          }
+        }
+      },
+      {
+        "compared": [
+          "Q01",
+          "Q02",
+          "Q03",
+          "Q04",
+          "Q05",
+          "Q06",
+          "Q07",
+          "Q08",
+          "Q09",
+          "Q10",
+          "Q11",
+          "Q12",
+          "Q13",
+          "Q14",
+          "Q15",
+          "Q16",
+          "Q17",
+          "Q18",
+          "Q19",
+          "Q20"
+        ],
+        "full": {
+          "noted": {
+            "answer_match": 59,
+            "total": 60
+          },
+          "plain": {
+            "answer_match": 47,
+            "total": 60
+          }
+        },
+        "not_compared": {},
+        "store": "sql",
+        "without_zero_guarded": {
+          "noted": {
+            "answer_match": 53,
+            "total": 54
+          },
+          "plain": {
+            "answer_match": 41,
+            "total": 54
+          }
+        }
+      }
+    ],
+    "version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+    "zero_guarded": [
+      "Q03",
+      "Q16"
+    ]
+  }
+}

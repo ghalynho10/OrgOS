@@ -1,0 +1,117 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.01947758300229907,
+      "text": "select p.project_key as id, count(i.issue_key) as value from model.project p left join model.issue i on i.project_key=p.project_key and i.created_at>='2013-01-01 00:00:00+00' and i.created_at<'2013-04-01 00:00:00+00' and i.resolution_date is null and i.resolution_name is null and i.assignee_key is null group by p.project_key"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q01",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 3.161381207872182,
+  "series": "plain",
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 224
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "map",
+      "sources": [],
+      "value": [
+        {
+          "id": "project:BAM",
+          "value": {
+            "int": 45
+          }
+        },
+        {
+          "id": "project:CLOUD",
+          "value": {
+            "int": 2
+          }
+        },
+        {
+          "id": "project:CLOV",
+          "value": {
+            "int": 0
+          }
+        },
+        {
+          "id": "project:CRUC",
+          "value": {
+            "int": 24
+          }
+        },
+        {
+          "id": "project:CWD",
+          "value": {
+            "int": 27
+          }
+        },
+        {
+          "id": "project:FE",
+          "value": {
+            "int": 36
+          }
+        },
+        {
+          "id": "project:JRASERVER",
+          "value": {
+            "int": 90
+          }
+        }
+      ]
+    }
+  },
+  "time": "2026-11-14T05:54:14+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.0055283,
+    "input_tokens": 11417,
+    "output_tokens": 360,
+    "requests": 2,
+    "tool_calls": 1
+  },
+  "zero_answer": false
+}

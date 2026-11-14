@@ -1,0 +1,146 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 5,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.013753624865785241,
+      "text": "select count(*), count(*) filter (where a.resolution_date is null and b.resolution_date is null) rd, count(*) filter (where a.resolution_name is null and b.resolution_name is null) rn from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where link_type_name='Depends'"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.01742362487129867,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where link_type_name='Depends' and a.resolution_date is null and b.resolution_date is null),\np as (select array[f,t] path, array[link_id] ln from e union all select p.path||e.t, p.ln||e.link_id from p join e on e.f=p.path[array_length(p.path,1)] where not e.t=any(p.path) and array_length(p.path,1)<6)\nselect path, ln from p where not exists (select 1 from e where e.f=p.path[array_length(p.path,1)] and not e.t=any(p.path))"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.009688624879345298,
+      "text": "select distinct k as issue_key from (select path[1] k from (select unnest(array['x']) ) z, (select '{}'::text[] path) q where false) w right join (values ('JRASERVER-67790'),('JRASERVER-67462'),('JRASERVER-66660'),('JRASERVER-68724'),('CWD-5029'),('JRASERVER-66870'),('JRASERVER-37545')) v(k) on true"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.006970458896830678,
+      "text": "select link_id from model.issue_link where link_id in ('382591','382592','382655','406801')"
+    },
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.00963637512177229,
+      "text": "select issue_key from model.issue where issue_key in ('JRASERVER-67790','JRASERVER-67462','JRASERVER-66660','JRASERVER-68724','CWD-5029','JRASERVER-66870','JRASERVER-37545')"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q08",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 17.728617625078186,
+  "series": "plain",
+  "source_match": false,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "full": {
+      "shape": "path",
+      "sources": [],
+      "value": [
+        {
+          "path": [
+            "issue:JRASERVER-66870",
+            "issue:JRASERVER-37545"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "406801"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-66660"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382592"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-67462"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382591"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-68724",
+            "issue:CWD-5029"
+          ],
+          "sources": [
+            {
+              "issue_link": [
+                "382655"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "time": "2026-11-14T05:46:55+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.027875599999999997,
+    "input_tokens": 46816,
+    "output_tokens": 1785,
+    "requests": 7,
+    "tool_calls": 5
+  },
+  "zero_answer": false
+}

@@ -1,0 +1,109 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": false,
+  "attempt_count": 8,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.08476541703566909,
+      "text": "select count(*), count(distinct from_issue_key), (select count(*) from model.issue where assignee_key is not null) from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.04145925003103912,
+      "text": "select count(*) c, (select count(*) from model.issue_link) t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.10260820807889104,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select array[f,t] ns, array[link_id] ls, 1 n from e\nunion all select p.ns||e.t, p.ls||e.link_id, n+1 from p join e on e.f=p.ns[array_length(p.ns,1)] where n<5 and not e.t=any(p.ns))\nselect n,count(*) from p group by n order by n"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1768,
+      "seconds": 0.11799550009891391,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select array[f,t] ns, array[link_id] ls, 1 n from e\nunion all select p.ns||e.t, p.ls||e.link_id, n+1 from p join e on e.f=p.ns[array_length(p.ns,1)] where n<5 and not e.t=any(p.ns))\nselect array_to_string(ns,' > ') path, ns, ls from p"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2888,
+      "seconds": 0.1372698750346899,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key)\nselect distinct i.issue_key, i.project_key, i.assignee_key, e.link_id from e join model.issue i on i.issue_key in (e.f,e.t)"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2888,
+      "seconds": 0.11933187488466501,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key)\nselect distinct link_id, f issue_key, i.project_key, i.assignee_key person_key from e join model.issue i on i.issue_key=e.f\nunion select link_id, t, i.project_key, i.assignee_key from e join model.issue i on i.issue_key=e.t"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1768,
+      "seconds": 0.4045699159614742,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select array[f,t] ns, array[link_id] ls, 1 n from e\nunion all select p.ns||e.t, p.ls||e.link_id, n+1 from p join e on e.f=p.ns[array_length(p.ns,1)] where n<5 and not e.t=any(p.ns))\nselect ns path, ns issues, ls links, (select array_agg(distinct i.project_key) from model.issue i where i.issue_key=any(ns)) projects, (select array_agg(distinct i.assignee_key) from model.issue i where i.issue_key=any(ns)) people from p"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1768,
+      "seconds": 0.4265072080306709,
+      "text": "with recursive e as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select array[f,t] ns, array[link_id] ls, 1 n from e\nunion all select p.ns||e.t, p.ls||e.link_id, n+1 from p join e on e.f=p.ns[array_length(p.ns,1)] where n<5 and not e.t=any(p.ns))\nselect ns path,\n (select jsonb_agg(jsonb_build_array(ns[k],ns[k+1]) order by k) from generate_subscripts(ls,1) k) issues,\n to_jsonb(ls) links,\n (select jsonb_agg(jsonb_build_array((select project_key from model.issue where issue_key=ns[k]),(select project_key from model.issue where issue_key=ns[k+1])) order by k) from generate_subscripts(ls,1) k) projects,\n (select jsonb_agg(jsonb_build_array((select assignee_key from model.issue where issue_key=ns[k]),(select assignee_key from model.issue where issue_key=ns[k+1])) order by k) from generate_subscripts(ls,1) k) people\nfrom p"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 34.49165887502022,
+  "series": "plain",
+  "source_match": false,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "591da9d54b6deef51939dbf05334f8a10bd32ed00ab534c16a221150a8030a25",
+    "source_ids": [],
+    "value_items": 1768
+  },
+  "time": "2026-11-14T05:58:40+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.1228914,
+    "input_tokens": 153176,
+    "output_tokens": 3930,
+    "requests": 10,
+    "tool_calls": 8
+  },
+  "zero_answer": false
+}
