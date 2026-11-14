@@ -41,6 +41,7 @@ from orgos.eval.runs import (
     run_agent,
     run_path,
     version_add,
+    version_dir,
     write_once,
 )
 from orgos.eval.tries import read_tries
@@ -321,7 +322,7 @@ def test_slice_one_end_to_end(settings: Settings, root: Path) -> None:
     )
     assert lines[0] == "wrote 6 run files under results/agent_runs/replay/"
     assert "replay sql: 3/3 correct (3/3 without the zero guarded none)" in lines
-    files = read_run_files(root, "replay")
+    files = read_run_files(version_dir(root, "replay"))
     assert [f["outcome"] for f in files] == ["correct"] * 6
     assert {f["load_id"] for f in files} == {LOAD_ID}
     again = run_agent(
@@ -409,24 +410,24 @@ def test_a_real_agent_is_gated_before_any_run_then_written_once(
     ):
         with pytest.raises(EvalError, match=reason):
             run(**options)
-    assert read_run_files(fresh_root, "v1") == ()
+    assert read_run_files(version_dir(fresh_root, "v1")) == ()
 
     assert "wrote 1 run files under results/agent_runs/v1/" in run()
-    (first,) = read_run_files(fresh_root, "v1")
+    (first,) = read_run_files(version_dir(fresh_root, "v1"))
     assert (first["agent_version"], first["load_id"]) == ("v1", LOAD_ID)
     assert first["usage"]["cost_usd"] == 0.01
 
     # The measured mean, $0.01, times the 5 runs left is above a $0.02 cap.
     with pytest.raises(EvalError, match=r"times 5 runs is \$0\.0500, above the cap \$0\.0200"):
         run(store=None, max_run=None, max_cost_usd=0.02)
-    assert len(read_run_files(fresh_root, "v1")) == 1
+    assert len(read_run_files(version_dir(fresh_root, "v1"))) == 1
     lines = run(store=None, max_run=None)
     assert "cost this invocation $0.0500; cumulative for version v1 $0.0600" in lines
-    assert len(read_run_files(fresh_root, "v1")) == 6
+    assert len(read_run_files(version_dir(fresh_root, "v1"))) == 6
 
     # A run file of the version on another load ID refuses the next run (AC-37).
     write_once(
-        run_path(fresh_root, "v1", "Q01", "sql", 4),
+        run_path(version_dir(fresh_root, "v1"), "Q01", "sql", 4),
         dict(first) | {"run": 4, "load_id": "1761000000.1"},
     )
     with pytest.raises(

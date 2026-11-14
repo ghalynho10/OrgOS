@@ -48,6 +48,7 @@ from orgos.eval.runs import (
     score_run,
     stored_answer,
     version_add,
+    version_dir,
     version_entry,
     write_once,
 )
@@ -130,8 +131,8 @@ LIMITS = {
 }
 
 
-@pytest.fixture
-def root(tmp_path: Path) -> Path:
+def make_root(tmp_path: Path) -> Path:
+    """A git repo with one question, its known answer and a comparison rule file."""
     env = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
     for args in (
         ("init", "--quiet"),
@@ -159,6 +160,11 @@ def root(tmp_path: Path) -> Path:
     return tmp_path
 
 
+@pytest.fixture
+def root(tmp_path: Path) -> Path:
+    return make_root(tmp_path)
+
+
 def work(root: Path, *numbers: int, store: Store = "sql") -> tuple[Work, ...]:
     question = read_questions(root)[0]
     return tuple(Work(question, store, number) for number in numbers)
@@ -170,8 +176,9 @@ def execute(
     return run_work(
         root,
         settings(),
-        agent,
+        agent.run,
         items,
+        folder=version_dir(root, "v1"),
         version="v1",
         plan=None,
         load_id=LOAD_ID,
@@ -263,8 +270,8 @@ def test_a_failed_write_leaves_no_file_at_all(tmp_path: Path) -> None:
 
 def test_a_resume_plans_only_the_missing_run_numbers(root: Path) -> None:
     questions = read_questions(root)
-    write_once(run_path(root, "v1", "Q01", "sql", 2), {"run": 2})
-    planned = planned_work(root, "v1", questions, ("sql", "graph"), 3)
+    write_once(run_path(version_dir(root, "v1"), "Q01", "sql", 2), {"run": 2})
+    planned = planned_work(version_dir(root, "v1"), questions, ("sql", "graph"), 3)
     assert [(w.store, w.number) for w in planned] == [
         ("sql", 1),
         ("sql", 3),
@@ -278,7 +285,7 @@ def test_runs_are_scored_written_and_hold_every_record_field(root: Path) -> None
     written, spent, stopped = execute(root, StubAgent(), work(root, 1, 2))
     assert (written, stopped) == (2, [])
     assert spent == pytest.approx(0.02)
-    record = read_run_files(root, "v1")[0]
+    record = read_run_files(version_dir(root, "v1"))[0]
     assert record["outcome"] == "correct" and record["correct"] is True
     assert record["load_id"] == LOAD_ID and record["response_model"] == "stub-model"
     assert (record["type"], record["data"], record["zero_answer"]) == ("aggregate", "real", False)
@@ -292,7 +299,7 @@ def test_an_outage_stops_with_how_to_resume_and_keeps_finished_files(root: Path)
         items = work(root, 1, 2, store="graph" if isinstance(outage, StoreOutage) else "sql")
         with pytest.raises(EvalError, match="run the same command again to fill only the missing"):
             execute(root, agent, items)
-    assert len(read_run_files(root, "v1")) == 2
+    assert len(read_run_files(version_dir(root, "v1"))) == 2
 
 
 # covers: review 2026-11-11 Minor 1, an outage's cost joins the cost spent so far
@@ -304,7 +311,7 @@ def test_an_outage_adds_its_cost_to_the_spent_so_far_and_keeps_its_type(root: Pa
         r" \$0\.0400\. Finished run files are kept",
     ):
         execute(root, agent, work(root, 1, 2))
-    assert len(read_run_files(root, "v1")) == 1
+    assert len(read_run_files(version_dir(root, "v1"))) == 1
 
 
 # covers: review 2026-11-11 Minor 1, a provider refusal mid run keeps its cost and exit code 7
@@ -321,7 +328,7 @@ def test_a_provider_refusal_adds_its_cost_and_keeps_its_type(root: Path) -> None
     assert raised.value.cost_usd == pytest.approx(0.05)
     assert next(code for named, code in EXIT_CODES if isinstance(raised.value, named)) == 7
     assert isinstance(raised.value, AgentError)
-    assert len(read_run_files(root, "v1")) == 1
+    assert len(read_run_files(version_dir(root, "v1"))) == 1
 
 
 def test_the_cap_stops_starting_runs(root: Path) -> None:
@@ -343,13 +350,13 @@ def test_a_failure_after_the_model_call_keeps_the_paid_run_in_a_fallback_file(
     assert "Q01 sql run 1 failed after the model call: TypeError" in message
     assert "wrote results/agent_runs/v1/Q01-sql-1.json with outcome error" in message
     assert agent.calls == ["Q01"]
-    (kept,) = read_run_files(root, "v1")
+    (kept,) = read_run_files(version_dir(root, "v1"))
     assert (kept["outcome"], kept["correct"], kept["fallback"]) == ("error", False, True)
     assert kept["usage"] == asdict(USAGE) and kept["problem"].startswith("TypeError")
     # spec 0012 AC-25: every run record holds the model name the API returned.
     assert kept["response_model"] == "stub-model"
     assert run_entries([kept], "v1", read_questions(root), None)[0].outcome == "error"
-    assert planned_work(root, "v1", read_questions(root), ("sql",), 1) == ()
+    assert planned_work(version_dir(root, "v1"), read_questions(root), ("sql",), 1) == ()
 
 
 def test_files_on_another_load_id_are_named() -> None:
@@ -662,7 +669,7 @@ def test_replay_is_its_own_layer_and_never_partial() -> None:
 
 def test_planned_runs_without_a_file_stay_in_the_denominator(root: Path) -> None:
     execute(root, StubAgent(), work(root, 1))
-    files = read_run_files(root, "v1")
+    files = read_run_files(version_dir(root, "v1"))
     entries = run_entries(files, "v1", read_questions(root), 3)
     assert len(entries) == 6
     assert sorted(e.missing for e in entries if e.missing) == [

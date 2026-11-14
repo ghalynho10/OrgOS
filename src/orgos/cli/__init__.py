@@ -26,7 +26,14 @@ from orgos.eval.describe import describe
 from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
 from orgos.eval.handoff import RunStopped
 from orgos.eval.preflight import preflight, summary
-from orgos.eval.runs import estimate, read_run_files, run_agent, upper_bound, version_add
+from orgos.eval.runs import (
+    estimate,
+    read_run_files,
+    run_agent,
+    upper_bound,
+    version_add,
+    version_dir,
+)
 from orgos.graphstore import GraphStoreError
 from orgos.graphstore.load import load_graph
 from orgos.ingest import IngestError
@@ -125,7 +132,10 @@ def ask_lines(
         f"{settings.agent_token_limit:,}",
         price,
     )
-    costs = [float(f["usage"]["cost_usd"]) for f in read_run_files(root, description.version_hash)]
+    costs = [
+        float(f["usage"]["cost_usd"])
+        for f in read_run_files(version_dir(root, description.version_hash))
+    ]
     if costs:
         log.info(
             "ask: measured mean cost of %d finished runs of this version: $%.4f",
