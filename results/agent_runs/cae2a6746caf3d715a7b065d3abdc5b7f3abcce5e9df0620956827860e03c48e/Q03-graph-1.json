@@ -1,0 +1,71 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 0,
+      "seconds": 0.06167208403348923,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(:Project {projectKey:'FE'}) WHERE i.resolutionName IS NOT NULL AND i.resolutionName<>'' AND i.resolutionDate>=datetime('2012-04-01T00:00:00Z') AND i.resolutionDate<datetime('2012-07-01T00:00:00Z') AND i.dueAt IS NOT NULL AND i.resolutionDate>i.dueAt RETURN i.issueKey AS id"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.005617999937385321,
+      "text": "RETURN 0 AS value"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q03",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 8.83456475008279,
+  "source_match": true,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "number",
+      "sources": [],
+      "value": {
+        "int": 0
+      }
+    }
+  },
+  "time": "2026-11-13T22:52:44+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.0078439,
+    "input_tokens": 18519,
+    "output_tokens": 380,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": true
+}

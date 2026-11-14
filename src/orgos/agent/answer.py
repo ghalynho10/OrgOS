@@ -6,7 +6,9 @@ that holds each kind's IDs (AC-16). `answer_problems` checks that pointer
 against the stored results before the run may end (AC-17), and `assemble`
 copies the value and the sources out of the full stored rows into the form
 `store_answer` takes (AC-18, AC-19). Both are pure; neither sorts, filters,
-sums or fills.
+sums or fills. `layout_problems` and `layout_send_back` hold the soft layout
+check of spec 0015 (AC-8, AC-9): a wrong evidence layout costs a send back,
+never the answer.
 """
 
 from __future__ import annotations
@@ -30,6 +32,8 @@ ANSWER_DESCRIPTION = (
 )
 SHAPES: tuple[Shape, ...] = ("number", "boolean", "map", "ranking", "set", "path")
 SOURCE_KINDS = (*ID_KINDS, "parent")
+# A question's evidence layout: its source steps in order, each the kinds it holds, sorted.
+Layout = tuple[tuple[str, ...], ...]
 # The columns each shape needs in `answer_result` (AC-17).
 SHAPE_COLUMNS: Mapping[str, tuple[str, ...]] = {
     "number": ("value",),
@@ -230,17 +234,7 @@ def _hop_ids(item: Any) -> tuple[str, ...]:
     return tuple(str(i) for i in item) if isinstance(item, list | tuple) else (str(item),)
 
 
-def assemble(
-    answer: FinalAnswer, results: Mapping[str, StoredResult]
-) -> tuple[Any, tuple[SourceStep, ...]]:
-    """The value and sources of a checked `final_answer`, copied from the full stored rows.
-
-    Number and boolean: the single cell. Map and ranking: `(kind:id, cell)`
-    pairs in stored row order. Set: typed IDs in row order. Path: `(typed path,
-    one step per hop)` pairs, with the top level sources empty. Source steps
-    hold bare IDs under their kind; an empty value whose every source list is
-    empty has no steps at all, while a non empty value keeps an empty list.
-    """
+def _answer_value(answer: FinalAnswer, results: Mapping[str, StoredResult]) -> Any:
     result = results[answer.answer_result]
     shape = answer.shape
     if shape == "path":
@@ -254,18 +248,31 @@ def assemble(
                 for hop in range(len(path) - 1)
             )
             paths.append((tuple(_typed(kinds[row], node) for node in path), hops))
-        return paths, ()
+        return paths
     if shape in SINGLE_ROW:
-        value: Any = _column(result, "value")[0]
-    else:
-        kinds = _row_kinds(answer, result)
-        ids = tuple(
-            _typed(kind, cell) for kind, cell in zip(kinds, _column(result, "id"), strict=True)
-        )
-        if shape == "set":
-            value = list(ids)
-        else:
-            value = list(zip(ids, _column(result, "value"), strict=True))
+        return _column(result, "value")[0]
+    kinds = _row_kinds(answer, result)
+    ids = tuple(_typed(kind, cell) for kind, cell in zip(kinds, _column(result, "id"), strict=True))
+    if shape == "set":
+        return list(ids)
+    return list(zip(ids, _column(result, "value"), strict=True))
+
+
+def assemble(
+    answer: FinalAnswer, results: Mapping[str, StoredResult]
+) -> tuple[Any, tuple[SourceStep, ...]]:
+    """The value and sources of a checked `final_answer`, copied from the full stored rows.
+
+    Number and boolean: the single cell. Map and ranking: `(kind:id, cell)`
+    pairs in stored row order. Set: typed IDs in row order. Path: `(typed path,
+    one step per hop)` pairs, with the top level sources empty. Source steps
+    hold bare IDs under their kind; an empty value whose every source list is
+    empty has no steps at all, while a non empty value keeps an empty list.
+    """
+    shape = answer.shape
+    value = _answer_value(answer, results)
+    if shape == "path":
+        return value, ()
     sources = tuple(
         {
             kind: tuple(str(cell) for cell in _column(results[ref.result], ref.column))
@@ -276,3 +283,52 @@ def assemble(
     if _is_empty(shape, value) and all(not ids for step in sources for ids in step.values()):
         return value, ()
     return value, sources
+
+
+def _steps(count: int) -> str:
+    return f"{count} step" if count == 1 else f"{count} steps"
+
+
+def layout_problems(
+    answer: FinalAnswer, results: Mapping[str, StoredResult], layout: Layout | None
+) -> tuple[str, ...]:
+    """Where a `final_answer` that `answer_problems` passed differs from its layout (AC-8).
+
+    Empty when there is no layout, or when the value is empty, zero or false
+    (the value half of `assemble`'s rule), sources or not. Otherwise a reason
+    for a wrong step count, and one for each step, up to the shorter of the
+    two, whose kinds differ from the layout's. Each reason names counts and
+    kinds only, never a column, a record or how to find one.
+    """
+    if layout is None or _is_empty(answer.shape, _answer_value(answer, results)):
+        return ()
+    problems = []
+    if len(answer.sources) != len(layout):
+        problems.append(
+            f"the layout asks for {_steps(len(layout))}, the answer has {len(answer.sources)}"
+        )
+    for number, (step, kinds) in enumerate(zip(answer.sources, layout, strict=False), start=1):
+        if set(step) != set(kinds):
+            problems.append(
+                f"step {number} holds {', '.join(sorted(step))}; the layout asks for"
+                f" {', '.join(kinds)}"
+            )
+    return tuple(problems)
+
+
+def layout_send_back(
+    answer: FinalAnswer,
+    results: Mapping[str, StoredResult],
+    layout: Layout | None,
+    retry: int,
+    max_retries: int,
+) -> tuple[str, ...]:
+    """The reasons to send `answer` back for its layout; empty to accept it as given (AC-9).
+
+    `retry` is the output retries used so far. Once none is left the answer is
+    accepted with whatever layout it has, so a layout problem alone never ends
+    a run.
+    """
+    if retry >= max_retries:
+        return ()
+    return layout_problems(answer, results, layout)

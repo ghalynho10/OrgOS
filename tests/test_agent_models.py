@@ -33,6 +33,7 @@ from orgos.config import ConfigError
 from orgos.eval.handoff import ProviderOutage
 from tests.test_agent_run import (
     DESCRIPTIONS,
+    LAYOUTS,
     LIMITS,
     PRICES,
     QUESTION,
@@ -78,6 +79,7 @@ def _sent_request() -> tuple[dict[str, Any], Any]:
         executors={"sql": _executor(), "graph": _executor()},
         descriptions=DESCRIPTIONS,
         question_blocks=("Question: one",),
+        layouts=LAYOUTS,
         meanings_text="meanings",
     )
     run = agent.run(QUESTION, "sql")

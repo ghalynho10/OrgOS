@@ -1,0 +1,87 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": false,
+  "attempt_count": 6,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.0209497909527272,
+      "text": "select count(*), count(distinct from_issue_key) from model.issue_link l join model.issue a on a.issue_key=from_issue_key join model.issue b on b.issue_key=to_issue_key where outward_label='depends on' and coalesce(a.resolution_name,'')='' and coalesce(b.resolution_name,'')=''"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.009460333036258817,
+      "text": "with recursive e as (select l.link_id,from_issue_key f,to_issue_key t from model.issue_link l join model.issue a on a.issue_key=from_issue_key join model.issue b on b.issue_key=to_issue_key where outward_label='depends on' and coalesce(a.resolution_name,'')='' and coalesce(b.resolution_name,'')='' and from_issue_key<>to_issue_key),\np as (select array[f,t] ns, array[link_id] ls from e union all select p.ns||e.t, p.ls||e.link_id from p join e on e.f=p.ns[array_length(p.ns,1)] where not e.t=any(p.ns) and array_length(p.ns,1)<=5)\nselect ns as path, ls from p where array_length(ns,1)<=6\n and not exists(select 1 from e where e.f=p.ns[array_length(p.ns,1)] and not e.t=any(p.ns))\n and not exists(select 1 from e where e.t=p.ns[1] and not e.f=any(p.ns))"
+    },
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.010181166930124164,
+      "text": "select distinct x as issue_key from (values ('JRASERVER-67790'),('JRASERVER-67462'),('JRASERVER-66660'),('JRASERVER-68724'),('CWD-5029'),('JRASERVER-66870'),('JRASERVER-37545')) v(x)"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.006173624889925122,
+      "text": "select link_id from model.issue_link where link_id in ('382591','382592','382655','406801')"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.013621916994452477,
+      "text": "select '[\"JRASERVER-67790\",\"JRASERVER-67462\"]'::jsonb as path union all select '[\"JRASERVER-67790\",\"JRASERVER-66660\"]'::jsonb union all select '[\"JRASERVER-68724\",\"CWD-5029\"]'::jsonb union all select '[\"JRASERVER-66870\",\"JRASERVER-37545\"]'::jsonb"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.0129656249191612,
+      "text": "select '[[\"JRASERVER-67790\",\"JRASERVER-67462\"]]'::jsonb as path, '[[\"382591\"]]'::jsonb as ls union all select '[[\"JRASERVER-67790\",\"JRASERVER-66660\"]]'::jsonb,'[[\"382592\"]]'::jsonb union all select '[[\"JRASERVER-68724\",\"CWD-5029\"]]'::jsonb,'[[\"382655\"]]'::jsonb union all select '[[\"JRASERVER-66870\",\"JRASERVER-37545\"]]'::jsonb,'[[\"406801\"]]'::jsonb"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "no_answer",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q08",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 2,
+  "run_outcome": "no_answer",
+  "seconds": 20.201771083055064,
+  "source_match": false,
+  "steps": [],
+  "store": "sql",
+  "store_answer": null,
+  "time": "2026-11-13T22:56:25+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0326009,
+    "input_tokens": 60055,
+    "output_tokens": 2023,
+    "requests": 8,
+    "tool_calls": 6
+  },
+  "zero_answer": false
+}

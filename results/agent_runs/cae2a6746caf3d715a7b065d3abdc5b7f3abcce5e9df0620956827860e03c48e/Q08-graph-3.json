@@ -1,0 +1,156 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 5,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.0228064579423517,
+      "text": "MATCH ()-[r:DEPENDS]->() RETURN count(r), collect(DISTINCT r.outwardLabel)"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.026640625204890966,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue)\nWHERE all(n IN nodes(p) WHERE n.resolutionName IS NULL OR n.resolutionName='')\nAND size(apoc.coll.toSet(nodes(p)))=size(nodes(p))\nAND NOT EXISTS {MATCH (x:Issue)-[:DEPENDS]->(a) WHERE (x.resolutionName IS NULL OR x.resolutionName='') AND NOT x IN nodes(p)}\nAND NOT EXISTS {MATCH (b)-[:DEPENDS]->(y:Issue) WHERE (y.resolutionName IS NULL OR y.resolutionName='') AND NOT y IN nodes(p)}\nRETURN [n IN nodes(p)|n.issueKey] AS path, [r IN relationships(p)|r.linkId] AS links"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.017204874893650413,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue)\nWHERE all(n IN nodes(p) WHERE n.resolutionName IS NULL OR n.resolutionName='')\nAND size(apoc.coll.toSet([n IN nodes(p)|n.issueKey]))=size(nodes(p))\nAND NOT EXISTS {MATCH (x:Issue)-[:DEPENDS]->(a) WHERE (x.resolutionName IS NULL OR x.resolutionName='') AND NOT x IN nodes(p)}\nAND NOT EXISTS {MATCH (b)-[:DEPENDS]->(y:Issue) WHERE (y.resolutionName IS NULL OR y.resolutionName='') AND NOT y IN nodes(p)}\nRETURN [n IN nodes(p)|n.issueKey] AS path, [r IN relationships(p)|r.linkId] AS links"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.08920933282934129,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue)\nWHERE all(n IN nodes(p) WHERE n.resolutionName IS NULL OR n.resolutionName='')\nAND size(nodes(p))=size(reduce(s=[], n IN nodes(p) | CASE WHEN n IN s THEN s ELSE s+[n] END))\nAND NOT EXISTS {MATCH (x:Issue)-[:DEPENDS]->(a) WHERE (x.resolutionName IS NULL OR x.resolutionName='') AND NOT x IN nodes(p)}\nAND NOT EXISTS {MATCH (b)-[:DEPENDS]->(y:Issue) WHERE (y.resolutionName IS NULL OR y.resolutionName='') AND NOT y IN nodes(p)}\nRETURN [n IN nodes(p)|n.issueKey] AS path, [r IN relationships(p)|r.linkId] AS links"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4,
+      "seconds": 0.15499770804308355,
+      "text": "MATCH p=(a:Issue)-[:DEPENDS*1..5]->(b:Issue)\nWHERE all(n IN nodes(p) WHERE n.resolutionName IS NULL OR n.resolutionName='')\nAND size(nodes(p))=size(reduce(s=[], n IN nodes(p) | CASE WHEN n IN s THEN s ELSE s+[n] END))\nAND NOT EXISTS {MATCH (x:Issue)-[:DEPENDS]->(a) WHERE (x.resolutionName IS NULL OR x.resolutionName='') AND NOT x IN nodes(p)}\nAND NOT EXISTS {MATCH (b)-[:DEPENDS]->(y:Issue) WHERE (y.resolutionName IS NULL OR y.resolutionName='') AND NOT y IN nodes(p)}\nRETURN [n IN nodes(p)|n.issueKey] AS path, [i IN range(0,size(relationships(p))-1)|[nodes(p)[i].issueKey,nodes(p)[i+1].issueKey]] AS issues, [r IN relationships(p)|[r.linkId]] AS links"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q08",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 2,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 20.17354275006801,
+  "source_match": true,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "path",
+      "sources": [],
+      "value": [
+        {
+          "path": [
+            "issue:JRASERVER-66870",
+            "issue:JRASERVER-37545"
+          ],
+          "sources": [
+            {
+              "issue": [
+                "JRASERVER-37545",
+                "JRASERVER-66870"
+              ],
+              "issue_link": [
+                "406801"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-66660"
+          ],
+          "sources": [
+            {
+              "issue": [
+                "JRASERVER-66660",
+                "JRASERVER-67790"
+              ],
+              "issue_link": [
+                "382592"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-67790",
+            "issue:JRASERVER-67462"
+          ],
+          "sources": [
+            {
+              "issue": [
+                "JRASERVER-67462",
+                "JRASERVER-67790"
+              ],
+              "issue_link": [
+                "382591"
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "issue:JRASERVER-68724",
+            "issue:CWD-5029"
+          ],
+          "sources": [
+            {
+              "issue": [
+                "CWD-5029",
+                "JRASERVER-68724"
+              ],
+              "issue_link": [
+                "382655"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "time": "2026-11-13T22:57:27+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0364742,
+    "input_tokens": 52270,
+    "output_tokens": 2406,
+    "requests": 7,
+    "tool_calls": 5
+  },
+  "zero_answer": false
+}

@@ -382,7 +382,7 @@ def test_a_real_agent_is_gated_before_any_run_then_written_once(
 
     with pytest.raises(EvalError, match=r"has no entry in results/agent_runs/versions\.jsonl"):
         run()
-    version_add(limited, fresh_root, STUB, reason=None, exposed_by=None, kind=None)
+    version_add(limited, fresh_root, STUB, reason=None, exposed_by=(), kind=None)
     with pytest.raises(EvalError, match=r"has no PLAN\.json"):
         run()
     estimate(limited, fresh_root, STUB, only="Q01")

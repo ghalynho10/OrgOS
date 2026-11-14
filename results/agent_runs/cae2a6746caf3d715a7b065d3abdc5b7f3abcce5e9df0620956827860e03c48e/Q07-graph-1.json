@@ -1,0 +1,325 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 11,
+      "seconds": 0.12570529081858695,
+      "text": "MATCH (i:Issue)<-[l:LOGGED_TIME]-(p:Person) WHERE i.timeOriginalEstimateS>0 AND l.seconds>0\nWITH i, sum(l.seconds) AS tot, collect(l.historyId) AS tes, collect(DISTINCT p.personKey) AS ps\nWITH i, abs(i.timeOriginalEstimateS-tot) AS value, tes, ps\nORDER BY value DESC\nWITH collect({i:i.issueKey,v:value,t:tes,p:ps}) AS rows\nWITH rows, rows[CASE WHEN size(rows)>=10 THEN 9 ELSE size(rows)-1 END].v AS cut\nUNWIND rows AS r\nWITH r WHERE r.v>=cut\nRETURN r.i AS id, r.v AS value, r.t AS tes, r.p AS ps\nORDER BY value DESC"
+    },
+    {
+      "outcome": "ok",
+      "rows": 51,
+      "seconds": 0.05971945892088115,
+      "text": "MATCH (i:Issue)<-[l:LOGGED_TIME]-(p:Person) WHERE i.issueKey IN [\"JRASERVER-9\",\"JRASERVER-868\",\"CRUC-3320\",\"FE-2053\",\"BAM-991\",\"CLOV-803\",\"BAM-3094\",\"CRUC-5177\",\"CLOV-578\",\"JRASERVER-12943\",\"CWD-1963\"] AND l.seconds>0\nRETURN i.issueKey AS issue, p.personKey AS person, l.historyId AS te"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q07",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 7.165460083168,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "ranking",
+      "sources": [
+        {
+          "issue": [
+            "BAM-3094",
+            "BAM-3094",
+            "BAM-3094",
+            "BAM-3094",
+            "BAM-3094",
+            "BAM-3094",
+            "BAM-3094",
+            "BAM-991",
+            "CLOV-578",
+            "CLOV-578",
+            "CLOV-803",
+            "CLOV-803",
+            "CLOV-803",
+            "CLOV-803",
+            "CLOV-803",
+            "CLOV-803",
+            "CLOV-803",
+            "CLOV-803",
+            "CLOV-803",
+            "CRUC-3320",
+            "CRUC-3320",
+            "CRUC-3320",
+            "CRUC-3320",
+            "CRUC-3320",
+            "CRUC-3320",
+            "CRUC-3320",
+            "CRUC-3320",
+            "CRUC-3320",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CRUC-5177",
+            "CWD-1963",
+            "FE-2053",
+            "FE-2053",
+            "FE-2053",
+            "FE-2053",
+            "FE-2053",
+            "FE-2053",
+            "FE-2053",
+            "FE-2053",
+            "JRASERVER-12943",
+            "JRASERVER-12943",
+            "JRASERVER-868",
+            "JRASERVER-9"
+          ],
+          "person": [
+            "<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+            "<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+            "<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+            "<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+            "<<|author_key|184b4daa-2780-423e-b785-a643b7829cdf|>>",
+            "<<|author_key|184b4daa-2780-423e-b785-a643b7829cdf|>>",
+            "<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+            "<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+            "<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+            "<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+            "<<|author_key|27f5cf44-db91-42e2-b42b-a57e48f9c207|>>",
+            "<<|author_key|33b8d774-5ee4-4c31-aa5e-22e85793e88b|>>",
+            "<<|author_key|38d6a575-5457-47ca-9ffc-080d6477f5d3|>>",
+            "<<|author_key|38d6a575-5457-47ca-9ffc-080d6477f5d3|>>",
+            "<<|author_key|38d6a575-5457-47ca-9ffc-080d6477f5d3|>>",
+            "<<|author_key|38d6a575-5457-47ca-9ffc-080d6477f5d3|>>",
+            "<<|author_key|38d6a575-5457-47ca-9ffc-080d6477f5d3|>>",
+            "<<|author_key|38d6a575-5457-47ca-9ffc-080d6477f5d3|>>",
+            "<<|author_key|38d6a575-5457-47ca-9ffc-080d6477f5d3|>>",
+            "<<|author_key|50dbebaf-354b-4741-bb6a-fe447f456a59|>>",
+            "<<|author_key|50dbebaf-354b-4741-bb6a-fe447f456a59|>>",
+            "<<|author_key|50dbebaf-354b-4741-bb6a-fe447f456a59|>>",
+            "<<|author_key|50dbebaf-354b-4741-bb6a-fe447f456a59|>>",
+            "<<|author_key|632907fb-2d09-4b60-bb5d-6e042c9a1d89|>>",
+            "<<|author_key|a3ba628e-9b65-4ced-9124-5718bd153a45|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>",
+            "<<|author_key|a6d34932-a9b7-4826-878a-c899c81d4bf6|>>"
+          ],
+          "time_entry": [
+            "161652",
+            "233018",
+            "234015",
+            "236317",
+            "239058",
+            "240560",
+            "241240",
+            "241901",
+            "308558",
+            "312268",
+            "336944",
+            "337502",
+            "337914",
+            "338504",
+            "338527",
+            "339098",
+            "339099",
+            "340259",
+            "341404",
+            "341441",
+            "357054",
+            "357055",
+            "357057",
+            "357111",
+            "357450",
+            "357459",
+            "357461",
+            "358397",
+            "358398",
+            "396280",
+            "396680",
+            "397484",
+            "399154",
+            "411516",
+            "418108",
+            "418621",
+            "424231",
+            "426368",
+            "427612",
+            "520986",
+            "522119",
+            "525151",
+            "526295",
+            "530765",
+            "531444",
+            "531486",
+            "533590",
+            "534906",
+            "535397",
+            "539793",
+            "597472"
+          ]
+        }
+      ],
+      "value": [
+        {
+          "ids": [
+            "issue:JRASERVER-9"
+          ],
+          "value": {
+            "int": 2158500
+          }
+        },
+        {
+          "ids": [
+            "issue:JRASERVER-868"
+          ],
+          "value": {
+            "int": 575940
+          }
+        },
+        {
+          "ids": [
+            "issue:CRUC-3320"
+          ],
+          "value": {
+            "int": 486360
+          }
+        },
+        {
+          "ids": [
+            "issue:FE-2053"
+          ],
+          "value": {
+            "int": 374100
+          }
+        },
+        {
+          "ids": [
+            "issue:BAM-991"
+          ],
+          "value": {
+            "int": 345600
+          }
+        },
+        {
+          "ids": [
+            "issue:CLOV-803"
+          ],
+          "value": {
+            "int": 328920
+          }
+        },
+        {
+          "ids": [
+            "issue:BAM-3094"
+          ],
+          "value": {
+            "int": 316800
+          }
+        },
+        {
+          "ids": [
+            "issue:CRUC-5177"
+          ],
+          "value": {
+            "int": 267660
+          }
+        },
+        {
+          "ids": [
+            "issue:CLOV-578"
+          ],
+          "value": {
+            "int": 262800
+          }
+        },
+        {
+          "ids": [
+            "issue:JRASERVER-12943"
+          ],
+          "value": {
+            "int": 230400
+          }
+        },
+        {
+          "ids": [
+            "issue:CWD-1963"
+          ],
+          "value": {
+            "int": 230400
+          }
+        }
+      ]
+    }
+  },
+  "time": "2026-11-13T22:55:32+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.0230319,
+    "input_tokens": 24047,
+    "output_tokens": 860,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

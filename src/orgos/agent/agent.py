@@ -45,8 +45,10 @@ from orgos.agent.answer import (
     ANSWER_DESCRIPTION,
     ANSWER_TOOL,
     FinalAnswer,
+    Layout,
     answer_problems,
     assemble,
+    layout_send_back,
 )
 from orgos.agent.describe_graph import read_graph_values, render_graph_description
 from orgos.agent.describe_sql import (
@@ -68,7 +70,13 @@ from orgos.agent.models import (
     recorded_settings,
 )
 from orgos.agent.outcome import RunEnd, run_outcome
-from orgos.agent.prompt import render_instructions, render_plain_block, render_question_block
+from orgos.agent.prompt import (
+    LAYOUTS_FILE,
+    parse_layouts,
+    render_instructions,
+    render_plain_block,
+    render_question_block,
+)
 from orgos.agent.session import check_sessions, read_graph_session, read_sql_session
 from orgos.agent.tools import TOOL_DESCRIPTION, Executor, RunTrace, run_query
 from orgos.config import STORE_ROW_CAP, ConfigError, Settings
@@ -99,10 +107,16 @@ log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class RunDeps:
-    """What a run's tools and checks see: its trace, and the shape a scored question asks for."""
+    """What a run's tools and checks see: its trace, and what a scored question asks for.
+
+    `question_id` and `layout` are None in plain question mode, where no
+    layout is checked (spec 0015 AC-10).
+    """
 
     trace: RunTrace
     expected_shape: Shape | None
+    question_id: str | None = None
+    layout: Layout | None = None
 
 
 @dataclass(frozen=True)
@@ -147,9 +161,23 @@ QUERY_TOOL = Tool(
 def _check_answer(ctx: RunContext[RunDeps], output: FinalAnswer | str) -> FinalAnswer | str:
     if isinstance(output, str):
         return output
-    problems = answer_problems(output, ctx.deps.trace.results, ctx.deps.expected_shape)
+    deps = ctx.deps
+    problems = answer_problems(output, deps.trace.results, deps.expected_shape)
     if problems:
         raise ModelRetry("final_answer is not accepted yet:\n- " + "\n- ".join(problems))
+    # Spec 0015 AC-9: the layout is checked only once the answer itself passes.
+    reasons = layout_send_back(output, deps.trace.results, deps.layout, ctx.retry, OUTPUT_RETRIES)
+    if reasons:
+        log.warning(
+            "layout send back: %s %s retry %d: %s",
+            deps.question_id,
+            deps.trace.store,
+            ctx.retry,
+            "; ".join(reasons),
+        )
+        raise ModelRetry(
+            "final_answer does not follow the Sources layout:\n- " + "\n- ".join(reasons)
+        )
     return output
 
 
@@ -269,6 +297,7 @@ class OrgosQueryAgent:
         executors: Mapping[Store, Executor],
         descriptions: Mapping[Store, Description],
         question_blocks: tuple[str, ...],
+        layouts: Mapping[str, Layout],
         meanings_text: str,
         resources: ExitStack | None = None,
         clock: Callable[[], float] = time.monotonic,
@@ -278,6 +307,7 @@ class OrgosQueryAgent:
         self._prices = prices
         self._limits = limits
         self._executors = dict(executors)
+        self._layouts = dict(layouts)
         self._instructions = {
             store: (render_instructions(store, limits.max_rows), descriptions[store].text)
             for store in STORES
@@ -307,14 +337,29 @@ class OrgosQueryAgent:
         return self._description
 
     def run(self, question: Question, store: Store) -> AgentRun:
-        """Answer one question against one store, scored by the runner."""
-        return self._run(render_question_block(question), store, question.shape)
+        """Answer one question against one store, scored by the runner.
+
+        The one layout entry of the question gives both the block's line and
+        the check, so the two cannot drift (spec 0015 AC-2).
+        """
+        layout = self._layouts.get(question.id)
+        if layout is None:
+            raise AgentError(f"{LAYOUTS_FILE.name} has no layout for {question.id}")
+        block = render_question_block(question, layout)
+        return self._run(block, store, question.shape, question.id, layout)
 
     def ask(self, text: str, store: Store) -> AgentRun:
         """Answer a plain question: the same agent with the question text only (AC-5)."""
-        return self._run(render_plain_block(text), store, None)
+        return self._run(render_plain_block(text), store, None, None, None)
 
-    def _run(self, block: str, store: Store, expected_shape: Shape | None) -> AgentRun:
+    def _run(
+        self,
+        block: str,
+        store: Store,
+        expected_shape: Shape | None,
+        question_id: str | None,
+        layout: Layout | None,
+    ) -> AgentRun:
         limits = self._limits
         trace = RunTrace(store=store, execute=self._executors[store], max_rows=limits.max_rows)
         usage = RunUsage()
@@ -327,7 +372,12 @@ class OrgosQueryAgent:
                 result = self._agent.run_sync(
                     block,
                     model=self._model,
-                    deps=RunDeps(trace=trace, expected_shape=expected_shape),
+                    deps=RunDeps(
+                        trace=trace,
+                        expected_shape=expected_shape,
+                        question_id=question_id,
+                        layout=layout,
+                    ),
                     instructions=list(self._instructions[store]),
                     model_settings=model_settings(limits.max_tokens, limits.temperature),
                     usage_limits=UsageLimits(
@@ -379,17 +429,36 @@ class OrgosQueryAgent:
         )
 
 
-def read_question_blocks(root: Path = ROOT) -> tuple[str, ...]:
-    """The 20 rendered question blocks in id order, amendments applied, for the version hash."""
+def read_questions(root: Path = ROOT) -> tuple[Question, ...]:
+    """The 20 questions in id order, amendments applied."""
     questions = read_toml(root / QUESTIONS).get("question", [])
     amended = (
         read_toml(root / AMENDMENTS).get("amendment", []) if (root / AMENDMENTS).is_file() else []
     )
-    effective = sorted(
-        (Question.model_validate(table) for table in effective_tables(questions, amended)),
-        key=lambda question: question.id,
+    return tuple(
+        sorted(
+            (Question.model_validate(table) for table in effective_tables(questions, amended)),
+            key=lambda question: question.id,
+        )
     )
-    return tuple(render_question_block(question) for question in effective)
+
+
+def read_layouts(
+    questions: tuple[Question, ...], path: Path = LAYOUTS_FILE
+) -> Mapping[str, Layout]:
+    """The checked layout of each question, read from `layouts.toml` (spec 0015 AC-1)."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise AgentError(f"Cannot read {path}: {error.strerror}") from None
+    return parse_layouts(text, {question.id: question.shape for question in questions})
+
+
+def read_question_blocks(
+    questions: tuple[Question, ...], layouts: Mapping[str, Layout]
+) -> tuple[str, ...]:
+    """The 20 rendered question blocks in id order, each with its layout, for the version hash."""
+    return tuple(render_question_block(question, layouts[question.id]) for question in questions)
 
 
 def build_agent(settings: Settings) -> OrgosQueryAgent:
@@ -401,6 +470,8 @@ def build_agent(settings: Settings) -> OrgosQueryAgent:
     if settings.model is None:
         raise ConfigError("ORGOS_MODEL not set; the agent needs a model, see .env.example")
     prices = prices_for(settings.model, read_prices_file())
+    questions = read_questions()
+    layouts = read_layouts(questions)
     model = build_model(settings)
     limits = Limits.from_settings(settings)
     timeout = float(settings.query_timeout_s)
@@ -438,7 +509,8 @@ def build_agent(settings: Settings) -> OrgosQueryAgent:
         limits=limits,
         executors=executors,
         descriptions=descriptions,
-        question_blocks=read_question_blocks(),
+        question_blocks=read_question_blocks(questions, layouts),
+        layouts=layouts,
         meanings_text=MEANINGS_FILE.read_text(encoding="utf-8"),
         resources=resources,
     )

@@ -27,6 +27,7 @@ from orgos.agent.agent import Limits, OrgosQueryAgent, version_hash, version_par
 from orgos.agent.errors import AgentError, ProviderRefusal
 from orgos.agent.meanings import Description
 from orgos.agent.models import Prices
+from orgos.agent.prompt import render_layout_line, visible_reading
 from orgos.eval.handoff import ProviderOutage, Store, StoreOutage
 from orgos.eval.models import Question
 from orgos.sqlstore.query import QueryResult, SqlConnectionLost, SqlQueryTimeout
@@ -60,6 +61,7 @@ QUESTION = Question(
     reading="Open means status Open.\nIf empty: the answer is the empty set.",
     data="real",
 )
+LAYOUTS = {"Q01": (("issue",),)}
 SIXTY = QueryResult(("id",), tuple({"id": f"CLOUD-{n}"} for n in range(60)))
 SET_ANSWER = {
     "shape": "set",
@@ -108,6 +110,7 @@ def _agent(
     model_id: str = "test:scripted",
     descriptions: dict[Store, Description] = DESCRIPTIONS,  # type: ignore[assignment]
     question_blocks: tuple[str, ...] = ("Question: one",),
+    layouts: dict[str, tuple[tuple[str, ...], ...]] = LAYOUTS,
 ) -> OrgosQueryAgent:
     ticks = itertools.count(start=0.0, step=1.0)
     return OrgosQueryAgent(
@@ -118,6 +121,7 @@ def _agent(
         executors={"sql": sql or _executor(SIXTY), "graph": graph or _executor(SIXTY)},
         descriptions=descriptions,
         question_blocks=question_blocks,
+        layouts=layouts,
         meanings_text="meanings",
         clock=lambda: next(ticks),
     )
@@ -475,6 +479,161 @@ def test_own_error_logs_the_type_name_and_not_the_message(
         (logging.WARNING, "a run ended as own_error: RuntimeError")
     ]
     assert "a store value" not in caplog.text
+
+
+# --- The layout line and the soft layout check (spec 0015 AC-2, AC-3, AC-8 to AC-10) ---
+
+WRONG_LAYOUT = {**SET_ANSWER, "sources": [{"person": {"result": "r1", "column": "id"}}]}
+LAYOUT_REASON = "step 1 holds person; the layout asks for issue"
+
+
+def _feedback(texts: list[str], script: Script) -> Script:
+    """`script`, recording every check message sent back to the model in `texts`."""
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        kinds = ("retry-prompt", "tool-return")
+        texts.extend(str(p.content) for p in messages[-1].parts if p.part_kind in kinds)
+        return script(messages, info)
+
+    return respond
+
+
+def _layout_sends(texts: list[str]) -> list[str]:
+    return [text for text in texts if "does not follow the Sources layout" in text]
+
+
+def test_the_right_layout_ends_on_the_first_try(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.WARNING, logger="orgos.agent.agent")
+    texts: list[str] = []
+    run = _agent(_feedback(texts, _scripted("SELECT 1", SET_ANSWER))).run(QUESTION, "sql")
+    assert run.outcome == "answered"
+    assert run.usage.requests == 2
+    assert _layout_sends(texts) == []
+    assert "layout send back" not in caplog.text
+
+
+def test_a_wrong_layout_three_times_is_accepted_after_two_send_backs(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.WARNING, logger="orgos.agent.agent")
+    texts: list[str] = []
+    script = _feedback(texts, _scripted("SELECT 1", WRONG_LAYOUT, WRONG_LAYOUT, WRONG_LAYOUT))
+    run = _agent(script).run(QUESTION, "graph")
+    assert run.outcome == "answered"
+    assert len(run.value) == 60
+    assert run.sources == ({"person": tuple(f"CLOUD-{n}" for n in range(60))},)
+    assert run.usage.requests == 4
+    sends = _layout_sends(texts)
+    assert len(sends) == 2
+    assert all(LAYOUT_REASON in text for text in sends)
+    records = [r.getMessage() for r in caplog.records if r.name == "orgos.agent.agent"]
+    assert records == [
+        f"layout send back: Q01 graph retry 0: {LAYOUT_REASON}",
+        f"layout send back: Q01 graph retry 1: {LAYOUT_REASON}",
+    ]
+
+
+def test_a_wrong_layout_then_a_right_one_is_accepted_after_one_send_back() -> None:
+    texts: list[str] = []
+    run = _agent(_feedback(texts, _scripted("SELECT 1", WRONG_LAYOUT, SET_ANSWER))).run(
+        QUESTION, "sql"
+    )
+    assert run.outcome == "answered"
+    assert run.sources == ({"issue": tuple(f"CLOUD-{n}" for n in range(60))},)
+    assert len(_layout_sends(texts)) == 1
+
+
+def test_a_structural_problem_is_sent_alone_and_the_layout_only_after_it_is_fixed() -> None:
+    texts: list[str] = []
+    structural = {**WRONG_LAYOUT, "answer_result": "r9"}
+    script = _feedback(texts, _scripted("SELECT 1", structural, WRONG_LAYOUT, SET_ANSWER))
+    run = _agent(script).run(QUESTION, "sql")
+    assert run.outcome == "answered"
+    sent = [t for t in texts if "not accepted yet" in t or "Sources layout" in t]
+    assert len(sent) == 2
+    assert "there is no result r9" in sent[0]
+    assert "Sources layout" not in sent[0]
+    assert LAYOUT_REASON in sent[1]
+    assert "not accepted yet" not in sent[1]
+
+
+def test_a_structural_problem_after_two_layout_send_backs_ends_as_no_answer() -> None:
+    structural = {**SET_ANSWER, "answer_result": "r9"}
+    script = _scripted("SELECT 1", WRONG_LAYOUT, WRONG_LAYOUT, structural)
+    run = _agent(script).run(QUESTION, "sql")
+    assert run.outcome == "no_answer"
+    _no_answer_fields(run)
+
+
+def test_a_zero_answer_with_any_sources_is_not_checked() -> None:
+    empty = QueryResult(("id",), ())
+    texts: list[str] = []
+    run = _agent(_feedback(texts, _scripted("SELECT 1", WRONG_LAYOUT)), sql=_executor(empty)).run(
+        QUESTION, "sql"
+    )
+    assert run.outcome == "answered"
+    assert run.value == []
+    assert _layout_sends(texts) == []
+
+
+def test_ask_has_no_layout_line_and_no_layout_check(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.WARNING, logger="orgos.agent.agent")
+    prompts: list[str] = []
+    texts: list[str] = []
+    inner = _scripted("SELECT 1", WRONG_LAYOUT)
+
+    def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        first = messages[0]
+        assert isinstance(first, ModelRequest)
+        prompts.extend(str(part.content) for part in first.parts if part.part_kind == "user-prompt")
+        return inner(messages, info)
+
+    run = _agent(_feedback(texts, script)).ask("Which issues exist?", "sql")
+    assert prompts[0] == "Question: Which issues exist?"
+    assert run.outcome == "answered"
+    assert run.usage.requests == 2
+    assert _layout_sends(texts) == []
+    assert "layout send back" not in caplog.text
+
+
+def test_a_run_on_a_question_with_no_layout_is_an_agent_error() -> None:
+    other = QUESTION.model_copy(update={"id": "Q02"})
+    with pytest.raises(AgentError, match=r"layouts\.toml has no layout for Q02"):
+        _agent(_scripted()).run(other, "sql")
+
+
+# covers: spec 0015 AC-1, a missing layouts file stops the build with a named error
+def test_an_unreadable_layout_file_is_an_agent_error(tmp_path: Path) -> None:
+    from orgos.agent.agent import read_layouts
+
+    with pytest.raises(AgentError, match=r"Cannot read .*layouts\.toml"):
+        read_layouts((QUESTION,), tmp_path / "layouts.toml")
+
+
+def test_both_stores_see_the_same_block_ending_in_its_layout_line_for_all_20() -> None:
+    from orgos.agent.agent import read_layouts, read_questions
+
+    questions = read_questions()
+    layouts = read_layouts(questions)
+    assert len(questions) == 20
+    prompts: list[str] = []
+
+    def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        first = messages[0]
+        assert isinstance(first, ModelRequest)
+        prompts.extend(str(part.content) for part in first.parts if part.part_kind == "user-prompt")
+        return ModelResponse(parts=[TextPart("cannot say")])
+
+    agent = _agent(script, layouts=dict(layouts))
+    for question in questions:
+        prompts.clear()
+        agent.run(question, "sql")
+        agent.run(question, "graph")
+        sql, graph = prompts
+        assert sql == graph, question.id
+        before, last = sql.rsplit("\n", 1)
+        assert last == render_layout_line(layouts[question.id], question.shape), question.id
+        assert before.endswith("Reading note:\n" + visible_reading(question.reading)), question.id
 
 
 # --- Usage and cost (AC-23) ---

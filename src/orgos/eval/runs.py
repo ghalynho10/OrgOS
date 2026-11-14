@@ -20,7 +20,7 @@ import logging
 import os
 import re
 import tempfile
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -261,16 +261,40 @@ def changed_parts(previous: Mapping[str, str], parts: Mapping[str, str]) -> tupl
     return tuple(sorted(name for name in names if previous.get(name) != parts.get(name)))
 
 
+def _exposed_problems(
+    exposed_by: Sequence[str], previous: str, missing: Collection[str]
+) -> list[str]:
+    # Spec 0015 AC-12: each value is a run file of the previous version, given once.
+    pattern = re.compile(
+        rf"{re.escape(RUNS_DIR.as_posix())}/{re.escape(previous)}/Q\d\d-(sql|graph)-[1-9]\d*\.json"
+    )
+    problems = []
+    for path in exposed_by:
+        if not pattern.fullmatch(path):
+            problems.append(f"--exposed-by {path} is not a run file of version {previous}")
+        elif path in missing:
+            problems.append(f"--exposed-by {path} is not a run file")
+    problems.extend(
+        f"--exposed-by {path} is given more than once"
+        for path in sorted({p for p in exposed_by if exposed_by.count(p) > 1})
+    )
+    return problems
+
+
 def version_entry(
     entries: Sequence[Mapping[str, Any]],
     description: AgentDescription,
     *,
     reason: str | None,
-    exposed_by: str | None,
+    exposed_by: Sequence[str],
     kind: str | None,
-    exposed_exists: bool,
+    missing: Collection[str],
 ) -> dict[str, Any]:
-    """The next versions log entry, or an `EvalError` for a rule it breaks (AC-32)."""
+    """The next versions log entry, or an `EvalError` for a rule it breaks (AC-32).
+
+    `exposed_by` are the run files that exposed the problem, in the order
+    given (spec 0015 AC-12); `missing` are those of them that are not files.
+    """
     if len(entries) >= MAX_VERSIONS:
         raise EvalError(f"{VERSIONS} already holds {MAX_VERSIONS} versions; a fourth is refused")
     if any(entry["version_hash"] == description.version_hash for entry in entries):
@@ -288,17 +312,18 @@ def version_entry(
         raise EvalError("no part changed since the previous version; nothing to log")
     if not reason or not exposed_by or kind not in KINDS:
         raise EvalError(
-            "a version after the first needs --reason, --exposed-by (the run file that"
+            "a version after the first needs --reason, --exposed-by (the run files that"
             " exposed the problem) and --kind bug_fix or behaviour_change"
         )
-    if not exposed_exists:
-        raise EvalError(f"--exposed-by {exposed_by} is not a run file")
+    problems = _exposed_problems(exposed_by, entries[-1]["version_hash"], missing)
+    if problems:
+        raise EvalError("\n".join(problems))
     if kind == "bug_fix" and any("instruction" in name for name in changed):
         raise EvalError("a change to instruction wording is a behaviour change, not a bug fix")
     return entry | {
         "changed": list(changed),
         "reason": reason,
-        "exposed_by": exposed_by,
+        "exposed_by": list(exposed_by),
         "kind": kind,
     }
 
@@ -309,7 +334,7 @@ def version_add(
     agent_spec: str,
     *,
     reason: str | None,
-    exposed_by: str | None,
+    exposed_by: Sequence[str],
     kind: str | None,
 ) -> str:
     """`orgos eval version add`: append the agent's version to the versions log."""
@@ -323,7 +348,7 @@ def version_add(
         reason=reason,
         exposed_by=exposed_by,
         kind=kind,
-        exposed_exists=exposed_by is not None and (root / exposed_by).is_file(),
+        missing=frozenset(path for path in exposed_by if not (root / path).is_file()),
     )
     path = root / VERSIONS
     path.parent.mkdir(parents=True, exist_ok=True)

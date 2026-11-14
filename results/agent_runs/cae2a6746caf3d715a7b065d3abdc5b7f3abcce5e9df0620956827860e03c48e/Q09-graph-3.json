@@ -1,0 +1,91 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": false,
+  "attempt_count": 6,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.1498331669718027,
+      "text": "MATCH (a:Issue)-[l]->(b:Issue) WHERE a<>b AND type(l)<>'HAS_PARENT' AND l.linkId IS NOT NULL\nMATCH (a)-[:ASSIGNED_TO]->(pa), (b)-[:ASSIGNED_TO]->(pb) WHERE pa<>pb\nRETURN count(l) AS n, count(DISTINCT a)+count(DISTINCT b) AS m"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.028074458008632064,
+      "text": "MATCH p=(a:Issue)-[r*1..5]-(b:Issue)\nWHERE all(x IN r WHERE x.linkId IS NOT NULL AND startNode(x).issueKey IS NOT NULL)\nAND size(apoc.coll.toSet(nodes(p)))=size(nodes(p))\nAND all(i IN range(0,size(r)-1) WHERE EXISTS { (nodes(p)[i])-[:ASSIGNED_TO]->(x), (nodes(p)[i+1])-[:ASSIGNED_TO]->(y) WHERE x<>y })\nAND NOT EXISTS { (a)-[l]-(c:Issue) WHERE l.linkId IS NOT NULL AND NOT c IN nodes(p) AND EXISTS{(a)-[:ASSIGNED_TO]->(x),(c)-[:ASSIGNED_TO]->(y) WHERE x<>y} }\nAND NOT EXISTS { (b)-[l]-(c:Issue) WHERE l.linkId IS NOT NULL AND NOT c IN nodes(p) AND EXISTS{(b)-[:ASSIGNED_TO]->(x),(c)-[:ASSIGNED_TO]->(y) WHERE x<>y} }\nRETURN [n IN nodes(p)|n.issueKey] AS path, [x IN r|x.linkId] AS links LIMIT 5"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.04844924993813038,
+      "text": "MATCH p=(a:Issue)-[r*1..5]-(b:Issue)\nWHERE all(x IN r WHERE x.linkId IS NOT NULL)\nWITH p,r,a,b,[n IN nodes(p)| head([(n)-[:ASSIGNED_TO]->(q)|q.personKey])] AS as\nWHERE none(x IN as WHERE x IS NULL) AND all(i IN range(0,size(as)-2) WHERE as[i]<>as[i+1])\nAND size(apoc.coll.toSet(nodes(p)))=size(nodes(p))\nAND NOT EXISTS { MATCH (a)-[l]-(c:Issue)-[:ASSIGNED_TO]->(y) WHERE l.linkId IS NOT NULL AND NOT c IN nodes(p) AND y.personKey<>as[0] }\nAND NOT EXISTS { MATCH (b)-[l]-(c:Issue)-[:ASSIGNED_TO]->(y) WHERE l.linkId IS NOT NULL AND NOT c IN nodes(p) AND y.personKey<>as[size(as)-1] }\nRETURN [n IN nodes(p)|n.issueKey] AS path, [x IN r|x.linkId] AS links, size(r) AS len"
+    },
+    {
+      "outcome": "store_timeout",
+      "rows": 0,
+      "seconds": 31.30400204192847,
+      "text": "MATCH p=(a:Issue)-[r*1..5]-(b:Issue)\nWHERE all(x IN r WHERE x.linkId IS NOT NULL)\nWITH p,r,a,b,nodes(p) AS ns,[n IN nodes(p)| head([(n)-[:ASSIGNED_TO]->(q)|q.personKey])] AS as\nWHERE none(x IN as WHERE x IS NULL) AND all(i IN range(0,size(as)-2) WHERE as[i]<>as[i+1])\nAND all(i IN range(0,size(ns)-1) WHERE NOT ns[i] IN ns[i+1..])\nAND NOT EXISTS { MATCH (a)-[l]-(c:Issue)-[:ASSIGNED_TO]->(y) WHERE l.linkId IS NOT NULL AND NOT c IN ns AND y.personKey<>as[0] }\nAND NOT EXISTS { MATCH (b)-[l]-(c:Issue)-[:ASSIGNED_TO]->(y) WHERE l.linkId IS NOT NULL AND NOT c IN ns AND y.personKey<>as[size(as)-1] }\nRETURN [n IN ns|n.issueKey] AS path, [x IN r|x.linkId] AS links, size(r) AS len"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2962,
+      "seconds": 0.5021685829851776,
+      "text": "MATCH p=(a:Issue) ((x:Issue)-[l]-(y:Issue) WHERE l.linkId IS NOT NULL AND x<>y AND EXISTS{(x)-[:ASSIGNED_TO]->(u),(y)-[:ASSIGNED_TO]->(v) WHERE u<>v}){1,5} (b:Issue)\nWITH p,a,b,nodes(p) AS ns,relationships(p) AS r\nWHERE all(i IN range(0,size(ns)-1) WHERE NOT ns[i] IN ns[i+1..])\nWITH p,a,b,ns,r,[n IN ns| head([(n)-[:ASSIGNED_TO]->(q)|q.personKey])] AS as\nWHERE NOT EXISTS { MATCH (a)-[l]-(c:Issue)-[:ASSIGNED_TO]->(y) WHERE l.linkId IS NOT NULL AND NOT c IN ns AND y.personKey<>as[0] }\nAND NOT EXISTS { MATCH (b)-[l]-(c:Issue)-[:ASSIGNED_TO]->(y) WHERE l.linkId IS NOT NULL AND NOT c IN ns AND y.personKey<>as[size(as)-1] }\nRETURN [n IN ns|n.issueKey] AS path, [x IN r|x.linkId] AS links, [n IN ns|head([(n)-[:IN_PROJECT]->(q)|q.projectKey])] AS projs, as, size(r) AS len"
+    },
+    {
+      "outcome": "ok",
+      "rows": 2962,
+      "seconds": 0.6698734578676522,
+      "text": "MATCH p=(a:Issue) ((x:Issue)-[l]-(y:Issue) WHERE l.linkId IS NOT NULL AND x<>y AND EXISTS{(x)-[:ASSIGNED_TO]->(u),(y)-[:ASSIGNED_TO]->(v) WHERE u<>v}){1,5} (b:Issue)\nWITH p,a,b,nodes(p) AS ns,relationships(p) AS r\nWHERE all(i IN range(0,size(ns)-1) WHERE NOT ns[i] IN ns[i+1..])\nWITH p,a,b,ns,r,[n IN ns| head([(n)-[:ASSIGNED_TO]->(q)|q.personKey])] AS as\nWHERE NOT EXISTS { MATCH (a)-[l]-(c:Issue)-[:ASSIGNED_TO]->(y) WHERE l.linkId IS NOT NULL AND NOT c IN ns AND y.personKey<>as[0] }\nAND NOT EXISTS { MATCH (b)-[l]-(c:Issue)-[:ASSIGNED_TO]->(y) WHERE l.linkId IS NOT NULL AND NOT c IN ns AND y.personKey<>as[size(as)-1] }\nRETURN [n IN ns|n.issueKey] AS path, [i IN range(0,size(r)-1)|[ns[i].issueKey,ns[i+1].issueKey]] AS hops, [x IN r|[x.linkId]] AS links"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 3,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 71.88978554191999,
+  "source_match": false,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "ec523e42637bc7dd190985752f8764cf43c8457d29a243bc91c97de404810284",
+    "source_ids": [],
+    "value_items": 2962
+  },
+  "time": "2026-11-13T23:01:11+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.08816610000000001,
+    "input_tokens": 93539,
+    "output_tokens": 4327,
+    "requests": 8,
+    "tool_calls": 6
+  },
+  "zero_answer": false
+}

@@ -1,0 +1,80 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 258,
+      "seconds": 0.12845025002025068,
+      "text": "MATCH (a:Issue)-[l]->(b:Issue)\nWHERE type(l) IN ['BLOCKER','DEPENDS','DUPLICATE','SUPERSESSION']\nWITH l, CASE WHEN type(l)='SUPERSESSION' THEN b ELSE a END AS s, CASE WHEN type(l)='SUPERSESSION' THEN a ELSE b END AS t\nMATCH (s)-[:ASSIGNED_TO]->(ps:Person), (t)-[:ASSIGNED_TO]->(pt:Person)\nWHERE ps<>pt\nRETURN DISTINCT s.issueKey AS issue, t.issueKey AS target, l.linkId AS link, ps.personKey AS person, pt.personKey AS tp"
+    },
+    {
+      "outcome": "ok",
+      "rows": 516,
+      "seconds": 0.12610045820474625,
+      "text": "MATCH (a:Issue)-[l]->(b:Issue)\nWHERE type(l) IN ['BLOCKER','DEPENDS','DUPLICATE','SUPERSESSION']\nWITH l, CASE WHEN type(l)='SUPERSESSION' THEN b ELSE a END AS s, CASE WHEN type(l)='SUPERSESSION' THEN a ELSE b END AS t\nMATCH (s)-[:ASSIGNED_TO]->(ps:Person), (t)-[:ASSIGNED_TO]->(pt:Person)\nWHERE ps<>pt\nUNWIND [[s.issueKey,ps.personKey],[t.issueKey,pt.personKey]] AS x\nRETURN DISTINCT x[0] AS issue, x[1] AS person, l.linkId AS link, ps.personKey AS id"
+    },
+    {
+      "outcome": "ok",
+      "rows": 114,
+      "seconds": 0.1225443750154227,
+      "text": "MATCH (a:Issue)-[l]->(b:Issue)\nWHERE type(l) IN ['BLOCKER','DEPENDS','DUPLICATE','SUPERSESSION']\nWITH CASE WHEN type(l)='SUPERSESSION' THEN b ELSE a END AS s, CASE WHEN type(l)='SUPERSESSION' THEN a ELSE b END AS t\nMATCH (s)-[:ASSIGNED_TO]->(ps:Person), (t)-[:ASSIGNED_TO]->(pt:Person)\nWHERE ps<>pt\nRETURN DISTINCT ps.personKey AS id"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q10",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 11.753019457915798,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "20251ceb95183719381e36b406a07b13a061d59e7cbcf4357d12d2e30ad493aa",
+    "source_ids": [
+      1548
+    ],
+    "value_items": 114
+  },
+  "time": "2026-11-13T23:02:20+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0532862,
+    "input_tokens": 55304,
+    "output_tokens": 1532,
+    "requests": 4,
+    "tool_calls": 3
+  },
+  "zero_answer": false
+}

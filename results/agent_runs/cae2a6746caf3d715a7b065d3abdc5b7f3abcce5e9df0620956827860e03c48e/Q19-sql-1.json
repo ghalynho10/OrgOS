@@ -1,0 +1,86 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 4,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.0833732089959085,
+      "text": "with l as (select l.link_id, a.issue_key ik, a.project_key pk, b.issue_key ok from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.project_key<>b.project_key),\ne as (select link_id, from_issue_key k from model.issue_link where link_id in (select link_id from l) union select link_id,to_issue_key from model.issue_link where link_id in (select link_id from l)),\nc as (select i.project_key id, count(distinct e.k) value from e join model.issue i on i.issue_key=e.k group by 1)\nselect id, value from c order by value desc"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1677,
+      "seconds": 0.07989874994382262,
+      "text": "with l as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.project_key<>b.project_key),\ne as (select link_id, f k from l union select link_id,t from l)\nselect e.k issue_key, e.link_id, i.project_key from e join model.issue i on i.issue_key=e.k where i.project_key in ('FE','CRUC','JRASERVER','CWD','BAM')"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1784,
+      "seconds": 0.07783566601574421,
+      "text": "with l as (select l.link_id, l.from_issue_key f, l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.project_key<>b.project_key and (a.project_key in ('FE','CRUC','JRASERVER','CWD','BAM') or b.project_key in ('FE','CRUC','JRASERVER','CWD','BAM')))\nselect f issue_key, link_id, project_key from l join model.issue on issue_key=f union select t, link_id, project_key from l join model.issue on issue_key=t union select null,null,null where false"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.0883887920062989,
+      "text": "select project_key id, count(distinct k) value from (select from_issue_key k from model.issue_link union select to_issue_key from model.issue_link) x join model.issue i on i.issue_key=k where k in (select l.from_issue_key from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.project_key<>b.project_key union select l.to_issue_key from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.project_key<>b.project_key) group by 1 order by 2 desc limit 5"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q19",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 14.942795915994793,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "a5d038f7657ba6cf6646410ad1973f3f3f69a1de51ebe8372137134e90eaa90b",
+    "source_ids": [
+      3573
+    ],
+    "value_items": 5
+  },
+  "time": "2026-11-13T23:11:12+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0288438,
+    "input_tokens": 30396,
+    "output_tokens": 1547,
+    "requests": 4,
+    "tool_calls": 4
+  },
+  "zero_answer": false
+}

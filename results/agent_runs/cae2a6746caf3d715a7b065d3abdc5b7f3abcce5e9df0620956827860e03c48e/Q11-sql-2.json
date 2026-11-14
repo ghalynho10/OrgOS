@@ -1,0 +1,104 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 7,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.0031385000329464674,
+      "text": "create temp view x as select 1"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.01015437487512827,
+      "text": "with r as (select issue_key i, assignee_key p from issue where coalesce(assignee_key,'')<>'' union select issue_key, reporter_key from issue where coalesce(reporter_key,'')<>'' union select issue_key, creator_key from issue where coalesce(creator_key,'')<>'' union select issue_key, person_key from logged_time where seconds>0 and coalesce(person_key,'')<>''),\ng as (select i from r group by i having count(distinct p)>=2)\nselect p id,'person' kind from r where i in (select i from g) union select project_key,'project' from issue where issue_key in (select i from g)"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.00800183298997581,
+      "text": "with r as (select issue_key i, assignee_key p from issue where coalesce(assignee_key,'')<>'' union select issue_key, reporter_key from issue where coalesce(reporter_key,'')<>'' union select issue_key, creator_key from issue where coalesce(creator_key,'')<>'' union select issue_key, person_key from logged_time where seconds>0 and coalesce(person_key,'')<>''),\ng as (select i from r group by i having count(distinct p)>=2)\nselect i issue_key from g"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.0061824999283999205,
+      "text": "with r as (select issue_key i, assignee_key p from issue where coalesce(assignee_key,'')<>'' union select issue_key, reporter_key from issue where coalesce(reporter_key,'')<>'' union select issue_key, creator_key from issue where coalesce(creator_key,'')<>'' union select issue_key, person_key from logged_time where seconds>0 and coalesce(person_key,'')<>''),\ng as (select i from r group by i having count(distinct p)>=2)\nselect history_id from logged_time where seconds>0 and issue_key in (select i from g)"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4110,
+      "seconds": 0.4746255420614034,
+      "text": "with r as (select issue_key i, assignee_key p from model.issue where coalesce(assignee_key,'')<>'' union select issue_key, reporter_key from model.issue where coalesce(reporter_key,'')<>'' union select issue_key, creator_key from model.issue where coalesce(creator_key,'')<>'' union select issue_key, person_key from model.logged_time where seconds>0 and coalesce(person_key,'')<>''),\ng as (select i from r group by i having count(distinct p)>=2)\nselect p id,'person' kind from r where i in (select i from g) union select project_key,'project' from model.issue where issue_key in (select i from g)"
+    },
+    {
+      "outcome": "ok",
+      "rows": 20750,
+      "seconds": 0.6183672919869423,
+      "text": "with r as (select issue_key i, assignee_key p from model.issue where coalesce(assignee_key,'')<>'' union select issue_key, reporter_key from model.issue where coalesce(reporter_key,'')<>'' union select issue_key, creator_key from model.issue where coalesce(creator_key,'')<>'' union select issue_key, person_key from model.logged_time where seconds>0 and coalesce(person_key,'')<>''),\ng as (select i from r group by i having count(distinct p)>=2)\nselect i issue_key from g"
+    },
+    {
+      "outcome": "ok",
+      "rows": 6237,
+      "seconds": 0.5980742501560599,
+      "text": "with r as (select issue_key i, assignee_key p from model.issue where coalesce(assignee_key,'')<>'' union select issue_key, reporter_key from model.issue where coalesce(reporter_key,'')<>'' union select issue_key, creator_key from model.issue where coalesce(creator_key,'')<>'' union select issue_key, person_key from model.logged_time where seconds>0 and coalesce(person_key,'')<>''),\ng as (select i from r group by i having count(distinct p)>=2)\nselect history_id from model.logged_time where seconds>0 and issue_key in (select i from g)"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q11",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 4,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 16.001599083887413,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "96f852c0fbf6c69f9ac0a699b70ce07f062f534cf1de8a39520b99049660e13b",
+    "source_ids": [
+      26987
+    ],
+    "value_items": 4110
+  },
+  "time": "2026-11-13T23:03:00+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.032759,
+    "input_tokens": 31084,
+    "output_tokens": 1845,
+    "requests": 4,
+    "tool_calls": 7
+  },
+  "zero_answer": false
+}

@@ -418,26 +418,77 @@ def test_the_gate_lets_a_run_through(costs: list[float], to_start: int) -> None:
 # --- The versions log (AC-32) ---
 
 FIRST = {"version_hash": "v1", "parts": dict(DESCRIPTION.parts)}
+EXPOSED = "results/agent_runs/v1/Q04-sql-1.json"
+EXPOSED_2 = "results/agent_runs/v1/Q11-graph-3.json"
+SECOND = replace(DESCRIPTION, version_hash="v2", parts={**DESCRIPTION.parts, "tools": "c" * 64})
 
 
 def test_the_first_version_needs_no_reason() -> None:
-    entry = version_entry(
-        [], DESCRIPTION, reason=None, exposed_by=None, kind=None, exposed_exists=False
-    )
+    entry = version_entry([], DESCRIPTION, reason=None, exposed_by=(), kind=None, missing=())
     assert entry["version_hash"] == "v1" and "changed" not in entry
+    assert "exposed_by" not in entry
 
 
 def test_a_later_version_holds_its_changed_parts_and_reason() -> None:
-    second = replace(DESCRIPTION, version_hash="v2", parts={**DESCRIPTION.parts, "tools": "c" * 64})
     entry = version_entry(
         [FIRST],
-        second,
+        SECOND,
         reason="row cap text",
-        exposed_by="r.json",
+        exposed_by=(EXPOSED,),
         kind="bug_fix",
-        exposed_exists=True,
+        missing=(),
     )
     assert entry["changed"] == ["tools"] and entry["kind"] == "bug_fix"
+    assert entry["exposed_by"] == [EXPOSED]
+
+
+# covers: spec 0015 AC-12, several exposing run files are stored as a list in the order given
+def test_several_exposing_run_files_are_kept_in_order() -> None:
+    entry = version_entry(
+        [FIRST], SECOND, reason="r", exposed_by=(EXPOSED_2, EXPOSED), kind="bug_fix", missing=()
+    )
+    assert entry["exposed_by"] == [EXPOSED_2, EXPOSED]
+
+
+# covers: spec 0015 AC-12, each bad --exposed-by value is refused, never dropped
+@pytest.mark.parametrize(
+    ("exposed_by", "missing", "reason"),
+    [
+        ((), (), "needs --reason, --exposed-by"),
+        (("r.json",), (), r"--exposed-by r\.json is not a run file of version v1"),
+        (
+            ("results/agent_runs/v0/Q04-sql-1.json",),
+            (),
+            "is not a run file of version v1",
+        ),
+        (("results/agent_runs/v1/Q04-mongo-1.json",), (), "is not a run file of version v1"),
+        (("results/agent_runs/v1/PLAN.json",), (), "is not a run file of version v1"),
+        (
+            (EXPOSED, EXPOSED_2),
+            (EXPOSED_2,),
+            r"--exposed-by .*Q11-graph-3\.json is not a run file$",
+        ),
+        ((EXPOSED, EXPOSED_2, EXPOSED), (), r"Q04-sql-1\.json is given more than once"),
+        (("results/agent_runs/v1/Q04-sql-0.json",), (), "is not a run file of version v1"),
+    ],
+    ids=[
+        "empty",
+        "not a path",
+        "other version",
+        "bad store",
+        "plan file",
+        "missing",
+        "repeat",
+        "run 0",
+    ],
+)
+def test_a_bad_exposing_run_file_is_refused(
+    exposed_by: tuple[str, ...], missing: tuple[str, ...], reason: str
+) -> None:
+    with pytest.raises(EvalError, match=reason):
+        version_entry(
+            [FIRST], SECOND, reason="r", exposed_by=exposed_by, kind="bug_fix", missing=missing
+        )
 
 
 @pytest.mark.parametrize(
@@ -468,18 +519,23 @@ def test_the_versions_log_refuses(
     entries: list[dict[str, Any]], parts: dict[str, str] | None, kind: str, reason: str
 ) -> None:
     second = replace(DESCRIPTION, version_hash="v2", parts=parts or DESCRIPTION.parts)
+    previous = entries[-1]["version_hash"]
     with pytest.raises(EvalError, match=reason):
         version_entry(
-            entries, second, reason="r", exposed_by="r.json", kind=kind, exposed_exists=True
+            entries,
+            second,
+            reason="r",
+            exposed_by=(f"results/agent_runs/{previous}/Q04-sql-1.json",),
+            kind=kind,
+            missing=(),
         )
 
 
 # covers: AC-32 (a later version names the run file that exposed the problem)
 def test_a_later_version_needs_its_exposing_run_file_to_exist() -> None:
-    second = replace(DESCRIPTION, version_hash="v2", parts={**DESCRIPTION.parts, "tools": "c" * 64})
-    with pytest.raises(EvalError, match=r"--exposed-by r\.json is not a run file"):
+    with pytest.raises(EvalError, match=r"--exposed-by .*Q04-sql-1\.json is not a run file$"):
         version_entry(
-            [FIRST], second, reason="r", exposed_by="r.json", kind="bug_fix", exposed_exists=False
+            [FIRST], SECOND, reason="r", exposed_by=(EXPOSED,), kind="bug_fix", missing=(EXPOSED,)
         )
 
 
@@ -489,11 +545,49 @@ def test_version_add_logs_the_loaded_agent(root: Path) -> None:
         root,
         "tests.test_eval_runs:stub_factory",
         reason=None,
-        exposed_by=None,
+        exposed_by=(),
         kind=None,
     )
     assert line.startswith("logged version v1 (1 of 3)")
     assert json.loads((root / VERSIONS).read_text())["parts"] == dict(DESCRIPTION.parts)
+
+
+# covers: spec 0015 AC-12, `--exposed-by` given twice on the command line is stored in that order
+def test_the_cli_keeps_each_exposed_by_in_the_order_given(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from orgos.cli import app
+
+    first = {"version_hash": "v0", "parts": {**DESCRIPTION.parts, "tools": "d" * 64}}
+    (tmp_path / VERSIONS).parent.mkdir(parents=True)
+    (tmp_path / VERSIONS).write_text(json.dumps(first) + "\n")
+    exposed = ("results/agent_runs/v0/Q02-graph-3.json", "results/agent_runs/v0/Q01-sql-1.json")
+    (tmp_path / "results/agent_runs/v0").mkdir()
+    for path in exposed:
+        (tmp_path / path).write_text("{}")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("orgos.cli.load_settings", settings)
+    app(
+        args=[
+            "eval",
+            "version",
+            "add",
+            "--agent",
+            "tests.test_eval_runs:stub_factory",
+            "--reason",
+            "r",
+            "--exposed-by",
+            exposed[0],
+            "--exposed-by",
+            exposed[1],
+            "--kind",
+            "bug_fix",
+        ],
+        standalone_mode=False,
+    )
+    last = json.loads((tmp_path / VERSIONS).read_text().splitlines()[-1])
+    assert last["version_hash"] == "v1"
+    assert last["exposed_by"] == list(exposed)
 
 
 # --- Agent loading (AC-38) ---
@@ -516,7 +610,7 @@ def test_replay_is_exempt_from_the_plan_and_the_versions_log(root: Path) -> None
     with pytest.raises(EvalError, match="exempt from the plan"):
         estimate(settings(**LIMITS), root, "replay", only=None)
     with pytest.raises(EvalError, match="exempt from the versions log"):
-        version_add(settings(), root, "replay", reason=None, exposed_by=None, kind=None)
+        version_add(settings(), root, "replay", reason=None, exposed_by=(), kind=None)
 
 
 # --- The summary (AC-23, AC-33, AC-34) ---

@@ -425,15 +425,25 @@ def version_add_command(
         str | None, typer.Option("--reason", help="Why this version exists (after the first).")
     ] = None,
     exposed_by: Annotated[
-        str | None,
-        typer.Option("--exposed-by", help="The run file that exposed the problem."),
+        list[str] | None,
+        typer.Option(
+            "--exposed-by",
+            help="A run file that exposed the problem; give it once per file.",
+        ),
     ] = None,
     kind: Annotated[str | None, typer.Option("--kind", help="bug_fix or behaviour_change.")] = None,
 ) -> None:
     """Log the agent's current version and the parts that changed since the previous one."""
     settings = load_settings()
     typer.echo(
-        version_add(settings, Path.cwd(), agent, reason=reason, exposed_by=exposed_by, kind=kind)
+        version_add(
+            settings,
+            Path.cwd(),
+            agent,
+            reason=reason,
+            exposed_by=tuple(exposed_by or ()),
+            kind=kind,
+        )
     )
 
 

@@ -1,0 +1,80 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "outcome": "rejected",
+      "rows": 0,
+      "seconds": 0.0,
+      "text": "create temp view x as select 1;\nwith q as (select l.person_key p,l.history_id h,l.issue_key i,i.project_key pr,l.seconds s from model.logged_time l join model.issue i using(issue_key) where l.seconds>0 and l.logged_at>='2009-07-01+00' and l.logged_at<'2009-10-01+00'),\ne as (select p,sum(s) v from q group by p having count(distinct pr)>=2),\nr as (select p,v,rank() over(order by v desc) k from e)\nselect p as id, v as value, k from r where k<=5 order by v desc"
+    },
+    {
+      "outcome": "ok",
+      "rows": 256,
+      "seconds": 0.03472550003789365,
+      "text": "with q as (select l.person_key p,l.history_id h,l.issue_key i,i.project_key pr,l.seconds s from model.logged_time l join model.issue i using(issue_key) where l.seconds>0 and l.logged_at>='2009-07-01+00' and l.logged_at<'2009-10-01+00'),\ne as (select p,sum(s) v from q group by p having count(distinct pr)>=2),\nr as (select p,v,rank() over(order by v desc) k from e)\nselect q.p as id, r.v as value, q.h, q.i, q.pr from r join q on q.p=r.p where k<=5 order by v desc, id"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.060884709004312754,
+      "text": "with q as (select l.person_key p,l.history_id h,l.issue_key i,i.project_key pr,l.seconds s from model.logged_time l join model.issue i using(issue_key) where l.seconds>0 and l.logged_at>='2009-07-01+00' and l.logged_at<'2009-10-01+00'),\ne as (select p,sum(s) v from q group by p having count(distinct pr)>=2),\nr as (select p,v,rank() over(order by v desc) k from e)\nselect p as id, v as value from r where k<=5 order by v desc"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q20",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 7.616774332942441,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "9f668dfb72cba6c9259b4d20c8670d568c563934b17fdd3b987e2f67add77a42",
+    "source_ids": [
+      1024
+    ],
+    "value_items": 5
+  },
+  "time": "2026-11-13T23:12:34+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0240444,
+    "input_tokens": 33758,
+    "output_tokens": 1008,
+    "requests": 4,
+    "tool_calls": 3
+  },
+  "zero_answer": false
+}

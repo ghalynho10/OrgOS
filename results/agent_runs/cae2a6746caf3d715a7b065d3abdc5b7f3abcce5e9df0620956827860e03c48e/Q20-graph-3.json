@@ -1,0 +1,86 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 4,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.13955745799466968,
+      "text": "MATCH (p:Person)-[l:LOGGED_TIME]->(i:Issue)-[:IN_PROJECT]->(pr:Project)\nWHERE l.seconds>0 AND l.loggedAt>=datetime('2009-07-01T00:00:00Z') AND l.loggedAt<datetime('2009-10-01T00:00:00Z')\nWITH p, count(DISTINCT pr) AS np, sum(l.seconds) AS tot\nWHERE np>=2\nWITH p.personKey AS id, tot AS value ORDER BY value DESC\nWITH collect({id:id,value:value}) AS rows\nWITH rows, rows[4].value AS cut\nUNWIND rows AS r\nWITH r WHERE size(rows)<5 OR r.value>=cut\nRETURN r.id AS id, r.value AS value"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.07705479208379984,
+      "text": "MATCH (p:Person)-[l:LOGGED_TIME]->(i:Issue)-[:IN_PROJECT]->(pr:Project)\nWHERE l.seconds>0 AND l.loggedAt>=datetime('2009-07-01T00:00:00Z') AND l.loggedAt<datetime('2009-10-01T00:00:00Z') AND p.personKey IN $k\nRETURN p.personKey AS person, i.issueKey AS issue, pr.projectKey AS project, l.historyId AS te"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.01558741694316268,
+      "text": "MATCH (p:Person)-[l:LOGGED_TIME]->(i:Issue)-[:IN_PROJECT]->(pr:Project)\nWHERE l.seconds>0 AND l.loggedAt>=datetime('2009-07-01T00:00:00Z') AND l.loggedAt<datetime('2009-10-01T00:00:00Z')\nWITH p, collect({i:i.issueKey,pr:pr.projectKey,te:l.historyId}) AS es, sum(l.seconds) AS tot\nWHERE size(apoc.coll.toSet([e IN es|e.pr]))>=2\nORDER BY tot DESC LIMIT 5\nUNWIND es AS e\nRETURN p.personKey AS person, e.i AS issue, e.pr AS project, e.te AS te"
+    },
+    {
+      "outcome": "ok",
+      "rows": 256,
+      "seconds": 0.12909137504175305,
+      "text": "MATCH (p:Person)-[l:LOGGED_TIME]->(i:Issue)-[:IN_PROJECT]->(pr:Project)\nWHERE l.seconds>0 AND l.loggedAt>=datetime('2009-07-01T00:00:00Z') AND l.loggedAt<datetime('2009-10-01T00:00:00Z')\nWITH p, count(DISTINCT pr) AS np, sum(l.seconds) AS tot\nWHERE np>=2\nORDER BY tot DESC LIMIT 5\nMATCH (p)-[l:LOGGED_TIME]->(i:Issue)-[:IN_PROJECT]->(pr:Project)\nWHERE l.seconds>0 AND l.loggedAt>=datetime('2009-07-01T00:00:00Z') AND l.loggedAt<datetime('2009-10-01T00:00:00Z')\nRETURN p.personKey AS person, i.issueKey AS issue, pr.projectKey AS project, l.historyId AS te"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q20",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 2,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 11.463339915964752,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "9f668dfb72cba6c9259b4d20c8670d568c563934b17fdd3b987e2f67add77a42",
+    "source_ids": [
+      1024
+    ],
+    "value_items": 5
+  },
+  "time": "2026-11-13T23:13:01+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0303227,
+    "input_tokens": 38883,
+    "output_tokens": 1517,
+    "requests": 5,
+    "tool_calls": 4
+  },
+  "zero_answer": false
+}

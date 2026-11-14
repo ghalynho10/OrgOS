@@ -1,0 +1,86 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 4,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 256,
+      "seconds": 0.024352042004466057,
+      "text": "with e as (select l.person_key p,l.issue_key i,i.project_key pr,l.history_id h,l.seconds s from model.logged_time l join model.issue i using(issue_key) where l.seconds>0 and l.logged_at>='2009-07-01+00' and l.logged_at<'2009-10-01+00'),\nel as (select p from e group by p having count(distinct pr)>=2),\nt as (select p,sum(s) v from e where p in (select p from el) group by p),\nr as (select p,v,rank() over(order by v desc) rk from t)\nselect e.p,e.i,e.pr,e.h,r.v from e join r on r.p=e.p where rk<=5 order by r.v desc,e.p"
+    },
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.022056917194277048,
+      "text": "with e as (select l.person_key p,l.issue_key i,i.project_key pr,l.history_id h,l.seconds s from model.logged_time l join model.issue i using(issue_key) where l.seconds>0 and l.logged_at>='2009-07-01+00' and l.logged_at<'2009-10-01+00'),\nel as (select p from e group by p having count(distinct pr)>=2)\nselect p id,sum(s) value from e where p in (select p from el) group by p order by 2 desc limit 7"
+    },
+    {
+      "outcome": "ok",
+      "rows": 256,
+      "seconds": 0.04936345783062279,
+      "text": "with e as (select l.person_key p,l.issue_key i,i.project_key pr,l.history_id h,l.seconds s from model.logged_time l join model.issue i using(issue_key) where l.seconds>0 and l.logged_at>='2009-07-01+00' and l.logged_at<'2009-10-01+00'),\nel as (select p from e group by p having count(distinct pr)>=2),\nt as (select p,sum(s) v from e where p in (select p from el) group by p order by 2 desc limit 5)\nselect e.p id, t.v value, e.i issue, e.pr project, e.h entry from e join t on t.p=e.p order by t.v desc"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.021485292119905353,
+      "text": "with e as (select l.person_key p,i.project_key pr,l.seconds s from model.logged_time l join model.issue i using(issue_key) where l.seconds>0 and l.logged_at>='2009-07-01+00' and l.logged_at<'2009-10-01+00'),\nel as (select p from e group by p having count(distinct pr)>=2)\nselect p id,sum(s) value from e where p in (select p from el) group by p order by 2 desc limit 5"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q20",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 11.050001959083602,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "9f668dfb72cba6c9259b4d20c8670d568c563934b17fdd3b987e2f67add77a42",
+    "source_ids": [
+      1024
+    ],
+    "value_items": 5
+  },
+  "time": "2026-11-13T23:12:19+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.0405451,
+    "input_tokens": 55223,
+    "output_tokens": 1310,
+    "requests": 5,
+    "tool_calls": 4
+  },
+  "zero_answer": false
+}

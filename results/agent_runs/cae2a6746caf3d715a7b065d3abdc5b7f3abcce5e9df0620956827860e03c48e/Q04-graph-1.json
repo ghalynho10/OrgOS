@@ -1,0 +1,86 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 4,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 7,
+      "seconds": 0.586800207849592,
+      "text": "MATCH (i:Issue)-[:IN_PROJECT]->(p:Project)\nOPTIONAL MATCH (:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH p,i,coalesce(i.timeOriginalEstimateS,0) AS e, collect(l.historyId) AS ids, coalesce(sum(l.seconds),0) AS s\nWHERE e<>0 OR size(ids)>0\nRETURN p.projectKey AS id, sum(s)-sum(e) AS value"
+    },
+    {
+      "outcome": "ok",
+      "rows": 10454,
+      "seconds": 0.3864285000599921,
+      "text": "MATCH (i:Issue)\nOPTIONAL MATCH (:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0\nWITH i, collect(l.historyId) AS ids\nWHERE i.timeOriginalEstimateS IS NOT NULL OR size(ids)>0\nUNWIND (CASE WHEN size(ids)=0 THEN [null] ELSE ids END) AS t\nRETURN i.issueKey AS issue, t AS time_entry"
+    },
+    {
+      "outcome": "ok",
+      "rows": 6958,
+      "seconds": 0.23912395793013275,
+      "text": "MATCH (i:Issue) WHERE i.timeOriginalEstimateS IS NOT NULL OR EXISTS {MATCH (:Person)-[l:LOGGED_TIME]->(i) WHERE l.seconds>0}\nRETURN i.issueKey AS issue"
+    },
+    {
+      "outcome": "ok",
+      "rows": 7923,
+      "seconds": 0.14927029190585017,
+      "text": "MATCH (:Person)-[l:LOGGED_TIME]->(i:Issue) WHERE l.seconds>0 RETURN l.historyId AS time_entry"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": true,
+  "data": "real",
+  "git": {
+    "commit": "4dfa2cfcb402e2537bc1f2d3edf9517b1ce38acb",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "correct",
+  "plan": {
+    "estimate_usd": 480.0,
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q04",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 11.324468333041295,
+  "source_match": true,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "4e9fa5a7be002fe1ad8999bd53a4b092f9629b0b787215670b3558f7ba94e757",
+    "source_ids": [
+      14881
+    ],
+    "value_items": 7
+  },
+  "time": "2026-11-13T22:43:54+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.0317954,
+    "input_tokens": 35614,
+    "output_tokens": 1060,
+    "requests": 5,
+    "tool_calls": 4
+  },
+  "zero_answer": false
+}

@@ -1,0 +1,319 @@
+[
+  {
+    "attempts_at_row_cap": 0,
+    "attempts_timed_out": 3,
+    "by_data": {
+      "real": {
+        "correct": 52,
+        "total": 60
+      },
+      "synthetic": {
+        "correct": 0,
+        "total": 0
+      }
+    },
+    "by_type": {
+      "aggregate": {
+        "correct": 20,
+        "total": 21
+      },
+      "mixed": {
+        "correct": 18,
+        "total": 18
+      },
+      "path_connection": {
+        "correct": 14,
+        "total": 21
+      }
+    },
+    "correct_not_reviewed": 0,
+    "discrepancies": 0,
+    "headline": {
+      "correct": 52,
+      "total": 60
+    },
+    "layer": "agent",
+    "limit_hit": {
+      "requests": 0,
+      "tokens": 0,
+      "tool_calls": 0
+    },
+    "missing": [],
+    "outcomes": {
+      "correct": 52,
+      "wrong": 8
+    },
+    "partial": false,
+    "per_question": {
+      "Q01": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q02": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q03": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q04": {
+        "attempts": 13,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q05": {
+        "attempts": 7,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q06": {
+        "attempts": 13,
+        "retries": 3,
+        "runs": 3
+      },
+      "Q07": {
+        "attempts": 8,
+        "retries": 2,
+        "runs": 3
+      },
+      "Q08": {
+        "attempts": 13,
+        "retries": 3,
+        "runs": 3
+      },
+      "Q09": {
+        "attempts": 22,
+        "retries": 12,
+        "runs": 3
+      },
+      "Q10": {
+        "attempts": 7,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q11": {
+        "attempts": 18,
+        "retries": 5,
+        "runs": 3
+      },
+      "Q12": {
+        "attempts": 14,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q13": {
+        "attempts": 7,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q14": {
+        "attempts": 8,
+        "retries": 1,
+        "runs": 3
+      },
+      "Q15": {
+        "attempts": 10,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q16": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q17": {
+        "attempts": 12,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q18": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q19": {
+        "attempts": 11,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q20": {
+        "attempts": 8,
+        "retries": 2,
+        "runs": 3
+      }
+    },
+    "store": "graph",
+    "version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+    "without_zero_guarded": {
+      "correct": 46,
+      "total": 54
+    },
+    "zero_guarded": [
+      "Q03",
+      "Q16"
+    ]
+  },
+  {
+    "attempts_at_row_cap": 0,
+    "attempts_timed_out": 0,
+    "by_data": {
+      "real": {
+        "correct": 52,
+        "total": 60
+      },
+      "synthetic": {
+        "correct": 0,
+        "total": 0
+      }
+    },
+    "by_type": {
+      "aggregate": {
+        "correct": 18,
+        "total": 21
+      },
+      "mixed": {
+        "correct": 18,
+        "total": 18
+      },
+      "path_connection": {
+        "correct": 16,
+        "total": 21
+      }
+    },
+    "correct_not_reviewed": 0,
+    "discrepancies": 0,
+    "headline": {
+      "correct": 52,
+      "total": 60
+    },
+    "layer": "agent",
+    "limit_hit": {
+      "requests": 0,
+      "tokens": 0,
+      "tool_calls": 0
+    },
+    "missing": [],
+    "outcomes": {
+      "correct": 52,
+      "no_answer": 1,
+      "wrong": 7
+    },
+    "partial": false,
+    "per_question": {
+      "Q01": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q02": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q03": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q04": {
+        "attempts": 9,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q05": {
+        "attempts": 7,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q06": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q07": {
+        "attempts": 10,
+        "retries": 3,
+        "runs": 3
+      },
+      "Q08": {
+        "attempts": 12,
+        "retries": 1,
+        "runs": 3
+      },
+      "Q09": {
+        "attempts": 18,
+        "retries": 6,
+        "runs": 3
+      },
+      "Q10": {
+        "attempts": 14,
+        "retries": 3,
+        "runs": 3
+      },
+      "Q11": {
+        "attempts": 17,
+        "retries": 6,
+        "runs": 3
+      },
+      "Q12": {
+        "attempts": 15,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q13": {
+        "attempts": 9,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q14": {
+        "attempts": 9,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q15": {
+        "attempts": 9,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q16": {
+        "attempts": 9,
+        "retries": 2,
+        "runs": 3
+      },
+      "Q17": {
+        "attempts": 12,
+        "retries": 3,
+        "runs": 3
+      },
+      "Q18": {
+        "attempts": 6,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q19": {
+        "attempts": 9,
+        "retries": 0,
+        "runs": 3
+      },
+      "Q20": {
+        "attempts": 10,
+        "retries": 2,
+        "runs": 3
+      }
+    },
+    "store": "sql",
+    "version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+    "without_zero_guarded": {
+      "correct": 46,
+      "total": 54
+    },
+    "zero_guarded": [
+      "Q03",
+      "Q16"
+    ]
+  }
+]
