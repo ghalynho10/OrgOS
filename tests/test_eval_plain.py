@@ -250,6 +250,20 @@ def test_the_plain_plan_copies_runs_and_is_one_flat_object(root: Path) -> None:
         estimate_plain(settings(), root, "tests.test_eval_plain:plain_factory", only=None)
 
 
+# covers: AC-13, the limits and the upper bound come from Settings; only `runs` from the noted plan
+def test_the_plain_plan_takes_its_limits_from_settings_and_only_runs_from_the_noted_plan(
+    root: Path,
+) -> None:
+    lowered = settings().model_copy(update={"agent_token_limit": 25_000, "agent_request_limit": 6})
+    estimate_plain(lowered, root, "tests.test_eval_plain:plain_factory", only=None)
+    plan = read_plain_plan(plain_dir(root, "v1"))
+    assert plan is not None
+    assert (NOTED_PLAN.token_limit, NOTED_PLAN.request_limit) == (50_000, 10)
+    assert (plan.plan.runs, plan.plan.token_limit, plan.plan.request_limit) == (2, 25_000, 6)
+    # Half the token limit of the test above, so half its upper bound.
+    assert plan.plan.estimate_usd == pytest.approx(80 * 25_000 * 15 / 1_000_000)
+
+
 def test_the_block_hash_is_over_every_question_even_with_only(
     root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

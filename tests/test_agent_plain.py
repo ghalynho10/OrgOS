@@ -93,6 +93,37 @@ def test_the_plain_block_holds_no_note_and_no_hidden_field() -> None:
         assert word not in block
 
 
+def _without(block: str, prefix: str) -> str:
+    return "\n".join(line for line in block.split("\n") if not line.startswith(prefix))
+
+
+# covers: AC-1, the unit line comes from `Question.unit` and nothing else
+def test_a_unit_of_none_drops_only_the_unit_line() -> None:
+    with_unit = [q for q in QUESTIONS if q.unit != "none"]
+    assert with_unit
+    for question in with_unit:
+        block = render_plain_run_block(question)
+        assert "\nUnit: " in block
+        cut = render_plain_run_block(question.model_copy(update={"unit": "none"}))
+        assert cut == _without(block, "Unit: ")
+
+
+# covers: AC-1, the hop limit line comes from `hop_mode` and `max_hops` only
+@pytest.mark.parametrize("question_id", ["Q08", "Q09"])
+def test_a_fixed_hop_mode_drops_only_the_hop_limit_line(question_id: str) -> None:
+    question = next(q for q in QUESTIONS if q.id == question_id)
+    block = render_plain_run_block(question)
+    cut = render_plain_run_block(question.model_copy(update={"hop_mode": "fixed"}))
+    assert cut == _without(block, "Hop limit: ") != block
+
+
+# covers: AC-1, the renderer never reads `Question.reading`
+def test_the_reading_note_does_not_change_the_plain_block() -> None:
+    for question in QUESTIONS:
+        swapped = question.model_copy(update={"reading": "A MARKER IN PLACE OF THE NOTE"})
+        assert render_plain_run_block(swapped) == render_plain_run_block(question)
+
+
 def test_both_stores_get_the_same_plain_block() -> None:
     blocks: dict[Store, list[str]] = {"sql": [], "graph": []}
 
