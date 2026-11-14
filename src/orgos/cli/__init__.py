@@ -8,9 +8,12 @@ feature adds its command and one line there.
 
 from __future__ import annotations
 
+import json
 import logging
+import os
+import tempfile
 from collections import Counter
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
@@ -24,14 +27,30 @@ from orgos.eval import EvalError
 from orgos.eval.answers import answers, read_questions
 from orgos.eval.checker import check_files
 from orgos.eval.describe import describe
-from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
+from orgos.eval.gold import (
+    gold_accept,
+    gold_decide,
+    gold_summary_entries,
+    gold_try,
+    parse_store,
+)
 from orgos.eval.handoff import RunStopped
-from orgos.eval.preflight import preflight, summary
-from orgos.eval.report import rule_lines
+from orgos.eval.preflight import preflight, record_load_id, summary
+from orgos.eval.report import (
+    SeriesFiles,
+    VersionFiles,
+    findings,
+    require_versions,
+    rule_lines,
+)
 from orgos.eval.runs import (
     estimate,
     estimate_plain,
+    plain_dir,
+    read_plain_plan,
+    read_plan,
     read_run_files,
+    read_versions,
     run_agent,
     run_plain_agent,
     upper_bound,
@@ -446,6 +465,56 @@ def eval_run_command(
         typer.echo(line)
 
 
+REPORT_FILE = Path("results/findings/report.json")
+
+
+def _series(root: Path, version: str) -> tuple[SeriesFiles, SeriesFiles | None]:
+    noted_plan = read_plan(version_dir(root, version))
+    noted = SeriesFiles(
+        noted_plan.runs if noted_plan is not None else None,
+        read_run_files(version_dir(root, version)),
+    )
+    plain_plan = read_plain_plan(plain_dir(root, version))
+    plain_files = read_run_files(plain_dir(root, version))
+    if plain_plan is None and not plain_files:
+        return noted, None
+    return noted, SeriesFiles(plain_plan.plan.runs if plain_plan else None, plain_files)
+
+
+def write_report(root: Path, record: Mapping[str, object]) -> Path:
+    """Rewrite the report JSON through a temporary file and a replace (spec 0014 AC-27)."""
+    path = root / REPORT_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temporary = tempfile.mkstemp(dir=path.parent, prefix=".tmp-", suffix=".json")
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(record, indent=2, sort_keys=True) + "\n")
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    return path
+
+
+def report_lines(root: Path) -> tuple[str, ...]:
+    """`orgos eval report`: read the files spec 0014 AC-15 lists, print, rewrite the JSON.
+
+    Reads the questions, `versions.jsonl`, each version's `PLAN.json` and run files,
+    noted and plain, the two load run records and the gold summary. Opens no store
+    and calls no model.
+    """
+    versions = tuple(
+        VersionFiles(version, *_series(root, version))
+        for version in (str(entry["version_hash"]) for entry in read_versions(root))
+    )
+    require_versions(versions)
+    question_types = {question.id: str(question.type) for question in read_questions(root)}
+    gold, _ = gold_summary_entries(root)
+    made = findings(versions, question_types, record_load_id(root), gold)
+    write_report(root, made.record)
+    return (*made.lines, "", f"wrote {REPORT_FILE}")
+
+
 @eval_app.command("report")
 def eval_report_command(
     rule: Annotated[
@@ -462,10 +531,11 @@ def eval_report_command(
     answer. Calls no model and opens no store.
     """
     root = Path.cwd()
-    if not rule:
-        raise EvalError("the full report is not built yet; run `orgos eval report --rule`")
-    counts = Counter(str(question.type) for question in read_questions(root))
-    for line in rule_lines(counts):
+    if rule:
+        lines = rule_lines(Counter(str(question.type) for question in read_questions(root)))
+    else:
+        lines = report_lines(root)
+    for line in lines:
         typer.echo(line)
 
 

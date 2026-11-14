@@ -817,8 +817,11 @@ def gold_entries(
     return tuple(entries)
 
 
-def gold_summary(root: Path) -> list[str]:
-    """The gold layer of the summary, computed from the tries log and not stored (AC-13)."""
+def gold_summary_entries(root: Path) -> tuple[tuple[Entry, ...], frozenset[str]]:
+    """The gold layer's entries and the zero guarded questions, from the tries log (AC-13).
+
+    The findings report (spec 0014 AC-20) reads the gold cells through this.
+    """
     lines = read_tries(root)
     questions = read_questions(root)
     known = known_answers(root)
@@ -829,4 +832,9 @@ def gold_summary(root: Path) -> list[str]:
         for store in STORES
     )
     entries = gold_entries(lines, questions, accepted_pairs(root, lines, pairs))
-    return summary_lines(entries, zero_guarded_ids(known))
+    return entries, zero_guarded_ids(known)
+
+
+def gold_summary(root: Path) -> list[str]:
+    """The gold layer of the summary, computed from the tries log and not stored (AC-13)."""
+    return summary_lines(*gold_summary_entries(root))

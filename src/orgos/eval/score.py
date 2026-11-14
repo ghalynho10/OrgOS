@@ -473,9 +473,14 @@ def plain_statement_lines(statement: Mapping[str, Any]) -> list[str]:
         f" SQL {_shown(against['sql'], 'answer_match')} answer_match; {verdict}"
     )
     if statement["stale"]:
-        lines.append(
-            f"the plain series of version {statement['version']} is stale, a lower bound of an"
-            f" older version: {VERSIONS_NAME} holds the later {', '.join(statement['stale'])};"
-            " nothing is rerun"
-        )
+        lines.append(stale_line(statement["version"], statement["stale"]))
     return lines
+
+
+def stale_line(version: str, later: Sequence[str]) -> str:
+    """The line for a plain series of a version that `versions.jsonl` has a later one of (AC-25)."""
+    return (
+        f"the plain series of version {version} is stale, a lower bound of an"
+        f" older version: {VERSIONS_NAME} holds the later {', '.join(later)};"
+        " nothing is rerun"
+    )
