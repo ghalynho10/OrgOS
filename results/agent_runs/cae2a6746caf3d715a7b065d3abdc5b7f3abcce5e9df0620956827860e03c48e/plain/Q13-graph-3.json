@@ -1,0 +1,85 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.07452704105526209,
+      "text": "MATCH (c:Issue)-[:HAS_PARENT]->(p:Issue {issueKey:'CLOV-108'}) WHERE c.issueTypeName='Sub-task'\nOPTIONAL MATCH (c)-[:ASSIGNED_TO]->(a:Person)\nOPTIONAL MATCH (:Person)-[l:LOGGED_TIME]->(c) WHERE l.seconds>0\nRETURN c.issueKey AS id, a.personKey AS assignee, c.statusName AS status, coalesce(sum(l.seconds),0) AS seconds, collect(l.historyId) AS te"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q13",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 3.885939958039671,
+  "series": "plain",
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 1,
+      "missing": 2
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "set",
+      "sources": [
+        {
+          "issue": [
+            "CLOV-109"
+          ],
+          "person": [
+            "<<|author_key|1519716a-f17a-460a-82a7-97996b25b99a|>>"
+          ]
+        }
+      ],
+      "value": [
+        "issue:CLOV-109"
+      ]
+    }
+  },
+  "time": "2026-11-14T06:02:18+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.0062704,
+    "input_tokens": 11406,
+    "output_tokens": 424,
+    "requests": 2,
+    "tool_calls": 1
+  },
+  "zero_answer": false
+}

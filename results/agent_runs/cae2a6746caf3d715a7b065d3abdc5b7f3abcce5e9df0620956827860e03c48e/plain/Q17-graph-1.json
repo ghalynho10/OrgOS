@@ -1,0 +1,318 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 6,
+      "seconds": 3.1960948340129107,
+      "text": "MATCH (p:Person)-[t1:LOGGED_TIME]->(a:Issue)-[l]-(b:Issue)<-[t2:LOGGED_TIME]-(p)\nWHERE t1.seconds>0 AND t2.seconds>0 AND a.issueKey<b.issueKey\nMATCH (a)-[:IN_PROJECT]->(pa), (b)-[:IN_PROJECT]->(pb)\nWHERE pa<>pb\nWITH p, collect(DISTINCT t1)+collect(DISTINCT t2) AS ts\nUNWIND ts AS t\nWITH p, collect(DISTINCT t) AS u\nRETURN p.personKey AS id, reduce(s=0,x IN u|s+x.seconds) AS value"
+    },
+    {
+      "outcome": "ok",
+      "rows": 44,
+      "seconds": 2.60502825002186,
+      "text": "MATCH (p:Person)-[t1:LOGGED_TIME]->(a:Issue)-[l]-(b:Issue)<-[t2:LOGGED_TIME]-(p)\nWHERE t1.seconds>0 AND t2.seconds>0 AND a.issueKey<b.issueKey\nMATCH (a)-[:IN_PROJECT]->(pa), (b)-[:IN_PROJECT]->(pb)\nWHERE pa<>pb\nUNWIND [[a.issueKey,pa.projectKey,t1.historyId,l.linkId],[b.issueKey,pb.projectKey,t2.historyId,l.linkId]] AS r\nRETURN DISTINCT r[0] AS issue, r[1] AS project, r[2] AS te, r[3] AS link"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q17",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 14.288255541119725,
+  "series": "plain",
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 6,
+      "missing": 24
+    },
+    {
+      "extra": 28,
+      "missing": 6
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "full": {
+      "shape": "map",
+      "sources": [
+        {
+          "person": [
+            "<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+            "<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+            "<<|author_key|27f5cf44-db91-42e2-b42b-a57e48f9c207|>>",
+            "<<|author_key|5bf891a1-634d-4f38-b153-46ccb8deb6ad|>>",
+            "<<|author_key|7d12fc76-9b8a-4981-9a39-2201fe9063da|>>",
+            "<<|author_key|a1b9a9c9-75c2-4488-9fa2-77bd10c61464|>>"
+          ]
+        },
+        {
+          "issue": [
+            "BAM-4046",
+            "BAM-4046",
+            "BAM-4363",
+            "BAM-4363",
+            "CLOV-566",
+            "CLOV-566",
+            "CLOV-566",
+            "CLOV-566",
+            "CLOV-566",
+            "CLOV-566",
+            "CLOV-566",
+            "CLOV-643",
+            "CRUC-1351",
+            "CRUC-1351",
+            "CRUC-2317",
+            "CRUC-2900",
+            "CRUC-2900",
+            "CRUC-3761",
+            "CRUC-3761",
+            "CRUC-3761",
+            "CRUC-7063",
+            "CRUC-7063",
+            "CRUC-948",
+            "CRUC-948",
+            "CRUC-948",
+            "CRUC-948",
+            "CRUC-948",
+            "CRUC-948",
+            "CRUC-948",
+            "CRUC-948",
+            "CRUC-948",
+            "CRUC-948",
+            "FE-1500",
+            "FE-1500",
+            "FE-1500",
+            "FE-2029",
+            "FE-2090",
+            "FE-2090",
+            "FE-2090",
+            "FE-2090",
+            "FE-2369",
+            "FE-2844",
+            "FE-2844",
+            "FE-5499"
+          ],
+          "issue_link": [
+            "167896",
+            "167896",
+            "167896",
+            "36321",
+            "36321",
+            "36321",
+            "36321",
+            "36321",
+            "37501",
+            "37501",
+            "37501",
+            "37501",
+            "37501",
+            "37501",
+            "37501",
+            "37501",
+            "37501",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38719",
+            "38781",
+            "38781",
+            "38781",
+            "39702",
+            "39702",
+            "40845",
+            "40845",
+            "40845",
+            "44789",
+            "44789",
+            "44789",
+            "44789",
+            "44789"
+          ],
+          "project": [
+            "BAM",
+            "BAM",
+            "BAM",
+            "BAM",
+            "CLOV",
+            "CLOV",
+            "CLOV",
+            "CLOV",
+            "CLOV",
+            "CLOV",
+            "CLOV",
+            "CLOV",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "CRUC",
+            "FE",
+            "FE",
+            "FE",
+            "FE",
+            "FE",
+            "FE",
+            "FE",
+            "FE",
+            "FE",
+            "FE",
+            "FE",
+            "FE"
+          ],
+          "time_entry": [
+            "2280809",
+            "2697319",
+            "2729103",
+            "287614",
+            "287615",
+            "290163",
+            "290454",
+            "290484",
+            "307662",
+            "308039",
+            "308557",
+            "308829",
+            "308835",
+            "310678",
+            "311125",
+            "311368",
+            "312393",
+            "312821",
+            "313637",
+            "314081",
+            "314975",
+            "315164",
+            "315340",
+            "324137",
+            "324727",
+            "325434",
+            "328901",
+            "329085",
+            "330888",
+            "332453",
+            "333141",
+            "333143",
+            "333525",
+            "334763",
+            "340741",
+            "340749",
+            "368244",
+            "369630",
+            "369770",
+            "440928",
+            "443452",
+            "444550",
+            "444761",
+            "444762"
+          ]
+        }
+      ],
+      "value": [
+        {
+          "id": "person:<<|author_key|08e7deb6-d0cc-486e-9567-e63a105e5fdb|>>",
+          "value": {
+            "int": 275400
+          }
+        },
+        {
+          "id": "person:<<|author_key|1c606a7f-4af8-4532-8787-9d4ba0608e96|>>",
+          "value": {
+            "int": 47520
+          }
+        },
+        {
+          "id": "person:<<|author_key|27f5cf44-db91-42e2-b42b-a57e48f9c207|>>",
+          "value": {
+            "int": 25200
+          }
+        },
+        {
+          "id": "person:<<|author_key|5bf891a1-634d-4f38-b153-46ccb8deb6ad|>>",
+          "value": {
+            "int": 40500
+          }
+        },
+        {
+          "id": "person:<<|author_key|7d12fc76-9b8a-4981-9a39-2201fe9063da|>>",
+          "value": {
+            "int": 7020
+          }
+        },
+        {
+          "id": "person:<<|author_key|a1b9a9c9-75c2-4488-9fa2-77bd10c61464|>>",
+          "value": {
+            "int": 262800
+          }
+        }
+      ]
+    }
+  },
+  "time": "2026-11-14T05:50:25+00:00",
+  "type": "mixed",
+  "usage": {
+    "cost_usd": 0.018915599999999998,
+    "input_tokens": 19580,
+    "output_tokens": 1142,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

@@ -8,7 +8,8 @@ description is a second instructions entry, rendered by `describe_sql` and
 sees of a question (AC-4); `render_plain_block` is the block of `orgos ask`,
 which holds only the question text (AC-5). Spec 0015 adds one `Sources layout`
 line after the reading note, from `layouts.toml` by question id, so the plain
-block never holds one (AC-1 to AC-3).
+block never holds one (AC-1 to AC-3). `render_plain_run_block` is the block of
+a plain run (spec 0013): the scored block cut before its reading note.
 """
 
 from __future__ import annotations
@@ -240,6 +241,23 @@ def render_question_block(question: Question, layout: Layout) -> str:
             render_layout_line(layout, question.shape),
         )
     )
+    return "\n".join(lines)
+
+
+def render_plain_run_block(question: Question) -> str:
+    """What the model sees of a question in a plain run (spec 0013 AC-1).
+
+    The scored block cut before its reading note: the text, the shape, the unit
+    unless it is `none`, and the hop limit only for a `variable` question, in
+    the words and order of `render_question_block`. No reading note and so no
+    `Sources layout` line. It never reads `question.reading`, and is not part
+    of the version hash; spec 0013 AC-8 pins it.
+    """
+    lines = [f"Question: {question.text}", f"Answer shape: {question.shape}"]
+    if question.unit != "none":
+        lines.append(f"Unit: {question.unit}")
+    if question.hop_mode == "variable" and question.max_hops is not None:
+        lines.append(f"Hop limit: {question.max_hops}")
     return "\n".join(lines)
 
 

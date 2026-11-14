@@ -1,0 +1,133 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": false,
+  "attempt_count": 12,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.002709625056013465,
+      "text": "select count(*), count(distinct link_type_name) from issue_link l join issue a on a.issue_key=l.from_issue_key join issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.07231195806525648,
+      "text": "select count(*), count(distinct link_type_name) from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1,
+      "seconds": 0.07082412508316338,
+      "text": "select count(*) c, count(distinct link_type_name) t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.10296708391979337,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns))\nselect n,count(*) from p group by n order by n"
+    },
+    {
+      "outcome": "ok",
+      "rows": 324,
+      "seconds": 0.10896487510763109,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns))\nselect ns as path, ls from p where n>=2"
+    },
+    {
+      "outcome": "ok",
+      "rows": 986,
+      "seconds": 0.09751249989494681,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns)),\ni as (select distinct unnest(ns) k from p where n>=2), l as (select distinct unnest(ls) k from p where n>=2)\nselect 'issue' kind, i.k id, null::text pr, null::text pe from i union all select 'link',k,null,null from l union all select 'project', project_key, null,null from model.issue join i on i.k=issue_key group by project_key union all select 'person', assignee_key,null,null from model.issue join i on i.k=issue_key where assignee_key is not null group by assignee_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 456,
+      "seconds": 0.1078155420254916,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns))\nselect distinct unnest(ns) issue from p where n>=2"
+    },
+    {
+      "outcome": "ok",
+      "rows": 360,
+      "seconds": 0.07004291703924537,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns))\nselect distinct unnest(ls) link from p where n>=2"
+    },
+    {
+      "outcome": "ok",
+      "rows": 6,
+      "seconds": 0.08662591595202684,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns)),\ni as (select distinct unnest(ns) k from p where n>=2)\nselect distinct project_key project from model.issue join i on i.k=issue_key"
+    },
+    {
+      "outcome": "ok",
+      "rows": 164,
+      "seconds": 0.08308979193679988,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns)),\ni as (select distinct unnest(ns) k from p where n>=2)\nselect distinct assignee_key person from model.issue join i on i.k=issue_key where assignee_key is not null"
+    },
+    {
+      "outcome": "ok",
+      "rows": 324,
+      "seconds": 0.3573827079962939,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns))\nselect ns as path, ns as issues, ls as links,\n (select array_agg(i.assignee_key order by o) from unnest(ns) with ordinality u(k,o) join model.issue i on i.issue_key=u.k) as people,\n (select array_agg(i.project_key order by o) from unnest(ns) with ordinality u(k,o) join model.issue i on i.issue_key=u.k) as projects\nfrom p where n>=2"
+    },
+    {
+      "outcome": "ok",
+      "rows": 324,
+      "seconds": 0.3755861250683665,
+      "text": "with recursive e as (select l.link_id,l.from_issue_key f,l.to_issue_key t from model.issue_link l join model.issue a on a.issue_key=l.from_issue_key join model.issue b on b.issue_key=l.to_issue_key where a.assignee_key<>b.assignee_key),\np as (select 1 n, array[f,t] ns, array[link_id] ls from e union all select n+1, ns||e.t, ls||e.link_id from p join e on e.f=ns[array_length(ns,1)] where n<5 and not e.t=any(ns))\nselect ns as path, \n (select jsonb_agg(jsonb_build_array(ns[h],ns[h+1]) order by h) from generate_series(1,n) h) as issues,\n ls as links,\n (select jsonb_agg(jsonb_build_array((select assignee_key from model.issue where issue_key=ns[h]),(select assignee_key from model.issue where issue_key=ns[h+1])) order by h) from generate_series(1,n) h) as people,\n (select jsonb_agg(jsonb_build_array((select project_key from model.issue where issue_key=ns[h]),(select project_key from model.issue where issue_key=ns[h+1])) order by h) from generate_series(1,n) h) as projects\nfrom p where n>=2"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 2,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 43.16223283391446,
+  "series": "plain",
+  "source_match": false,
+  "steps": [],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "89058b3ea00f1ff3415c508c5edc51d2c54b32153d82bf98d346aef0624de934",
+    "source_ids": [],
+    "value_items": 324
+  },
+  "time": "2026-11-14T05:58:06+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.15175470000000002,
+    "input_tokens": 164119,
+    "output_tokens": 4919,
+    "requests": 11,
+    "tool_calls": 12
+  },
+  "zero_answer": false
+}

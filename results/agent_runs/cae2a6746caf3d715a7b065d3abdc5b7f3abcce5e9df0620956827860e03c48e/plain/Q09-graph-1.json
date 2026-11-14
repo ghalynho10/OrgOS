@@ -1,0 +1,103 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": false,
+  "attempt_count": 7,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.11162445903755724,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE type(r)<>'HAS_PARENT' RETURN type(r) t, count(*) c"
+    },
+    {
+      "outcome": "ok",
+      "rows": 17,
+      "seconds": 0.22503754193894565,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE type(r)<>'HAS_PARENT' RETURN type(r) AS t, count(*) AS c"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.03371529211290181,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WHERE all(n IN nodes(p)[0..] WHERE single(m IN nodes(p) WHERE m=n)) AND all(i IN range(0,length(p)-1) WHERE EXISTS{(nodes(p)[i])-[:ASSIGNED_TO]->(x) WHERE NOT EXISTS{(nodes(p)[i+1])-[:ASSIGNED_TO]->(x)} AND EXISTS{(nodes(p)[i+1])-[:ASSIGNED_TO]->()}}) RETURN length(p) AS l, count(*) AS c"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.05687137506902218,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WHERE size(apoc.coll.toSet(nodes(p)))=length(p)+1 WITH p, [n IN nodes(p)| head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) RETURN length(p) AS l, count(*) AS c"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.9484470409806818,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WITH p, nodes(p) AS ns WHERE all(i IN range(0,size(ns)-1) WHERE all(j IN range(i+1,size(ns)-1) WHERE ns[i]<>ns[j])) WITH p, [n IN ns| head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) RETURN length(p) AS l, count(*) AS c"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1768,
+      "seconds": 0.8395263340789825,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WITH p, nodes(p) AS ns WHERE all(i IN range(0,size(ns)-1) WHERE all(j IN range(i+1,size(ns)-1) WHERE ns[i]<>ns[j])) WITH p, ns, [n IN ns| head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) RETURN [n IN ns|n.issueKey] AS path, asg AS people, [n IN ns| head([(n)-[:IN_PROJECT]->(q)|q.projectKey])] AS projects, [r IN relationships(p)|r.linkId] AS links, [r IN relationships(p)|type(r)] AS types"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1768,
+      "seconds": 0.6851361249573529,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WITH p, nodes(p) AS ns WHERE all(i IN range(0,size(ns)-1) WHERE all(j IN range(i+1,size(ns)-1) WHERE ns[i]<>ns[j])) WITH p, ns, [n IN ns| head([(n)-[:ASSIGNED_TO]->(x)|x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) WITH p, ns, asg, [n IN ns| head([(n)-[:IN_PROJECT]->(q)|q.projectKey])] AS pr RETURN [n IN ns|n.issueKey] AS path, [i IN range(0,size(ns)-2)|[ns[i].issueKey,ns[i+1].issueKey]] AS issues, [i IN range(0,size(ns)-2)|[asg[i],asg[i+1]]] AS people, [i IN range(0,size(ns)-2)|[pr[i],pr[i+1]]] AS projects, [r IN relationships(p)|r.linkId] AS links, 'issue' AS kind"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 3,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 39.52113754115999,
+  "series": "plain",
+  "source_match": false,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "d4000d8094451bb45a0f2c6b5d2f5af6d3f2f76e37a562a75d2ba90709dd2cdf",
+    "source_ids": [],
+    "value_items": 1768
+  },
+  "time": "2026-11-14T05:48:26+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.10052789999999999,
+    "input_tokens": 101787,
+    "output_tokens": 4126,
+    "requests": 9,
+    "tool_calls": 7
+  },
+  "zero_answer": false
+}

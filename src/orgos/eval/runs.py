@@ -9,6 +9,12 @@ most 3 entries, append only). Each run is scored by `store_answer` and
 exclusive link, so two runs cannot overwrite each other and a resume fills only
 the missing run numbers. Replay is exempt from the plan, the gate and the
 versions log, and is never counted as an agent result.
+
+Spec 0013 adds the plain series of a version: the same agent's `run_plain`,
+its own `plain/` folder with a `PlainPlan`, run files and summary, and the same
+gate on its own measured mean. The path, plan and summary functions take a
+folder, `version_dir` for noted runs and `plain_dir` for plain ones, and
+`run_work` takes the call to make, so both series share one runner.
 """
 
 from __future__ import annotations
@@ -23,7 +29,7 @@ import tempfile
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from orgos.config import Settings
 from orgos.eval import EvalError
@@ -42,6 +48,7 @@ from orgos.eval.handoff import (
     STORES,
     AgentDescription,
     AgentRun,
+    PlainQueryAgent,
     QueryAgent,
     QueryAttempt,
     RunStopped,
@@ -52,7 +59,17 @@ from orgos.eval.literal import mask
 from orgos.eval.models import QUESTION_COUNT, Question
 from orgos.eval.preflight import preflight
 from orgos.eval.replay import REPLAY, ReplayAgent
-from orgos.eval.score import Entry, Layer, Scored, failed, groups, score, summary_lines
+from orgos.eval.score import (
+    Entry,
+    Layer,
+    Scored,
+    failed,
+    groups,
+    plain_statement,
+    plain_statement_lines,
+    score,
+    summary_lines,
+)
 from orgos.eval.tries import git_record, now
 
 log = logging.getLogger(__name__)
@@ -61,6 +78,8 @@ RUNS_DIR = Path("results/agent_runs")
 VERSIONS = RUNS_DIR / "versions.jsonl"
 PLAN = "PLAN.json"
 SUMMARY = "summary.json"
+# The folder of a version's plain series (spec 0013 AC-12).
+PLAIN = "plain"
 MAX_VERSIONS = 3
 KINDS = ("bug_fix", "behaviour_change")
 # A store answer bigger than this is kept as its hash and counts (AC-31).
@@ -98,9 +117,14 @@ def version_dir(root: Path, version: str) -> Path:
     return root / RUNS_DIR / version
 
 
-def run_path(root: Path, version: str, question_id: str, store: Store, number: int) -> Path:
-    """`results/agent_runs/<version>/Qnn-<store>-<n>.json`."""
-    return version_dir(root, version) / f"{question_id}-{store}-{number}.json"
+def plain_dir(root: Path, version: str) -> Path:
+    """`results/agent_runs/<version>/plain/`, the plain series of a version (spec 0013 AC-12)."""
+    return version_dir(root, version) / PLAIN
+
+
+def run_path(folder: Path, question_id: str, store: Store, number: int) -> Path:
+    """`<folder>/Qnn-<store>-<n>.json`, in `version_dir` or `plain_dir`."""
+    return folder / f"{question_id}-{store}-{number}.json"
 
 
 def write_once(path: Path, data: Mapping[str, Any]) -> None:
@@ -124,9 +148,8 @@ def write_once(path: Path, data: Mapping[str, Any]) -> None:
         os.unlink(temporary)
 
 
-def read_run_files(root: Path, version: str) -> tuple[Mapping[str, Any], ...]:
-    """Every finished run file of a version, in name order."""
-    folder = version_dir(root, version)
+def read_run_files(folder: Path) -> tuple[Mapping[str, Any], ...]:
+    """Every finished run file in a folder, in name order; never the files of a subfolder."""
     if not folder.is_dir():
         return ()
     return tuple(
@@ -155,18 +178,55 @@ class Plan:
     estimate_usd: float
 
 
+@dataclass(frozen=True)
+class PlainPlan:
+    """What `plain/PLAN.json` holds: a `Plan` and the four plain series fields (spec 0013 AC-13)."""
+
+    plan: Plan
+    version_hash: str
+    plain_blocks_sha256: str
+    series: Literal["plain"] = "plain"
+    headline: Literal["answer_match"] = "answer_match"
+
+
+PLAIN_FIELDS = ("version_hash", "series", "plain_blocks_sha256", "headline")
+
+
+def plan_record(plan: Plan | PlainPlan) -> dict[str, Any]:
+    """A plan as the one flat object its file and a run file's `plan` field hold."""
+    if isinstance(plan, Plan):
+        return asdict(plan)
+    return asdict(plan.plan) | {name: getattr(plan, name) for name in PLAIN_FIELDS}
+
+
+def base_plan(plan: Plan | PlainPlan | None) -> Plan | None:
+    """The `Plan` of a noted or plain plan: the limits, prices and runs."""
+    return plan.plan if isinstance(plan, PlainPlan) else plan
+
+
+def series_fields(plan: Plan | PlainPlan | None) -> dict[str, str]:
+    """The fields a plain run file holds beyond a noted one (spec 0013 AC-16); none for noted."""
+    if not isinstance(plan, PlainPlan):
+        return {}
+    return {"series": plan.series, "plain_blocks_sha256": plan.plain_blocks_sha256}
+
+
 def upper_bound(runs: int, token_limit: int, prices: AgentDescription | Plan) -> float:
     """Runs times the token limit times the higher price per million tokens: an upper bound."""
     price = max(prices.usd_per_million_input, prices.usd_per_million_output)
     return runs * token_limit * price / 1_000_000
 
 
-def make_plan(settings: Settings, description: AgentDescription) -> Plan:
-    """The plan for a version: all 20 questions, the runs per question, both stores."""
+def make_plan(settings: Settings, description: AgentDescription, runs: int | None = None) -> Plan:
+    """The plan for a version: all 20 questions, the runs per question, both stores.
+
+    `runs` is the noted plan's for a plain plan (spec 0013 AC-13), else the setting.
+    """
+    runs = settings.eval_runs if runs is None else runs
     token_limit = settings.agent_token_limit
-    planned = QUESTION_COUNT * settings.eval_runs * len(STORES)
+    planned = QUESTION_COUNT * runs * len(STORES)
     return Plan(
-        runs=settings.eval_runs,
+        runs=runs,
         request_limit=settings.agent_request_limit,
         token_limit=token_limit,
         tool_call_limit=settings.agent_tool_call_limit,
@@ -179,13 +239,13 @@ def make_plan(settings: Settings, description: AgentDescription) -> Plan:
     )
 
 
-def write_plan(root: Path, version: str, plan: Plan) -> Path:
-    """Write `PLAN.json` once for a version; a written plan is not rewritten."""
-    path = version_dir(root, version) / PLAN
+def write_plan(root: Path, folder: Path, plan: Plan | PlainPlan) -> Path:
+    """Write `PLAN.json` once in a folder, as one flat object; a written plan is not rewritten."""
+    path = folder / PLAN
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with path.open("x", encoding="utf-8") as handle:
-            json.dump(asdict(plan), handle, indent=2, sort_keys=True)
+            json.dump(plan_record(plan), handle, indent=2, sort_keys=True)
             handle.write("\n")
     except FileExistsError:
         shown = path.relative_to(root)
@@ -193,12 +253,22 @@ def write_plan(root: Path, version: str, plan: Plan) -> Path:
     return path
 
 
-def read_plan(root: Path, version: str) -> Plan | None:
+def read_plan(folder: Path) -> Plan | None:
     """The version's plan, or None before `run --estimate` wrote it."""
-    path = version_dir(root, version) / PLAN
+    path = folder / PLAN
     if not path.is_file():
         return None
     return Plan(**json.loads(path.read_text(encoding="utf-8")))
+
+
+def read_plain_plan(folder: Path) -> PlainPlan | None:
+    """The plain plan, read back by taking the four series fields out; None before it is written."""
+    path = folder / PLAN
+    if not path.is_file():
+        return None
+    data = json.loads(path.read_text(encoding="utf-8"))
+    fields = {name: data.pop(name) for name in PLAIN_FIELDS}
+    return PlainPlan(plan=Plan(**data), **fields)
 
 
 def gate_problem(
@@ -208,6 +278,7 @@ def gate_problem(
     finished_costs: Sequence[float],
     finished_requests: Sequence[int],
     to_start: int,
+    series: str = "this version",
 ) -> str | None:
     """Why a real agent run is refused before it starts, or None (AC-30).
 
@@ -221,7 +292,7 @@ def gate_problem(
     if not finished_costs:
         if to_start > 1:
             return (
-                "this version has no finished run file yet: run one run of one question in one"
+                f"{series} has no finished run file yet: run one run of one question in one"
                 " store first (--only Qnn --store S --max-run 1)"
             )
         return None
@@ -416,7 +487,7 @@ def run_record(
     store: Store,
     number: int,
     version: str,
-    plan: Plan | None,
+    plan: Plan | PlainPlan | None,
     settings: Settings,
     load_id: str,
     known: Mapping[str, Any],
@@ -425,14 +496,17 @@ def run_record(
     compare_sha256: str,
     git: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Everything AC-22 and AC-31 ask a run file to hold; no connection detail."""
+    """Everything AC-22 and AC-31 ask a run file to hold; no connection detail.
+
+    A plain run file also holds the series fields and the flat plain plan (spec 0013 AC-16).
+    """
     return {
         "time": now(),
         "question": question.id,
         "store": store,
         "run": number,
         "agent_version": version,
-        "plan": asdict(plan) if plan is not None else {"runs": settings.eval_runs},
+        "plan": plan_record(plan) if plan is not None else {"runs": settings.eval_runs},
         "query_timeout_s": settings.query_timeout_s,
         "load_id": load_id,
         "type": question.type,
@@ -449,17 +523,23 @@ def run_record(
         "attempts": [asdict(attempt) for attempt in run.attempts],
         "attempt_count": len(run.attempts),
         "retries": retries(run.attempts),
-        "limit": limit_reached(run.usage, plan) if run.outcome == "limit_hit" else None,
+        "limit": limit_reached(run.usage, base_plan(plan)) if run.outcome == "limit_hit" else None,
         "usage": asdict(run.usage),
         "seconds": run.seconds,
         "store_answer": stored_answer(run),
         "compare_sha256": compare_sha256,
         "git": dict(git),
-    }
+    } | series_fields(plan)
 
 
 def fallback_record(
-    *, item: Work, version: str, load_id: str, run: AgentRun, problem: str
+    *,
+    item: Work,
+    version: str,
+    plan: Plan | PlainPlan | None,
+    load_id: str,
+    run: AgentRun,
+    problem: str,
 ) -> dict[str, Any]:
     """A paid run whose scoring or writing failed: outcome `error`, its usage and the problem.
 
@@ -490,7 +570,7 @@ def fallback_record(
         "limit": None,
         "usage": asdict(run.usage),
         "seconds": run.seconds,
-    }
+    } | series_fields(plan)
 
 
 def _first_line(error: BaseException, known: Mapping[str, Any]) -> str:
@@ -504,6 +584,7 @@ def keep_failed_run(
     *,
     item: Work,
     version: str,
+    plan: Plan | PlainPlan | None,
     load_id: str,
     run: AgentRun,
     known: Mapping[str, Any],
@@ -518,7 +599,7 @@ def keep_failed_run(
     shown = path.relative_to(root)
     try:
         record = fallback_record(
-            item=item, version=version, load_id=load_id, run=run, problem=problem
+            item=item, version=version, plan=plan, load_id=load_id, run=run, problem=problem
         )
         write_once(path, record)
         kept = f"wrote {shown} with outcome error and the run's usage, so a resume skips it"
@@ -539,9 +620,13 @@ def run_entries(
     version: str,
     questions: Sequence[Question],
     runs: int | None,
+    series: Literal["noted", "plain"] = "noted",
 ) -> tuple[Entry, ...]:
-    """One entry per finished run, and per planned run with no file when `runs` is given."""
-    layer: Layer = "replay" if version == REPLAY else "agent"
+    """One entry per finished run, and per planned run with no file when `runs` is given.
+
+    The series picks the layer: `plain` for the plain series (spec 0013 AC-20).
+    """
+    layer: Layer = "plain" if series == "plain" else "replay" if version == REPLAY else "agent"
     found = {(f["question"], f["store"], f["run"]): f for f in files}
     by_id = {question.id: question for question in questions}
     entries = [
@@ -558,10 +643,12 @@ def run_entries(
             timeouts=sum(1 for a in f["attempts"] if a["outcome"] == "store_timeout"),
             row_caps=sum(1 for a in f["attempts"] if a["outcome"] == "row_cap"),
             limit=f["limit"],
+            answer_match=f["answer_match"],
+            source_match=f["source_match"],
         )
         for f in files
     ]
-    if runs is not None and layer == "agent":
+    if runs is not None and layer in ("agent", "plain"):
         entries.extend(
             Entry(
                 layer=layer,
@@ -594,8 +681,7 @@ class Work:
 
 
 def planned_work(
-    root: Path,
-    version: str,
+    folder: Path,
     questions: Sequence[Question],
     stores: Sequence[Store],
     max_run: int,
@@ -606,7 +692,7 @@ def planned_work(
         for question in questions
         for store in stores
         for number in range(1, max_run + 1)
-        if not run_path(root, version, question.id, store, number).exists()
+        if not run_path(folder, question.id, store, number).exists()
     )
 
 
@@ -625,17 +711,58 @@ def _questions(root: Path, only: str | None) -> tuple[Question, ...]:
     return (question_by_id(root, only),)
 
 
-def estimate(
-    settings: Settings, root: Path, agent_spec: str, *, only: str | None
-) -> tuple[str, ...]:
-    """`orgos eval run --estimate`: write `PLAN.json` for the agent's version; no model call."""
-    if agent_spec == REPLAY:
-        raise EvalError("replay is exempt from the plan; run it without --estimate")
-    description = load_agent(agent_spec, settings, root).describe()
-    plan = make_plan(settings, description)
-    path = write_plan(root, description.version_hash, plan)
+def _stores(store: str | None) -> tuple[Store, ...]:
+    return (parse_store(store),) if store is not None else STORES
+
+
+def _require_load_id(files: Sequence[Mapping[str, Any]], load_id: str) -> None:
+    problems = load_id_problems(files, load_id)
+    if problems:
+        raise EvalError("\n".join(problems))
+
+
+def _gate_lines(
+    plan: Plan,
+    files: Sequence[Mapping[str, Any]],
+    *,
+    go: bool,
+    cap: float | None,
+    to_start: int,
+    series: str = "this version",
+) -> list[str]:
+    """The bound for one run and the measured mean of `files`, or the gate's refusal (AC-30)."""
+    price = max(plan.usd_per_million_input, plan.usd_per_million_output)
     lines = [
-        f"wrote {path.relative_to(root)} for version {description.version_hash}",
+        f"upper bound for one run: ${upper_bound(1, plan.token_limit, plan):.4f}"
+        f" (the token limit {plan.token_limit:,} times the higher price ${price:g} per million)"
+    ]
+    costs = [float(f["usage"]["cost_usd"]) for f in files]
+    if costs:
+        mean = sum(costs) / len(costs)
+        lines.append(f"measured mean cost of {len(costs)} finished runs: ${mean:.4f}")
+    problem = gate_problem(
+        go=go,
+        cap=cap,
+        finished_costs=costs,
+        finished_requests=[int(f["usage"]["requests"]) for f in files],
+        to_start=to_start,
+        series=series,
+    )
+    if problem is not None:
+        raise EvalError("\n".join((*lines, problem)))
+    return lines
+
+
+def _plan_lines(
+    root: Path,
+    path: Path,
+    version: str,
+    plan: Plan,
+    description: AgentDescription,
+    only: str | None,
+) -> tuple[str, ...]:
+    lines = [
+        f"wrote {path.relative_to(root)} for version {version}",
         f"  {plan.runs} runs per question per store, model {plan.model_id},"
         f" prices {plan.price_table}",
         f"  limits: requests {plan.request_limit}, tokens {plan.token_limit},"
@@ -649,14 +776,91 @@ def estimate(
     return tuple(lines)
 
 
+def estimate(
+    settings: Settings, root: Path, agent_spec: str, *, only: str | None
+) -> tuple[str, ...]:
+    """`orgos eval run --estimate`: write `PLAN.json` for the agent's version; no model call."""
+    if agent_spec == REPLAY:
+        raise EvalError("replay is exempt from the plan; run it without --estimate")
+    description = load_agent(agent_spec, settings, root).describe()
+    version = description.version_hash
+    plan = make_plan(settings, description)
+    path = write_plan(root, version_dir(root, version), plan)
+    return _plan_lines(root, path, version, plan, description, only)
+
+
+def load_plain_agent(spec: str, settings: Settings, root: Path) -> PlainQueryAgent:
+    """The agent of a plain command; refuses replay and any agent with no plain mode (AC-9)."""
+    if spec == REPLAY:
+        raise EvalError("replay has no plain mode; --plain needs a module:factory agent")
+    agent = load_agent(spec, settings, root)
+    if not isinstance(agent, PlainQueryAgent):
+        raise EvalError(
+            f"{spec} has no plain mode: it is not a PlainQueryAgent (no run_plain and"
+            " plain_blocks_sha256)"
+        )
+    return agent
+
+
+def _require_logged(root: Path, version: str) -> None:
+    if not any(e["version_hash"] == version for e in read_versions(root)):
+        raise EvalError(
+            f"version {version} has no entry in {VERSIONS}; run `orgos eval version add` first"
+        )
+
+
+def _require_timeout(plan: Plan, settings: Settings, version: str) -> None:
+    if plan.query_timeout_s != settings.query_timeout_s:
+        raise EvalError(
+            f"the {PLAN} of version {version} holds a query timeout of"
+            f" {plan.query_timeout_s} s, the current setting is {settings.query_timeout_s} s;"
+            f" set ORGOS_QUERY_TIMEOUT_S={plan.query_timeout_s} so every run of the version"
+            " has the same timeout"
+        )
+
+
+def estimate_plain(
+    settings: Settings, root: Path, agent_spec: str, *, only: str | None
+) -> tuple[str, ...]:
+    """`orgos eval run --plain --estimate`: write `plain/PLAN.json`; no preflight, no model call.
+
+    Refuses an agent with no plain mode, a version not in the versions log, and a
+    version with no noted plan, whose `runs` it copies (spec 0013 AC-9, AC-10, AC-13).
+    The block hash is over all the questions, whatever `--only` says (AC-7).
+    """
+    agent = load_plain_agent(agent_spec, settings, root)
+    description = agent.describe()
+    version = description.version_hash
+    _require_logged(root, version)
+    noted = read_plan(version_dir(root, version))
+    if noted is None:
+        raise EvalError(
+            f"version {version} has no {PLAN}; run `orgos eval run --estimate` first,"
+            " the plain plan copies its runs"
+        )
+    plain = PlainPlan(
+        plan=make_plan(settings, description, runs=noted.runs),
+        version_hash=version,
+        plain_blocks_sha256=agent.plain_blocks_sha256(read_questions(root)),
+    )
+    path = write_plan(root, plain_dir(root, version), plain)
+    lines = _plan_lines(root, path, version, plain.plan, description, only)
+    return (
+        lines[0] + ", series plain",
+        f"  headline {plain.headline}; plain blocks sha256 {plain.plain_blocks_sha256}",
+        *lines[1:],
+    )
+
+
 def run_work(
     root: Path,
     settings: Settings,
-    agent: QueryAgent,
+    call: Callable[[Question, Store], AgentRun],
     work: Sequence[Work],
     *,
+    folder: Path,
     version: str,
-    plan: Plan | None,
+    plan: Plan | PlainPlan | None,
     load_id: str,
     known: Mapping[str, Mapping[str, Any]],
     cap: float | None,
@@ -666,6 +870,7 @@ def run_work(
     A provider or store outage stops the command with how to resume (AC-28);
     anything the agent produced, no answer and limits included, is scored.
     Returns the files written, the cost spent and a line when the cap stopped it.
+    `call` is `agent.run` for noted runs and `agent.run_plain` for plain ones.
     """
     compare_sha256 = sha256_file(root / COMPARE_CODE)
     git = git_record(root)
@@ -679,7 +884,7 @@ def run_work(
                 [f"stopped: the cost so far, ${spent:.4f}, reached the cap ${cap:.4f}"],
             )
         try:
-            run = agent.run(item.question, item.store)
+            run = call(item.question, item.store)
         # An outage or a refusal: the run has no file, but its cost counts (spec 0012 AC-23).
         except RunStopped as error:
             spent += error.cost_usd
@@ -690,7 +895,7 @@ def run_work(
             ) from None
         spent += run.usage.cost_usd
         answer = known[item.question.id]
-        path = run_path(root, version, item.question.id, item.store, item.number)
+        path = run_path(folder, item.question.id, item.store, item.number)
         try:
             scored = score_run(answer, run)
             record = run_record(
@@ -716,6 +921,7 @@ def run_work(
                     path,
                     item=item,
                     version=version,
+                    plan=plan,
                     load_id=load_id,
                     run=run,
                     known=answer,
@@ -745,51 +951,24 @@ def run_agent(
     description = agent.describe()
     replay = agent_spec == REPLAY
     version = REPLAY if replay else description.version_hash
-    plan = None if replay else read_plan(root, version)
+    folder = version_dir(root, version)
+    plan = None if replay else read_plan(folder)
     if not replay:
-        if not any(e["version_hash"] == version for e in read_versions(root)):
-            raise EvalError(
-                f"version {version} has no entry in {VERSIONS}; run `orgos eval version add` first"
-            )
+        _require_logged(root, version)
         if plan is None:
             raise EvalError(
                 f"version {version} has no {PLAN}; run `orgos eval run --estimate` first"
             )
-        if plan.query_timeout_s != settings.query_timeout_s:
-            raise EvalError(
-                f"the {PLAN} of version {version} holds a query timeout of"
-                f" {plan.query_timeout_s} s, the current setting is {settings.query_timeout_s} s;"
-                f" set ORGOS_QUERY_TIMEOUT_S={plan.query_timeout_s} so every run of the version"
-                " has the same timeout"
-            )
-    files = read_run_files(root, version)
-    problems = load_id_problems(files, checked.load_id)
-    if problems:
-        raise EvalError("\n".join(problems))
-    questions = _questions(root, only)
-    stores = (parse_store(store),) if store is not None else STORES
+        _require_timeout(plan, settings, version)
+    files = read_run_files(folder)
+    _require_load_id(files, checked.load_id)
     runs = plan.runs if plan is not None else settings.eval_runs
-    work = planned_work(root, version, questions, stores, max_run or runs)
-    lines: list[str] = []
-    if plan is not None:
-        price = max(plan.usd_per_million_input, plan.usd_per_million_output)
-        lines.append(
-            f"upper bound for one run: ${upper_bound(1, plan.token_limit, plan):.4f}"
-            f" (the token limit {plan.token_limit:,} times the higher price ${price:g} per million)"
-        )
-        costs = [float(f["usage"]["cost_usd"]) for f in files]
-        if costs:
-            mean = sum(costs) / len(costs)
-            lines.append(f"measured mean cost of {len(costs)} finished runs: ${mean:.4f}")
-        problem = gate_problem(
-            go=go,
-            cap=max_cost_usd,
-            finished_costs=costs,
-            finished_requests=[int(f["usage"]["requests"]) for f in files],
-            to_start=len(work),
-        )
-        if problem is not None:
-            raise EvalError("\n".join((*lines, problem)))
+    work = planned_work(folder, _questions(root, only), _stores(store), max_run or runs)
+    lines = (
+        []
+        if plan is None
+        else _gate_lines(plan, files, go=go, cap=max_cost_usd, to_start=len(work))
+    )
     if not work:
         lines.append("every planned run number already has a file; nothing to run")
 
@@ -797,8 +976,9 @@ def run_agent(
     written, spent, stopped = run_work(
         root,
         settings,
-        agent,
+        agent.run,
         work,
+        folder=folder,
         version=version,
         plan=plan,
         load_id=checked.load_id,
@@ -807,12 +987,12 @@ def run_agent(
     )
     lines.extend(stopped)
 
-    files = read_run_files(root, version)
+    files = read_run_files(folder)
     entries = run_entries(files, version, read_questions(root), None if replay else runs)
     zero = zero_guarded_ids(known)
     summary = [group.record() for group in groups(entries, zero)]
-    write_summary(root, version, summary)
-    lines.append(f"wrote {written} run files under {version_dir(root, version).relative_to(root)}/")
+    write_summary(folder, summary)
+    lines.append(f"wrote {written} run files under {folder.relative_to(root)}/")
     if not replay:
         total = sum(float(f["usage"]["cost_usd"]) for f in files)
         lines.append(
@@ -821,8 +1001,101 @@ def run_agent(
     return (*lines, "", *summary_lines(entries, zero))
 
 
-def write_summary(root: Path, version: str, summary: Sequence[Mapping[str, Any]]) -> None:
-    """The summary record of a version, rewritten after each `run` (AC-23)."""
-    path = version_dir(root, version) / SUMMARY
+def run_plain_agent(
+    settings: Settings,
+    root: Path,
+    agent_spec: str,
+    *,
+    go: bool,
+    max_cost_usd: float | None,
+    only: str | None,
+    store: str | None,
+    max_run: int | None,
+) -> tuple[str, ...]:
+    """`orgos eval run --plain`: the preflight, the plain plan and block hash, the gate on the
+    plain mean, then each missing plain run, written once under `plain/` (spec 0013).
+
+    Never adds a version entry and never writes to the version's noted files.
+    """
+    checked = preflight(settings, root)
+    agent = load_plain_agent(agent_spec, settings, root)
+    version = agent.describe().version_hash
+    _require_logged(root, version)
+    folder = plain_dir(root, version)
+    plain = read_plain_plan(folder)
+    if plain is None:
+        raise EvalError(
+            f"version {version} has no plain {PLAN}; run `orgos eval run --plain --estimate` first"
+        )
+    _require_timeout(plain.plan, settings, version)
+    blocks = agent.plain_blocks_sha256(read_questions(root))
+    if blocks != plain.plain_blocks_sha256:
+        raise EvalError(
+            f"the plain blocks hash is {blocks}, the plain {PLAN} holds"
+            f" {plain.plain_blocks_sha256}; the plain blocks changed after the plan was written"
+        )
+    files = read_run_files(folder)
+    _require_load_id(files, checked.load_id)
+    work = planned_work(folder, _questions(root, only), _stores(store), max_run or plain.plan.runs)
+    lines = _gate_lines(
+        plain.plan,
+        files,
+        go=go,
+        cap=max_cost_usd,
+        to_start=len(work),
+        series="the plain series of this version",
+    )
+    if not work:
+        lines.append("every planned plain run number already has a file; nothing to run")
+
+    known = known_answers(root)
+    written, spent, stopped = run_work(
+        root,
+        settings,
+        agent.run_plain,
+        work,
+        folder=folder,
+        version=version,
+        plan=plain,
+        load_id=checked.load_id,
+        known=known,
+        cap=max_cost_usd,
+    )
+    lines.extend(stopped)
+
+    files = read_run_files(folder)
+    questions = read_questions(root)
+    runs = plain.plan.runs
+    zero = zero_guarded_ids(known)
+    found = groups(run_entries(files, version, questions, runs, series="plain"), zero)
+    statement = plain_statement(
+        read_run_files(version_dir(root, version)),
+        files,
+        found,
+        version=version,
+        question_ids=[question.id for question in questions],
+        runs=runs,
+        zero_guarded=zero,
+        versions=[str(entry["version_hash"]) for entry in read_versions(root)],
+    )
+    write_summary(folder, {"groups": [group.record() for group in found], "statement": statement})
+    total = sum(float(f["usage"]["cost_usd"]) for f in files)
+    lines.append(f"wrote {written} run files under {folder.relative_to(root)}/")
+    lines.append(
+        f"cost this invocation ${spent:.4f}; cumulative for the plain series of version"
+        f" {version} ${total:.4f}"
+    )
+    group_lines = [line for group in found for line in group.lines()]
+    return (*lines, "", *group_lines, *plain_statement_lines(statement))
+
+
+def write_summary(folder: Path, summary: Sequence[Mapping[str, Any]] | Mapping[str, Any]) -> None:
+    """The summary record of a version or its plain series, rewritten after each `run` (AC-23).
+
+    A noted summary is the list of group records; a plain one holds its groups
+    and the statement against noted (spec 0013 AC-23).
+    """
+    path = folder / SUMMARY
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(list(summary), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    record = dict(summary) if isinstance(summary, Mapping) else list(summary)
+    path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")

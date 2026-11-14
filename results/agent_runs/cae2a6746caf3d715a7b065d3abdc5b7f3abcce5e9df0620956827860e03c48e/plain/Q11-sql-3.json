@@ -1,0 +1,78 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.0030175000429153442,
+      "text": "select count(*) c, count(distinct p) from (select assignee_key p from issue union select reporter_key from issue union select creator_key from issue union select person_key from logged_time where seconds>0) x where p is not null"
+    },
+    {
+      "outcome": "ok",
+      "rows": 4110,
+      "seconds": 0.7196700829081237,
+      "text": "with r as (select issue_key, project_key, assignee_key p from model.issue union all select issue_key, project_key, reporter_key from model.issue union all select issue_key, project_key, creator_key from model.issue union all select l.issue_key, i.project_key, l.person_key from model.logged_time l join model.issue i using(issue_key) where seconds>0), s as (select issue_key, count(distinct p) n from r where p is not null group by 1 having count(distinct p)>1) select distinct 'person' kind, p id from r join s using(issue_key) where p is not null union select 'project', project_key from r join s using(issue_key)"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q11",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 1,
+  "run": 3,
+  "run_outcome": "answered",
+  "seconds": 7.823329917155206,
+  "series": "plain",
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 0,
+      "missing": 26987
+    }
+  ],
+  "store": "sql",
+  "store_answer": {
+    "sha256": "e700dac817e33a3ffeaa79d46beb69a08682b97d899ad7bf04377af6c64b86c5",
+    "source_ids": [],
+    "value_items": 4110
+  },
+  "time": "2026-11-14T06:01:08+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.015353,
+    "input_tokens": 19726,
+    "output_tokens": 677,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

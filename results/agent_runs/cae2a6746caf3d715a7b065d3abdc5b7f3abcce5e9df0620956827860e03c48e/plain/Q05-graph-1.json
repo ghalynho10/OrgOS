@@ -1,0 +1,90 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": true,
+  "attempt_count": 2,
+  "attempts": [
+    {
+      "outcome": "ok",
+      "rows": 84,
+      "seconds": 0.1553354999050498,
+      "text": "MATCH (p:Person)-[l:LOGGED_TIME]->(i:Issue)-[:ASSIGNED_TO]->(a:Person) WHERE l.seconds>0 AND a<>p RETURN p.personKey AS id, sum(l.seconds) AS value, collect(l.historyId) AS te, collect(i.issueKey) AS iss"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1574,
+      "seconds": 0.13890150003135204,
+      "text": "MATCH (p:Person)-[l:LOGGED_TIME]->(i:Issue)-[:ASSIGNED_TO]->(a:Person) WHERE l.seconds>0 AND a<>p RETURN DISTINCT l.historyId AS te, i.issueKey AS issue"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q05",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 0,
+  "run": 1,
+  "run_outcome": "answered",
+  "seconds": 5.563174000009894,
+  "series": "plain",
+  "source_match": false,
+  "steps": [
+    {
+      "extra": 84,
+      "missing": 2492
+    },
+    {
+      "extra": 1574,
+      "missing": 0
+    },
+    {
+      "extra": 918,
+      "missing": 0
+    }
+  ],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "558c6d0c799408ef1402b834db16d707a169e929176e687af4abd3c64359445c",
+    "source_ids": [
+      84,
+      1574,
+      1574
+    ],
+    "value_items": 84
+  },
+  "time": "2026-11-14T05:46:19+00:00",
+  "type": "aggregate",
+  "usage": {
+    "cost_usd": 0.034795,
+    "input_tokens": 36578,
+    "output_tokens": 579,
+    "requests": 3,
+    "tool_calls": 2
+  },
+  "zero_answer": false
+}

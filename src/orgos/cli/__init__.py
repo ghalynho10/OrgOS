@@ -26,7 +26,16 @@ from orgos.eval.describe import describe
 from orgos.eval.gold import gold_accept, gold_decide, gold_try, parse_store
 from orgos.eval.handoff import RunStopped
 from orgos.eval.preflight import preflight, summary
-from orgos.eval.runs import estimate, read_run_files, run_agent, upper_bound, version_add
+from orgos.eval.runs import (
+    estimate,
+    estimate_plain,
+    read_run_files,
+    run_agent,
+    run_plain_agent,
+    upper_bound,
+    version_add,
+    version_dir,
+)
 from orgos.graphstore import GraphStoreError
 from orgos.graphstore.load import load_graph
 from orgos.ingest import IngestError
@@ -125,7 +134,10 @@ def ask_lines(
         f"{settings.agent_token_limit:,}",
         price,
     )
-    costs = [float(f["usage"]["cost_usd"]) for f in read_run_files(root, description.version_hash)]
+    costs = [
+        float(f["usage"]["cost_usd"])
+        for f in read_run_files(version_dir(root, description.version_hash))
+    ]
     if costs:
         log.info(
             "ask: measured mean cost of %d finished runs of this version: $%.4f",
@@ -383,6 +395,12 @@ def eval_run_command(
     max_run: Annotated[
         int | None, typer.Option("--max-run", min=1, help="Run only run numbers 1 to K.")
     ] = None,
+    plain: Annotated[
+        bool,
+        typer.Option(
+            "--plain", help="Run the plain series: the questions without their reading note."
+        ),
+    ] = False,
 ) -> None:
     """Run an agent on the questions in both stores and score every run.
 
@@ -390,10 +408,26 @@ def eval_run_command(
     results/agent_runs/<version>/Qnn-<store>-<n>.json, and a rerun fills only the
     missing run numbers. A real agent needs `--estimate` first, a versions log
     entry, --go and --max-cost-usd. `--agent replay` runs the accepted gold
-    queries for free and needs none of these.
+    queries for free and needs none of these. `--plain` runs the same version
+    without the reading note into results/agent_runs/<version>/plain/, under
+    its own plan and gate, and refuses replay (spec 0013).
     """
     settings = load_settings()
-    if estimate_only:
+    if plain:
+        if estimate_only:
+            lines = estimate_plain(settings, Path.cwd(), agent, only=only)
+        else:
+            lines = run_plain_agent(
+                settings,
+                Path.cwd(),
+                agent,
+                go=go,
+                max_cost_usd=max_cost_usd,
+                only=only,
+                store=store,
+                max_run=max_run,
+            )
+    elif estimate_only:
         lines = estimate(settings, Path.cwd(), agent, only=only)
     else:
         lines = run_agent(

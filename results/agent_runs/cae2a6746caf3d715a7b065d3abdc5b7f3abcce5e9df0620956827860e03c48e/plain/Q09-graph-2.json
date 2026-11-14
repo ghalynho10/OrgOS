@@ -1,0 +1,115 @@
+{
+  "agent_version": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e",
+  "answer_match": false,
+  "attempt_count": 9,
+  "attempts": [
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.026161957997828722,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE type(r)<>'HAS_PARENT' RETURN type(r) t, count(*) c ORDER BY c DESC"
+    },
+    {
+      "outcome": "ok",
+      "rows": 17,
+      "seconds": 0.09838937502354383,
+      "text": "MATCH (a:Issue)-[r]->(b:Issue) WHERE type(r)<>'HAS_PARENT' RETURN type(r) AS t, count(*) AS c ORDER BY c DESC"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.011726457858458161,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WHERE all(n IN nodes(p) WHERE EXISTS{(n)-[:ASSIGNED_TO]->()}) AND size(apoc.coll.toSet(nodes(p)))=size(nodes(p)) RETURN length(p) AS l, count(*) AS c"
+    },
+    {
+      "outcome": "ok",
+      "rows": 5,
+      "seconds": 0.8815803749021143,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WITH p, [n IN nodes(p) | head([(n)-[:ASSIGNED_TO]->(x) | x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) AND size(reduce(s=[],n IN nodes(p)| CASE WHEN n IN s THEN s ELSE s+n END))=size(nodes(p)) RETURN length(p) AS l, count(*) AS c"
+    },
+    {
+      "outcome": "store_timeout",
+      "rows": 0,
+      "seconds": 31.56359204184264,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]-(b:Issue) WITH p, [n IN nodes(p) | head([(n)-[:ASSIGNED_TO]->(x) | x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) AND size(reduce(s=[],n IN nodes(p)| CASE WHEN n IN s THEN s ELSE s+n END))=size(nodes(p)) RETURN [n IN nodes(p) | n.issueKey] AS path, asg AS people, [n IN nodes(p) | head([(n)-[:IN_PROJECT]->(x) | x.projectKey])] AS projects, [r IN relationships(p) | r.linkId] AS links"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1768,
+      "seconds": 0.837771583115682,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WITH p, [n IN nodes(p) | head([(n)-[:ASSIGNED_TO]->(x) | x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) AND size(reduce(s=[],n IN nodes(p)| CASE WHEN n IN s THEN s ELSE s+n END))=size(nodes(p)) RETURN [n IN nodes(p) | n.issueKey] AS path, asg AS people, [n IN nodes(p) | head([(n)-[:IN_PROJECT]->(x) | x.projectKey])] AS projects, [r IN relationships(p) | r.linkId] AS links"
+    },
+    {
+      "outcome": "error",
+      "rows": 0,
+      "seconds": 0.03390625002793968,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WITH p, [n IN nodes(p) | head([(n)-[:ASSIGNED_TO]->(x) | x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) AND size(reduce(s=[],n IN nodes(p)| CASE WHEN n IN s THEN s ELSE s+n END))=size(nodes(p)) RETURN [r IN relationships(p) | r.linkId] AS path, [r IN relationships(p) | [startNode(r).issueKey, endNode(r).issueKey]] AS issues, [i IN range(0,size(asg)-2) | [asg[i],asg[i+1]]] AS people, [r IN relationships(p) | [head([(startNode(r))-[:IN_PROJECT]->(x) | x.projectKey]), head([(endNode(r))-[:IN_PROJECT]->(x) | x.projectKey])]] AS projects"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1768,
+      "seconds": 0.6940239579416811,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WITH p, [n IN nodes(p) | head([(n)-[:ASSIGNED_TO]->(x) | x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) AND size(reduce(s=[],n IN nodes(p)| CASE WHEN n IN s THEN s ELSE s+n END))=size(nodes(p)) WITH p, asg, [n IN nodes(p) | head([(n)-[:IN_PROJECT]->(x) | x.projectKey])] AS pr RETURN [r IN relationships(p) | r.linkId] AS path, [r IN relationships(p) | [startNode(r).issueKey, endNode(r).issueKey]] AS issues, [i IN range(0,size(asg)-2) | [asg[i],asg[i+1]]] AS people, [i IN range(0,size(pr)-2) | [pr[i],pr[i+1]]] AS projects"
+    },
+    {
+      "outcome": "ok",
+      "rows": 1768,
+      "seconds": 0.6467087499331683,
+      "text": "MATCH p=(a:Issue)-[:BLOCKER|BONFIRE_TESTING|CAUSE|CLONERS|DEPENDS|DERIVED|DETAIL|DUPLICATE|FOLLOWS|PART|REFERENCE|REGRESSION|RELATE|RELATED|RESOLVE|SPLIT|SUPERSESSION*1..5]->(b:Issue) WITH p, [n IN nodes(p) | head([(n)-[:ASSIGNED_TO]->(x) | x.personKey])] AS asg WHERE none(x IN asg WHERE x IS NULL) AND all(i IN range(0,size(asg)-2) WHERE asg[i]<>asg[i+1]) AND size(reduce(s=[],n IN nodes(p)| CASE WHEN n IN s THEN s ELSE s+n END))=size(nodes(p)) WITH p, asg, [n IN nodes(p) | head([(n)-[:IN_PROJECT]->(x) | x.projectKey])] AS pr RETURN [n IN nodes(p) | n.issueKey] AS path, [r IN relationships(p) | r.linkId] AS links, [r IN relationships(p) | [startNode(r).issueKey, endNode(r).issueKey]] AS issues, [i IN range(0,size(asg)-2) | [asg[i],asg[i+1]]] AS people, [i IN range(0,size(pr)-2) | [pr[i],pr[i+1]]] AS projects"
+    }
+  ],
+  "compare_sha256": "35f6b9f469e32bb54ba68664a5d3e84bda0f7a6f20b8f098c6d77cac489abc12",
+  "correct": false,
+  "data": "real",
+  "git": {
+    "commit": "28df30eca82a4c21623d19ee131e024e4474d1b9",
+    "dirty": false
+  },
+  "limit": null,
+  "load_id": "1794178447.229884",
+  "outcome": "wrong",
+  "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+  "plan": {
+    "estimate_usd": 480.0,
+    "headline": "answer_match",
+    "model_id": "anthropic:claude-sonnet-5-5",
+    "plain_blocks_sha256": "f4f986263ba5e530d0331e7451b4c5d129609e0522e773d21319875172f64e23",
+    "price_table": "prices.toml@2026-11-11",
+    "query_timeout_s": 30,
+    "request_limit": 20,
+    "runs": 3,
+    "series": "plain",
+    "token_limit": 400000,
+    "tool_call_limit": 15,
+    "usd_per_million_input": 2.0,
+    "usd_per_million_output": 10.0,
+    "version_hash": "cae2a6746caf3d715a7b065d3abdc5b7f3abcce5e9df0620956827860e03c48e"
+  },
+  "problem": null,
+  "query_timeout_s": 30,
+  "question": "Q09",
+  "response_model": "claude-sonnet-5-5",
+  "retries": 4,
+  "run": 2,
+  "run_outcome": "answered",
+  "seconds": 79.51644062506966,
+  "series": "plain",
+  "source_match": false,
+  "steps": [],
+  "store": "graph",
+  "store_answer": {
+    "sha256": "d4000d8094451bb45a0f2c6b5d2f5af6d3f2f76e37a562a75d2ba90709dd2cdf",
+    "source_ids": [],
+    "value_items": 1768
+  },
+  "time": "2026-11-14T06:00:00+00:00",
+  "type": "path_connection",
+  "usage": {
+    "cost_usd": 0.1396345,
+    "input_tokens": 173879,
+    "output_tokens": 5463,
+    "requests": 12,
+    "tool_calls": 9
+  },
+  "zero_answer": false
+}
