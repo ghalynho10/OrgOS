@@ -1,6 +1,6 @@
 [project]
 name = "orgos"
-version = "0.1.0"
+version = "1.0.0"
 description = "A shared operational memory over company work data, compared across a SQL store and a graph store."
 authors = [
     { name = "Ghaly Nicolas Jules", email = "32783189+ghalynho10@users.noreply.github.com" }
