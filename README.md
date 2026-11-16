@@ -25,6 +25,14 @@ A shared operational memory over a company's work data (projects, people, work, 
 
 The project brief, scope, and design specs are kept locally in `docs/`, outside this repository.
 
+## Phase 1 result
+
+This conclusion is about this project only. The counts were close, and where one store led, it was by a single question. In the counts, the biggest difference maker was not the store but the reading note. However, because too few questions disagreed, the test between the stores is inconclusive and therefore could not pick a winner.
+
+- The rule, an exact paired sign flip test at 0.05, was fixed before the full runs. It needs at least 6 questions where the stores disagree to ever read "real"; the three question types had 1, 4 and 0.
+- With a reading note defining each question's terms, both stores were fully correct in 52 of 60 runs. Without it, the answer was right in 47 of 60 runs (SQL) and 44 of 60 (graph), against 59 and 57 with it.
+- Limits: 20 questions; the graph was built from tables designed in SQL; one model on default settings; one Jira dataset.
+
 ## How it fits together
 
 ```
