@@ -152,13 +152,31 @@ uv run orgos eval gold accept Q01 --store sql --reviewed             # pin a cor
 uv run orgos eval version add --agent orgos.agent:build_agent        # log the agent version; calls no model
 uv run orgos eval run --agent orgos.agent:build_agent --estimate     # write PLAN.json with the limits and the upper bound
 uv run orgos eval run --agent orgos.agent:build_agent --go --max-cost-usd 1 --only Q01 --store sql --max-run 1
+uv run orgos eval run --plain --agent orgos.agent:build_agent --estimate   # the plain series: its own PLAN.json, copied from the noted plan
+uv run orgos eval run --plain --agent orgos.agent:build_agent --go --max-cost-usd 1 --only Q01 --store sql --max-run 1
 ```
 
 - **Preflight** runs first in every command that queries a store: the frozen eval set, the load run records, the SQL state, the graph state and the schema fingerprint. It stops at the first that fails.
 - **Gold queries** are what each store can express, written by hand under `gold/`. `gold try` runs one pair and logs the try; `gold accept` pins a correct pair by its hashes. `--agent replay` replays the accepted pairs through the runner for free.
 - **Agent runs** need the version logged, a `PLAN.json` from `--estimate`, `--go` and a cost cap. A version with no finished run may start only one run (one question, one store, `--max-run 1`); after that, the measured mean cost times the runs to start must stay under the cap.
 - **Run files** go to `results/agent_runs/<version>/`, one per question, store and run number. Each is written once and never overwritten (only `summary.json` is rewritten), so a rerun fills only the missing run numbers. They are committed as evidence.
+- **Plain runs** (`--plain`, spec 0013) run the same agent version without the reading note: the model still gets the question, its answer shape, unit and hop limit. They take the same options as `run`, refuse `--agent replay`, never log a version, and go to `results/agent_runs/<version>/plain/` with their own `PLAN.json` (which needs the noted one first), run files written once and `summary.json`. They have their own cost gate, measured on plain runs only. They are scored on `answer_match`, set beside the noted runs of the same version per store as a lower bound, and kept out of every noted rate.
 - **Exit codes**: 0 on success, 2 configuration, 4 a runner refusal, a failed check or a provider or store outage, 7 an agent that cannot be built or a provider refusal.
+
+### Print the findings report
+
+Run it from the repo root once the agent runs are finished. It needs no store up.
+
+```sh
+uv run orgos eval report --rule   # the frozen rule, its thresholds, the primary tests and the reach table; reads no run file
+uv run orgos eval report          # the findings from the finished run files; rewrites results/findings/report.json
+```
+
+- **The rule** for when a gap between the stores counts as real was fixed in spec 0014 and frozen by the docs tag `rule-frozen` before the full runs: an exact paired sign flip test at 0.05 over the questions, with three primary tests (the noted series, full form, one per question type) and every other test labelled secondary. `--rule` prints it without reading any run file, store or known answer.
+- **What it reads.** The run files and `PLAN.json` files, noted and plain, `versions.jsonl`, the load run records for the load ID and the gold summary, nothing else. It opens no store, calls no model and writes no run file. It uses the last complete version in `versions.jsonl` and names a newer one that is not complete.
+- **What it prints.** Per question type, store and form (all questions, and without the zero guarded ones), raw counts: gold pairs correct, agent runs correct, attempts, timeouts, row cap hits and `limit_hit` runs; a pass^k line; a source diagnostic; the noted beside plain table labelled lower bound; versions 1 and 2 side by side on `answer_match`; the `no_answer` counts; and the limitation lines. It prints no conclusion and no recommendation; those are written by hand.
+- **The JSON** at `results/findings/report.json` holds the same cells as raw counts, with a `schema_version` and no timestamp, so the same files give the same bytes. It is rewritten through a temporary file and a replace.
+- **Exit codes**: 0 for a full, partial or incomplete report, 4 when no version is logged or a run file lacks a field the report needs or disagrees with its question's other files (named in the message).
 
 ### Ask a question
 
