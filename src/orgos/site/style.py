@@ -66,15 +66,19 @@ h3 {{ font-size: 26px; margin: 2em 0 0.5em; }}
 p, ul, ol {{ margin: 0 0 1em; }}
 .byline {{ color: {MUTED}; }}
 .dek {{ font-size: 20px; font-weight: 400; color: {MUTED}; }}
-.scroll {{ overflow-x: auto; margin: 2em 0 0; }}
+.scroll {{ overflow-x: auto; margin: 2em 0 0; container-type: inline-size; }}
 table {{
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
   font-size: 16px;
   font-variant-numeric: tabular-nums;
 }}
 caption {{
   caption-side: bottom;
+  position: sticky;
+  left: 0;
+  max-width: 100cqw;
   text-align: left;
   font-size: 14px;
   padding-top: 20px;
