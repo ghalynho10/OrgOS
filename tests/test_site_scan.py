@@ -1,4 +1,4 @@
-"""The scan for emails and list names, on made up fixtures (spec 0016 AC-15 to AC-18, AC-36).
+"""The scan for emails and list names, on made up fixtures (spec 0016 AC-15 to AC-18, AC-36, AC-43).
 
 The fixtures here are invented, in the shape of the corpus fixtures and the data
 description, so no real name from the dataset is written in a test.
@@ -17,13 +17,24 @@ from orgos.site import SiteError
 from orgos.site.build import build, check
 from orgos.site.scan import (
     ALLOWLIST,
+    PERSON_FIELDS,
     NameList,
+    description_values,
     email_matches,
     entry_hash,
     name_list,
     name_matches,
 )
-from tests.site_pages import copy_inputs
+from tests.site_pages import REPO, copy_inputs
+
+# Spec 0016 *The scan*, Allowlist line 1 (amended 2026-11-17): the hash and the reason.
+SPEC_ALLOWLIST = (
+    (
+        "1e32847769dc4a1588004a1dfdf10041407a3494ae910bc76783917fffea7789",
+        "the issue tracker's name, in the dataset title (K9) and the conclusion;"
+        " from a system mailbox, not a person",
+    ),
+)
 
 USER = {
     "displayName": "Zelda Quartermaine",
@@ -54,9 +65,18 @@ def _issue() -> dict[str, Any]:
     }
 
 
+def _heading(field: str) -> str:
+    return f"### `changelog.items[field={field}].fromString/toString`\n\n"
+
+
+# Every person field gets its heading (AC-43); only the assignee list holds values here.
 DESCRIPTION = (
-    '# Data description\n\n### Assignee\n\n- "Ottoline Brack"\n- "Abe"\n\n'
-    '### Status\n\n- "Resolved"\n'
+    "# Data description\n\n## Value lists\n\n"
+    + _heading("Assignee")
+    + '- "Ottoline Brack"\n- "Abe"\n\n'
+    + "".join(_heading(field.title()) for field in sorted(PERSON_FIELDS - {"assignee"}))
+    + _heading("Status")
+    + '- "Resolved"\n'
 )
 
 
@@ -77,7 +97,27 @@ def test_the_list_is_sorted_numbered_and_counted_per_source() -> None:
 # covers: AC-17
 def test_a_source_that_yields_nothing_fails() -> None:
     with pytest.raises(SiteError, match="source 4 yielded no entry"):
-        _names(DESCRIPTION.replace("### Assignee", "### Something else"))
+        _names(DESCRIPTION.replace('- "Ottoline Brack"\n- "Abe"\n', ""))
+
+
+# covers: AC-43, AC-17
+def test_person_headings_all_eight_found_in_the_real_description() -> None:
+    real = (REPO / "eval/data-description.md").read_text(encoding="utf-8")
+    assert description_values(real)
+    renamed = real.replace("[field=Reporter]", "[field=Reporter (old)]")
+    assert renamed != real
+    with pytest.raises(SiteError, match=r"person field reporter \(spec 0016 AC-43\)") as failed:
+        description_values(renamed)
+    assert '"' not in str(failed.value)
+
+
+# covers: AC-43
+def test_person_headings_follow_the_heading_form_only() -> None:
+    loose = DESCRIPTION.replace(_heading("Assignee"), "### Assignee\n\n")
+    with pytest.raises(SiteError, match="person field assignee"):
+        _names(loose)
+    plain = DESCRIPTION.replace("`", "")
+    assert _names(plain).entries == _names().entries
 
 
 # covers: AC-16
@@ -119,8 +159,11 @@ def test_an_email_anywhere_under_site_fails(tmp_path: Path) -> None:
 
 
 # covers: AC-36
-def test_allowlist_is_empty_and_keyed_by_sha256() -> None:
-    assert ALLOWLIST == ()
+def test_allowlist_holds_the_one_spec_line_keyed_by_sha256() -> None:
+    assert ALLOWLIST == SPEC_ALLOWLIST
+    product = NameList(("jira", "perpetua vane"), (1, 1, 0, 0))
+    files = {"site/a.html": "The Public Jira Dataset\nby Perpetua Vane\n"}
+    assert [(m.line, m.entry) for m in name_matches(files, product)] == [(2, 2)]
     names = _names()
     files = {"site/a.html": "Perpetua Vane\n"}
     assert len(name_matches(files, names)) == 1

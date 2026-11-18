@@ -4,7 +4,7 @@ Pure. The name list is built at check time from exactly four sources in the
 corpus fixtures and the data description, trimmed, lower cased, deduplicated,
 dropped under 4 characters, sorted and numbered. A match is reported by file,
 line and entry number, never by the entry's text. An entry is allowed only by
-the SHA 256 in `ALLOWLIST`, mirrored in the spec by number and reason (AC-36).
+the SHA 256 in `ALLOWLIST`, mirrored in the spec by hash, source and reason (AC-36).
 """
 
 from __future__ import annotations
@@ -46,10 +46,19 @@ USER_PATHS: Final = frozenset(
 USER_MARKS: Final = ("displayName", "emailAddress")
 USER_VALUES: Final = ("displayName", "name", "key", "emailAddress")
 HEADING: Final = re.compile(r"^#+\s*(.*?)\s*#*\s*$")
+PERSON_HEADING: Final = re.compile(r"changelog\.items\[field=(.+)\]\.fromString/toString")
 VALUE_LINE: Final = re.compile(r'^- ".*"$')
 
-# (the SHA 256 of an allowed entry, the reason). Empty: no entry is allowed (spec 0016).
-ALLOWLIST: Final[tuple[tuple[str, str], ...]] = ()
+# (the SHA 256 of an allowed entry, the reason), mirrored in spec 0016 *The scan* by the
+# hash, its source and the reason; a line is added only with a dated line there.
+ALLOWLIST: Final[tuple[tuple[str, str], ...]] = (
+    (
+        # 2026-11-17, source 1 only.
+        "1e32847769dc4a1588004a1dfdf10041407a3494ae910bc76783917fffea7789",
+        "the issue tracker's name, in the dataset title (K9) and the conclusion;"
+        " from a system mailbox, not a person",
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -138,15 +147,31 @@ def changelog_values(documents: Sequence[Any]) -> frozenset[str]:
 
 
 def description_values(description: str) -> frozenset[str]:
-    """Source 4: the `- "<value>"` lines under a heading whose text is a person field."""
+    """Source 4: the `- "<value>"` lines under a person field's value list heading.
+
+    The heading, backticks removed, reads `changelog.items[field=<name>].fromString/toString`
+    with `<name>` a person field; the list ends at the next heading. Fails naming each
+    person field that no heading matches (AC-43), so a format change cannot drop names.
+    """
     values = []
+    found = set()
     under_person = False
     for line in description.splitlines():
         heading = HEADING.match(line)
         if heading:
-            under_person = heading.group(1).lower() in PERSON_FIELDS
+            person = PERSON_HEADING.fullmatch(heading.group(1).replace("`", ""))
+            name = person.group(1).lower() if person else None
+            under_person = name in PERSON_FIELDS
+            if under_person:
+                found.add(name)
         elif under_person and VALUE_LINE.match(line):
             values.append(line[line.index('"') + 1 : line.rindex('"')])
+    unmatched = sorted(PERSON_FIELDS - found)
+    if unmatched:
+        raise SiteError(
+            "name list: no value list heading in the data description for the person field"
+            f" {', '.join(unmatched)} (spec 0016 AC-43)"
+        )
     return _normalise(values)
 
 

@@ -38,3 +38,17 @@ def test_the_expression_follows_its_own_splitting() -> None:
         "4.0",
         "18/21",
     ]
+
+
+def test_a_count_is_sourced_only_from_its_own_two_fields() -> None:
+    made = report()
+    drop = made["plain"]["drop"]["sql"]["noted"]
+    beside = next(
+        e for e in made["plain"]["noted_beside_plain"]["path_connection"] if e["store"] == "sql"
+    )["full"]["noted"]
+    own = f"{drop['answer_match']}/{drop['total']}"
+    mixed = f"{drop['answer_match']}/{beside['total']}"
+    assert own in page() and unsourced(page(), _sources()) == ()
+    assert mixed not in {t for s in _sources() for t in NUMBER.findall(s)}
+    scratch = page().replace("</main>", f"<p>{mixed}</p></main>")
+    assert unsourced(scratch, _sources()) == (mixed,)

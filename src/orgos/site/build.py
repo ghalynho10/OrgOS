@@ -5,8 +5,8 @@ and writes the page and its stylesheet. `check` regenerates both in memory from
 the tracked copy and the report and compares them byte for byte, checks every
 number on the page has a source, and scans every file under `site/` for email
 addresses and the name list (spec 0016). Neither opens a store, calls a model or
-loads `Settings`, and neither opens `eval/answers.json`, `results/agent_runs/` or
-`gold/` (AC-18, AC-29).
+loads `Settings`, and neither opens the known answers, the agent run files or the
+gold queries (AC-18, AC-29).
 """
 
 from __future__ import annotations
