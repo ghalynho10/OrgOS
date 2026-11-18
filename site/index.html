@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graph or SQL, and when? Conclusion of Phase 1 | OrgOS</title>
+<meta name="description" content="This conclusion is about this project only. The counts were close, and where one store led, it was by a single question. In the counts, the biggest difference maker was not the store but the note. However, because too few questions disagreed, the test between the stores is inconclusive and therefore could not pick a winner.">
+<link rel="canonical" href="https://ghalynho10.github.io/OrgOS/">
+<meta property="og:title" content="Graph or SQL, and when? Conclusion of Phase 1">
+<meta property="og:description" content="This conclusion is about this project only. The counts were close, and where one store led, it was by a single question. In the counts, the biggest difference maker was not the store but the note. However, because too few questions disagreed, the test between the stores is inconclusive and therefore could not pick a winner.">
+<meta property="og:url" content="https://ghalynho10.github.io/OrgOS/">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="band band-top"><div class="band-inner"><p>OrgOS · Phase 1 result</p></div></header>
+<div class="layout">
+<nav class="toc" aria-labelledby="toc-label">
+<p id="toc-label" class="toc-label">On this page</p>
+<ul>
+<li><a href="#1-what-the-frozen-rule-said">1. What the frozen rule said</a></li>
+<li><a href="#2-what-i-expected-and-what-happened">2. What I expected, and what happened</a></li>
+<li><a href="#3-the-questions-where-the-stores-differed">3. The questions where the stores differed</a></li>
+<li><a href="#4-what-the-plain-runs-add">4. What the plain runs add</a></li>
+<li><a href="#5-how-far-this-reaches">5. How far this reaches</a></li>
+<li><a href="#6-graph-or-sql-and-when">6. Graph or SQL, and when?</a></li>
+<li><a href="#limitations">Limitations</a></li>
+</ul>
+</nav>
+<main class="column">
+<h1>Graph or SQL, and when? Conclusion of Phase 1</h1>
+<p class="byline"><a href="https://github.com/ghalynho10">Ghaly Nicolas Jules</a><br>
+<a href="https://github.com/ghalynho10/OrgOS">Code and eval: github.com/ghalynho10/OrgOS</a></p>
+<p class="dek">This conclusion is about this project only. The counts were close, and where one store led, it was by a single question. In the counts, the biggest difference maker was not the store but the note. However, because too few questions disagreed, the test between the stores is inconclusive and therefore could not pick a winner.</p>
+<section>
+<h2 id="1-what-the-frozen-rule-said">1. What the frozen rule said</h2>
+<p>The rule, fixed before the full runs, tested each question type for a real gap between the stores. All three tests read &quot;did not detect a gap&quot;:</p>
+<div class="scroll" tabindex="0" role="region" aria-label="1. What the frozen rule said">
+<table aria-label="1. What the frozen rule said">
+<thead>
+<tr>
+<th scope="col">Type</th>
+<th scope="col">Questions</th>
+<th scope="col">Untied</th>
+<th scope="col">Graph ahead</th>
+<th scope="col">SQL ahead</th>
+<th scope="col">p</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aggregate</td>
+<td>7</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>path_connection</td>
+<td>7</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>7/8</td>
+</tr>
+<tr>
+<td>mixed</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>For none of the three question types could the test tell whether graph or SQL did better. It doesn't show they're the same either. Too few questions disagreed for the test to reach a conclusion.</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-rule">
+<table>
+<caption id="table-rule">The frozen rule, by question type, with the smallest p each type could have given</caption>
+<thead>
+<tr><th scope="col">Type</th><th scope="col">Questions</th><th scope="col">Untied</th><th scope="col">Graph ahead</th><th scope="col">SQL ahead</th><th scope="col">p</th><th scope="col">Smallest p the test could give</th></tr>
+</thead>
+<tbody>
+<tr><td>aggregate</td><td>7</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>path_connection</td><td>7</td><td>4</td><td>2</td><td>2</td><td>7/8</td><td>1/8</td></tr>
+<tr><td>mixed</td><td>6</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+</section>
+<section>
+<h2 id="2-what-i-expected-and-what-happened">2. What I expected, and what happened</h2>
+<p>Counts, correct with the reading note (answer right without it):</p>
+<ul>
+<li>aggregate: SQL 18/21 (18/21), graph 20/21 (18/21)</li>
+<li>path_connection: SQL 16/21 (11/21), graph 14/21 (10/21)</li>
+<li>mixed: SQL 18/18 (18/18), graph 18/18 (16/18)</li>
+</ul>
+<p>Aggregates: I expected the stores to be fairly close, with a slight edge to SQL. Instead, the graph is ahead by 1 question.</p>
+<p>Paths: I expected the graph to be much better than SQL. Instead, SQL is ahead, mostly from one question (Q09).</p>
+<p>Mixed: I expected a split. Both stores got 18 of 18.</p>
+<p>In both stores, most failures were citation failures: the answer was right but the evidence wasn't (SQL 7 of 8 failed runs, graph 5 of 8).</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-counts">
+<table>
+<caption id="table-counts">Correct runs and answers right, by question type and store</caption>
+<thead>
+<tr><th scope="col">Type</th><th scope="col">Store</th><th scope="col">Correct with the note</th><th scope="col">Answers right without the note</th><th scope="col">Runs with a retry</th><th scope="col">Attempts timed out</th><th scope="col">Attempts at the row cap</th><th scope="col">Limit hit: requests</th><th scope="col">Limit hit: tokens</th><th scope="col">Limit hit: tool calls</th></tr>
+</thead>
+<tbody>
+<tr><td>aggregate</td><td>SQL</td><td>18/21</td><td>18/21</td><td>3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>aggregate</td><td>Graph</td><td>20/21</td><td>18/21</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>path_connection</td><td>SQL</td><td>16/21</td><td>11/21</td><td>10</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>path_connection</td><td>Graph</td><td>14/21</td><td>10/21</td><td>8</td><td>3</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>mixed</td><td>SQL</td><td>18/18</td><td>18/18</td><td>7</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>mixed</td><td>Graph</td><td>18/18</td><td>16/18</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-zero">
+<table>
+<caption id="table-zero">Answers right with and without the two zero answer questions, Q03 and Q16</caption>
+<thead>
+<tr><th scope="col">Type</th><th scope="col">Store</th><th scope="col">With the note</th><th scope="col">Without the note</th><th scope="col">With the note, without Q03 and Q16</th><th scope="col">Without the note, without Q03 and Q16</th></tr>
+</thead>
+<tbody>
+<tr><td>aggregate</td><td>SQL</td><td>21/21</td><td>18/21</td><td>18/18</td><td>15/18</td></tr>
+<tr><td>aggregate</td><td>Graph</td><td>21/21</td><td>18/21</td><td>18/18</td><td>15/18</td></tr>
+<tr><td>path_connection</td><td>SQL</td><td>20/21</td><td>11/21</td><td>20/21</td><td>11/21</td></tr>
+<tr><td>path_connection</td><td>Graph</td><td>18/21</td><td>10/21</td><td>18/21</td><td>10/21</td></tr>
+<tr><td>mixed</td><td>SQL</td><td>18/18</td><td>18/18</td><td>15/15</td><td>15/15</td></tr>
+<tr><td>mixed</td><td>Graph</td><td>18/18</td><td>16/18</td><td>15/15</td><td>13/15</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+</section>
+<section>
+<h2 id="3-the-questions-where-the-stores-differed">3. The questions where the stores differed</h2>
+<p>Graph minus SQL, correct runs out of 3: Q04 +2, Q08 +1, Q09 −3, Q13 +1, Q14 −1. All other questions tied.</p>
+<p>On Q09, SQL is 3/3 against the graph's 0/3 with the note's either direction rule, while both are 0/3 without it. Each graph run hit several errors and a query timeout before answering wrongly, while the gold query for Q09 ran successfully.</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-differences">
+<table>
+<caption id="table-differences">Graph minus SQL, correct runs of 3, per question</caption>
+<thead>
+<tr><th scope="col">Question</th><th scope="col">Type</th><th scope="col">Graph minus SQL</th></tr>
+</thead>
+<tbody>
+<tr><td>Q01</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q02</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q03</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q04</td><td>aggregate</td><td>+2</td></tr>
+<tr><td>Q05</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q06</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q07</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q08</td><td>path_connection</td><td>+1</td></tr>
+<tr><td>Q09</td><td>path_connection</td><td>−3</td></tr>
+<tr><td>Q10</td><td>path_connection</td><td>0</td></tr>
+<tr><td>Q11</td><td>path_connection</td><td>0</td></tr>
+<tr><td>Q12</td><td>path_connection</td><td>0</td></tr>
+<tr><td>Q13</td><td>path_connection</td><td>+1</td></tr>
+<tr><td>Q14</td><td>path_connection</td><td>−1</td></tr>
+<tr><td>Q15</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q16</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q17</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q18</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q19</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q20</td><td>mixed</td><td>0</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+</section>
+<section>
+<h2 id="4-what-the-plain-runs-add">4. What the plain runs add</h2>
+<p>Without the reading note, answers right fell from 59 to 47 of 60 (SQL) and 57 to 44 of 60 (graph), most of it on path questions (SQL 20 to 11, graph 18 to 10, of 21).</p>
+<p>That tells me the stores are much more accurate with a note. Whether this can be a viable product without the note is a different conversation, though.</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-note">
+<table>
+<caption id="table-note">Answers right with and without the reading note</caption>
+<thead>
+<tr><th scope="col">Scope</th><th scope="col">Store</th><th scope="col">With the note</th><th scope="col">Without the note</th></tr>
+</thead>
+<tbody>
+<tr><td>All questions</td><td>SQL</td><td>59/60</td><td>47/60</td></tr>
+<tr><td>All questions</td><td>Graph</td><td>57/60</td><td>44/60</td></tr>
+<tr><td>path_connection</td><td>SQL</td><td>20/21</td><td>11/21</td></tr>
+<tr><td>path_connection</td><td>Graph</td><td>18/21</td><td>10/21</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+<p class="limitation"><span class="lim-id">G2-6</span> <span class="lim-text">every scored run got the reading note, and plain runs are a lower bound that still carried shape, unit and hop limit (spec 0013 Follow-up).</span> <span class="lim-source">spec 0013 Follow-up</span></p>
+<p class="caveat">The findings report marks this drop as untested: no test was run on it.</p>
+</section>
+<section>
+<h2 id="5-how-far-this-reaches">5. How far this reaches</h2>
+<p>Limitations that matter most:</p>
+<ol>
+<li>The graph was built from tables designed in SQL, so it may be shaped like a database rather than a natural graph. That could disadvantage the graph.</li>
+<li>Every scored run got the reading note; real users don't write one, which is why I did the plain runs. Those still told the agent the answer's shape, unit and hop limit, which the scoring needed. A real person would give even less.</li>
+<li>The model ran on default settings with low thinking effort. More effort might change the results.</li>
+</ol>
+<p>What a real deployment would need:</p>
+<ol>
+<li>This project loaded the data once; a real one would need constant updates.</li>
+<li>The same person appears under different names and emails in each system.</li>
+<li>Data sensitivity: a company could use its own model. Nothing in the project requires it to use Claude, though the numbers would need re-measuring on that model.</li>
+<li>Not everyone may see every ticket, and the agent would have to respect that.</li>
+<li>Real company data isn't only in Jira: there's chat, docs, code and HR systems.</li>
+</ol>
+</section>
+<section>
+<h2 id="6-graph-or-sql-and-when">6. Graph or SQL, and when?</h2>
+<p>This conclusion is about this project only. The counts were close, and where one store led, it was by a single question. In the counts, the biggest difference maker was not the store but the note. However, because too few questions disagreed, the test between the stores is inconclusive and therefore could not pick a winner.</p>
+</section>
+<section>
+<h2 id="limitations">Limitations</h2>
+<h3>Group 1, from the scope</h3>
+<ul class="limitations">
+<li class="limitation"><span class="lim-id">G1-1</span> <span class="lim-text">known answers and dbt share one reading of the Jira fields</span> <span class="lim-source">scope feature 17, Done when</span></li>
+<li class="limitation"><span class="lim-id">G1-2</span> <span class="lim-text">the gold queries were model drafted blind to the answers, Q01 as a teaching pass, with counts only feedback, and Q01&#x27;s pattern shaped the rest</span> <span class="lim-source">scope feature 17, Done when</span></li>
+<li class="limitation"><span class="lim-id">G1-3</span> <span class="lim-text">`model_int` is written in SQL, so the graph may lean relational.</span> <span class="lim-source">scope feature 17, Done when</span></li>
+</ul>
+<h3>Group 2, method</h3>
+<ul class="limitations">
+<li class="limitation"><span class="lim-id">G2-1</span> <span class="lim-text">n is 20, with 6 or 7 questions per type, so a test with fewer than 6 untied questions can never read `real`, and `did not detect a gap` is not `equal`</span> <span class="lim-source">spec 0014 AC-4, AC-6 and the reach table</span></li>
+<li class="limitation"><span class="lim-id">G2-2</span> <span class="lim-text">the family bound of AC-4 and the chance line of AC-7</span> <span class="lim-source">spec 0014 AC-4 and AC-7</span></li>
+<li class="limitation"><span class="lim-id">G2-3</span> <span class="lim-text">the known answer code, the gold queries and the agent come from one model family, a shared blind spot and not a bias between stores</span> <span class="lim-source">spec 0014 rationale, Context (the literature look back, no longer in docs/session-notes.md)</span></li>
+<li class="limitation"><span class="lim-id">G2-4</span> <span class="lim-text">the strict score is all or nothing and not comparable to published execution accuracy</span> <span class="lim-source">spec 0014 rationale, Context; spec 0013 References (BIRD execution accuracy)</span></li>
+<li class="limitation"><span class="lim-id">G2-5</span> <span class="lim-text">query and run times are recorded but never compared or ranked, because both stores run untuned in Docker on one laptop on a small dataset (spec 0011 AC-24)</span> <span class="lim-source">spec 0011 AC-24</span></li>
+<li class="limitation"><span class="lim-id">G2-6</span> <span class="lim-text">every scored run got the reading note, and plain runs are a lower bound that still carried shape, unit and hop limit (spec 0013 Follow-up).</span> <span class="lim-source">spec 0013 Follow-up</span></li>
+</ul>
+<h3>Group 3, data and scoring</h3>
+<ul class="limitations">
+<li class="limitation"><span class="lim-id">G3-1</span> <span class="lim-text">hours count positive entries only, 70 negative entries left out (about 1.5% of counted seconds, CLOV about 12%)</span> <span class="lim-source">eval/data-description.md, Negative time entries (the 70 entries); docs/session-notes.md, Ruled out (about 1.5%); the CLOV 12% is in no file read (spec 0014 Follow-up)</span></li>
+<li class="limitation"><span class="lim-id">G3-2</span> <span class="lim-text">Q03 and Q16 are zero answers, shown both ways</span> <span class="lim-source">docs/session-notes.md, Q03 zero and Q16 zero; spec 0014 AC-14</span></li>
+<li class="limitation"><span class="lim-id">G3-3</span> <span class="lim-text">Q08 is one hop</span> <span class="lim-source">scope, feature 17 candidates; not confirmed from any file read (spec 0014 Follow-up)</span></li>
+<li class="limitation"><span class="lim-id">G3-4</span> <span class="lim-text">Q10 is scored through its sources, and was told to return entities, not pairs, in both stores</span> <span class="lim-source">spec 0012 AC-7</span></li>
+<li class="limitation"><span class="lim-id">G3-5</span> <span class="lim-text">categories are properties, not labels (spec 0008)</span> <span class="lim-source">spec 0008</span></li>
+<li class="limitation"><span class="lim-id">G3-6</span> <span class="lim-text">Q11 mixes people and projects in one set, and the sources of an empty, zero or false answer are `[]` (spec 0012 AC-17, AC-18)</span> <span class="lim-source">spec 0012 AC-17, AC-18</span></li>
+<li class="limitation"><span class="lim-id">G3-7</span> <span class="lim-text">the literal check misses small numbers (spec 0011 Follow-up).</span> <span class="lim-source">spec 0011 Follow-up</span></li>
+</ul>
+<h3>Group 4, agent setup</h3>
+<ul class="limitations">
+<li class="limitation"><span class="lim-id">G4-1</span> <span class="lim-text">the reading note&#x27;s definitions and the list of source kinds were given</span> <span class="lim-source">spec 0012 Follow-up</span></li>
+<li class="limitation"><span class="lim-id">G4-2</span> <span class="lim-text">temperature, `top_p` and `top_k` were the provider default and thinking was adaptive at effort low</span> <span class="lim-source">spec 0012 Follow-up</span></li>
+<li class="limitation"><span class="lim-id">G4-3</span> <span class="lim-text">a run&#x27;s label follows spec 0011 AC-10 as amended</span> <span class="lim-source">spec 0012 Follow-up</span></li>
+<li class="limitation"><span class="lim-id">G4-4</span> <span class="lim-text">cap hits, timeouts and `limit_hit` per limit are shown beside every headline</span> <span class="lim-source">spec 0012 Follow-up</span></li>
+<li class="limitation"><span class="lim-id">G4-5</span> <span class="lim-text">the agent was given the answer shape and unit of each question</span> <span class="lim-source">spec 0012 Follow-up</span></li>
+<li class="limitation"><span class="lim-id">G4-6</span> <span class="lim-text">the 400,000 token limit was chosen so the 15 call limit binds first</span> <span class="lim-source">spec 0012 Follow-up</span></li>
+<li class="limitation"><span class="lim-id">G4-7</span> <span class="lim-text">and if a real bug is found in the agent when no agent version is left (the cap is three), the runs are reported as they are and the bug is named here.</span> <span class="lim-source">spec 0012 Follow-up</span></li>
+</ul>
+<h3>Group 5, agent version 2 and the plain runs</h3>
+<ul class="limitations">
+<li class="limitation"><span class="lim-id">G5-1</span> <span class="lim-text">From agent version 2 the agent was told the evidence layout of each scored question, which version 1 had to infer, so version 1 and version 2 source scores are not compared, and the move from version 1 to version 2 is reported as a format change (spec 0015 changes format only).</span> <span class="lim-source">spec 0015 Consequences and Follow-up, 2026-11-13; `docs/session-notes.md`, &quot;How others do it&quot;, 2026-11-13</span></li>
+<li class="limitation"><span class="lim-id">G5-2</span> <span class="lim-text">Noted runs can get a layout send back that plain runs cannot, because plain has no layout line; send backs appear in the log lines and are not recorded in run files.</span> <span class="lim-source">spec 0015 Consequences, 2026-11-13</span></li>
+<li class="limitation"><span class="lim-id">G5-3</span> <span class="lim-text">Change C4 applies to Q09 only, with identical text in both stores; version 1 and version 2 Q09 counts are shown on their own line.</span> <span class="lim-source">spec 0015 Consequences and Follow-up, 2026-11-13</span></li>
+<li class="limitation"><span class="lim-id">G5-4</span> <span class="lim-text">The layout check is soft, so a layout miss shows as `source_match` false and never as a lost answer by the layout alone; a send back can still lead the model into a structural slip, so the `no_answer` count of each version is printed (AC-33); a send back also spends model requests, so a run can end as `limit_hit` because of the layout check, and the `limit_hit` count of each version is printed beside it.</span> <span class="lim-source">spec 0015 Consequences and Follow-up, 2026-11-13</span></li>
+<li class="limitation"><span class="lim-id">G5-5</span> <span class="lim-text">Two sentences of the shared Sources text, &quot;Each kind may point at its own result.&quot; and &quot;A source column holds no NULL, so query a kind separately when some rows lack it.&quot;, tell the agent how to shape its result tables, with identical text for every question and both stores; spec 0015 says they edge toward method.</span> <span class="lim-source">spec 0015 Consequences, 2026-11-13, added after its review</span></li>
+<li class="limitation"><span class="lim-id">G5-6</span> <span class="lim-text">The shared instruction text still speaks of a reading note in plain runs, in both stores, so the plain series is called &quot;without the reading note&quot;, never &quot;cold&quot;.</span> <span class="lim-source">spec 0013 Consequences, 2026-11-11, and its Follow-up (undated); spec 0015 `index.md` line 100, 2026-11-13</span></li>
+<li class="limitation"><span class="lim-id">G5-7</span> <span class="lim-text">Q03 is a zero answer with empty evidence, not a real zero, so a query that finds nothing scores correct and the zero says nothing about lateness; the stage reading is in the note.</span> <span class="lim-source">`docs/session-notes.md`, Q03 zero, 2026-11-11</span></li>
+<li class="limitation"><span class="lim-id">G5-8</span> <span class="lim-text">Q13 is scored as which sub-tasks of one issue (shape set, frozen); the score checks the sub-task IDs and, in the sources, every positive time entry on them, and does not check the summed hours, the assignee or the status.</span> <span class="lim-source">`docs/session-notes.md`, Q13 limitation, 2026-11-12</span></li>
+<li class="limitation"><span class="lim-id">G5-9</span> <span class="lim-text">Q16 is a real zero but a weak test: part of its filter never removes anything, so a query that gets that part wrong still scores correct; the stage reading is in the note.</span> <span class="lim-source">`docs/session-notes.md`, Q16 zero, 2026-11-13</span></li>
+<li class="limitation"><span class="lim-id">G5-10</span> <span class="lim-text">`eval/data-description.md`, already published, holds real looking names and emails taken from changelog display strings of the public CC BY 4.0 dataset, and `tests/fixtures/corpus/` possibly does too (not checked); they are not newly exposed and the file is not edited.</span> <span class="lim-source">`docs/OrgOS-carry-forward.md`, &quot;Findings report (feature 17), additions&quot;, file dated 2026-11-03</span></li>
+<li class="limitation"><span class="lim-id">G5-11</span> <span class="lim-text">The accuracy numbers hold only for this dataset, one model family and one load.</span> <span class="lim-source">`docs/OrgOS-carry-forward.md`, that section and its date; this spec&#x27;s Consequences, 2026-11-11</span></li>
+<li class="limitation"><span class="lim-id">G5-12</span> <span class="lim-text">The commit tagged `rule-frozen` is dated 2026-11-11 at 23:57 UTC. The six version 1 Q01 runs (2026-11-11, 16:46 to 17:02 UTC) came before it; every other agent run came after it (version 1 from 2026-11-12, version 2 from 2026-11-13, the plain series from 2026-11-14). Replay files are not agent results.</span> <span class="lim-source">the `time` field of the run files, the git tag `rule-frozen`, checked 2026-11-14</span></li>
+<li class="limitation"><span class="lim-id">G5-13</span> <span class="lim-text">The measure of the version 1 against version 2 block (`answer_match`, Q09 apart) and the `no_answer` cells were set on 2026-11-14, after the version 1, version 2 and plain results had been seen; the measure follows spec 0015 line 165, written before the first version 2 run. The first form of AC-17 (a disagreement line) was replaced on 2026-11-14, also after the results were seen, by side by side counts, justified only by the cross check&#x27;s list of decisions the disagreement rule needed.</span> <span class="lim-source">this amendment, 2026-11-14; spec 0015 commit `20d2486`, 2026-11-13 20:59 UTC</span></li>
+<li class="limitation"><span class="lim-id">G5-14</span> <span class="lim-text">The layout line reveals the structure of the evidence grading, which is the kinds and the step count, never IDs.</span> <span class="lim-source">spec 0015 `rationale.md` &quot;How others do it&quot; (SWE-bench row), 2026-11-13</span></li>
+<li class="limitation"><span class="lim-id">G5-15</span> <span class="lim-text">The layout line is new: no benchmark read tells the model which record kinds to cite per question.</span> <span class="lim-source">spec 0015 `rationale.md` &quot;How others do it&quot;, last row, 2026-11-13</span></li>
+</ul>
+</section>
+<p class="note">OrgOS is a prototype of a system a company would build for itself. It tests one design question, a SQL store against a graph store for an AI agent over work data, with a frozen eval that checks citations. This page makes no claim that a company wants it and, like the conclusion above, names no winner.</p>
+<p class="note">The design specs behind this work are kept private. Where a limitation names a spec or a note, it points to a document that is not published here.</p>
+</main>
+</div>
+<footer class="band band-bottom"><div class="band-inner">
+<p>The data is The Public Jira Dataset (Zenodo record 15719919), licensed CC BY 4.0. Montgomery L, Lüders C, Maalej W. An Alternative Issue Tracking Dataset of Public Jira Repositories. In 2022 IEEE/ACM 19th International Conference on Mining Software Repositories (MSR) 2022 May 23 (pp. 73-77). IEEE.</p>
+<p>The public code repository also holds test fixtures and a data description built from that dataset. They contain real looking names and email addresses from the dataset&#x27;s change history, which are already public in the dataset. This page repeats none of them.</p>
+</div></footer>
+</body>
+</html>

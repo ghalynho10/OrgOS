@@ -63,6 +63,9 @@ from orgos.ingest import IngestError
 from orgos.mongostore import MongoStoreError
 from orgos.mongostore.restore import restore
 from orgos.mongostore.verify import verify
+from orgos.site import SiteError
+from orgos.site.build import build as build_site
+from orgos.site.build import check as check_site
 from orgos.sqlstore import SqlStoreError
 from orgos.sqlstore.bootstrap import bootstrap
 from orgos.sqlstore.load import load_sql
@@ -84,6 +87,7 @@ EXIT_CODES: tuple[tuple[type[Exception], int], ...] = (
     (IngestError, 5),
     (GraphStoreError, 6),
     (AgentError, 7),
+    (SiteError, 8),
 )
 NAMED_ERRORS = tuple(error for error, _ in EXIT_CODES)
 
@@ -608,6 +612,52 @@ def load_graph_command() -> None:
     """
     settings = load_settings()
     typer.echo(load_graph(settings, Path.cwd()))
+
+
+site_app = typer.Typer(
+    name="site",
+    help="Build and check the public results page from the conclusion and the findings report.",
+    no_args_is_help=True,
+)
+app.add_typer(site_app)
+
+RootOption = Annotated[
+    Path, typer.Option("--root", help="The repository root; the current directory by default.")
+]
+
+
+@site_app.command("build")
+def site_build_command(
+    accept: Annotated[
+        bool,
+        typer.Option(
+            "--accept", help="Copy a new or changed docs/findings/conclusion.md into site/."
+        ),
+    ] = False,
+    root: RootOption = Path("."),
+) -> None:
+    """Write site/index.html and site/style.css from the conclusion and the findings report.
+
+    Refuses when docs/findings/conclusion.md differs from site/conclusion.md
+    unless --accept is given, and when the report is partial, stale or out of
+    line (spec 0016). Loads no Settings, so it runs with no .env; opens no store
+    and calls no model.
+    """
+    for line in build_site(root, accept=accept):
+        typer.echo(line)
+
+
+@site_app.command("check")
+def site_check_command(root: RootOption = Path(".")) -> None:
+    """Check the page: regeneration, every number sourced, and the email and name scan.
+
+    Fails unless site/index.html and site/style.css equal a build from
+    site/conclusion.md and the report. Prints the name list's size and counts,
+    and any match by file, line and entry number, never an entry. Loads no
+    Settings, opens no store and calls no model.
+    """
+    for line in check_site(root):
+        typer.echo(line)
 
 
 def run(args: Sequence[str] | None = None) -> None:
