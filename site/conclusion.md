@@ -42,13 +42,13 @@ That tells me the stores are much more accurate with a note. Whether this can be
 
 ## 5. How far this reaches
 
-Limitations that matter most:
+### Limitations that matter most:
 
 1. The graph was built from tables designed in SQL, so it may be shaped like a database rather than a natural graph, which could put the graph at a disadvantage.
 2. Every scored run got the reading note. Real users don't write one, which is why I did the plain runs. Those still told the agent the answer's shape, unit and hop limit, which the scoring needed. A real person would give even less.
 3. The model ran on default settings with low thinking effort. More effort might change the results.
 
-What a real deployment would need:
+### What a real deployment would need:
 
 1. This project loaded the data once; a real one would need constant updates.
 2. The same person appears under different names and emails in each system.

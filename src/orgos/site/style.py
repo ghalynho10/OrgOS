@@ -1,9 +1,10 @@
 """The page's stylesheet, written from the design tokens of spec 0016 (*Page design*).
 
 One 645px text column, flat striped tables that scroll inside their box with a
-sticky first column, a dark header and footer band, the system font stack and
-no colour on data (AC-20). The tokens are constants so a test can compute the
-contrast of every text and background pair (AC-38).
+sticky first column, a dark header and footer band, the system sans stack for
+words and the system mono stack for data, and no colour on data (AC-20, AC-47).
+The tokens are constants so a test can compute the contrast of every text and
+background pair (AC-38).
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ BAND_TEXT: Final = "#FFFFFF"
 COLUMN_PX: Final = 645
 TOC_FROM_PX: Final = 1100
 FONT: Final = '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif'
+MONO: Final = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace'
 
 # Every text colour against every background it is drawn on.
 TEXT_PAIRS: Final = (
@@ -41,8 +43,8 @@ body {{
   background: {PAGE};
   color: {TEXT};
   font-family: {FONT};
-  font-size: 18px;
-  line-height: 1.6;
+  font-size: 17px;
+  line-height: 1.7;
   overflow-wrap: break-word;
 }}
 a {{ color: inherit; text-decoration: underline; text-underline-offset: 2px; }}
@@ -53,7 +55,7 @@ a {{ color: inherit; text-decoration: underline; text-underline-offset: 2px; }}
 .band-inner {{ max-width: {COLUMN_PX}px; margin: 0 auto; }}
 .band-top {{ height: 60px; display: flex; align-items: center; }}
 .band-top .band-inner {{ width: 100%; }}
-.band-top p {{ margin: 0; font-weight: 600; }}
+.band-top p {{ margin: 0; }}
 .band-bottom {{ margin-top: 4em; padding-top: 2em; padding-bottom: 2em; }}
 .band-bottom p {{ margin: 0 0 1em; }}
 .layout {{ padding: 0 16px; }}
@@ -62,16 +64,16 @@ a {{ color: inherit; text-decoration: underline; text-underline-offset: 2px; }}
 h1, h2, h3 {{ color: {HEADING}; font-weight: 600; line-height: 1.2; }}
 h1 {{ font-size: 46px; margin: 1em 0 0.4em; }}
 h2 {{ font-size: 30px; margin: 60px 0 20px; }}
-h3 {{ font-size: 26px; margin: 2em 0 0.5em; }}
+h3 {{ font-size: 21px; margin: 2em 0 0.5em; }}
 p, ul, ol {{ margin: 0 0 1em; }}
 .byline {{ color: {MUTED}; }}
-.dek {{ font-size: 20px; font-weight: 400; color: {MUTED}; }}
+.dek {{ font-size: 20px; font-weight: 400; color: {TEXT}; }}
 .scroll {{ overflow-x: auto; margin: 2em 0 0; container-type: inline-size; }}
 table {{
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
-  font-size: 16px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
 }}
 caption {{
@@ -81,8 +83,8 @@ caption {{
   max-width: 100cqw;
   text-align: left;
   font-size: 14px;
-  padding-top: 20px;
-  color: {MUTED};
+  padding-top: 12px;
+  color: {TEXT};
 }}
 th {{
   font-weight: 600;
@@ -92,13 +94,19 @@ th {{
   border-bottom: 2px solid {HEADING};
   padding: 10px;
 }}
-td {{ padding: 10px; border-bottom: 1px solid {HAIRLINE}; vertical-align: top; }}
+td {{
+  font-family: {MONO};
+  padding: 10px;
+  border-bottom: 1px solid {HAIRLINE};
+  vertical-align: top;
+}}
 thead tr, tbody tr {{ background: {PAGE}; }}
 tbody tr:nth-child(even) {{ background: {STRIPE}; }}
 th:first-child, td:first-child {{ position: sticky; left: 0; background: inherit; }}
+th:first-child, td:first-child {{ border-right: 1px solid {HAIRLINE}; }}
 .caveat {{ font-size: 14px; color: {MUTED}; margin: 10px 0 2em; }}
 .limitation {{ margin: 0 0 1em; }}
-.lim-id {{ font-weight: 600; color: {HEADING}; }}
+.lim-id {{ font-family: {MONO}; font-size: 15px; color: {HEADING}; }}
 .lim-source {{ display: block; font-size: 16px; color: {MUTED}; }}
 .note {{ color: {MUTED}; }}
 @media (min-width: {TOC_FROM_PX}px) {{
@@ -120,7 +128,7 @@ th:first-child, td:first-child {{ position: sticky; left: 0; background: inherit
   }}
   .toc ul {{ list-style: none; padding: 0; margin: 0; }}
   .toc li {{ margin: 0 0 0.6em; }}
-  .toc-label {{ font-weight: 600; color: {HEADING}; }}
+  .toc-label {{ color: {HEADING}; }}
   .column {{ grid-column: 2; max-width: none; margin: 0; }}
 }}
 """

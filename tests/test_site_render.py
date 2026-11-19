@@ -278,9 +278,19 @@ def test_no_limitation_list() -> None:
     assert len(others) > 0
     visible = tree(html).text()
     assert not any(line["text"].replace("`", "") in visible for line in others)
-    assert "<h3" not in html
     assert "Limitations</h2>" not in html
     contents = [a.text() for a in tree(html).find("nav").all("a")]
+    assert contents == re.findall(r"(?m)^## (.*)$", conclusion_text())
+
+
+# covers: AC-48
+def test_h3_only_from_the_conclusion() -> None:
+    root = tree(page())
+    headings = root.all("h3")
+    assert [h.text() for h in headings] == re.findall(r"(?m)^### (.*)$", conclusion_text())
+    assert headings
+    assert all("id" not in h.attrs for h in headings)
+    contents = [a.text() for a in root.find("nav").all("a")]
     assert contents == re.findall(r"(?m)^## (.*)$", conclusion_text())
 
 
