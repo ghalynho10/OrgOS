@@ -15,28 +15,20 @@ SPEC = {
     "K2_code_url": "https://github.com/ghalynho10/OrgOS",
     "K4": (
         "The frozen rule, by question type, with the smallest p each type could have given",
-        "Correct runs and answers right, by question type and store",
-        "Answers right with and without the two zero answer questions, <Q03 and Q16>",
+        "Correct runs and right answers, by question type and store",
+        "Right answers with and without the two zero answer questions, <Q03 and Q16>",
         "Graph minus SQL, correct runs of 3, per question",
-        "Answers right with and without the reading note",
+        "Right answers with and without the reading note",
     ),
-    "K5": (
-        "Group 1, from the scope",
-        "Group 2, method",
-        "Group 3, data and scoring",
-        "Group 4, agent setup",
-        "Group 5, agent version 2 and the plain runs",
-    ),
-    "K6": "Limitations",
     "K7": (
         "OrgOS is a prototype of a system a company would build for itself. It tests one design"
-        " question, a SQL store against a graph store for an AI agent over work data, with a"
-        " frozen eval that checks citations. This page makes no claim that a company wants it"
-        " and, like the conclusion above, names no winner."
+        " question, a SQL store against a graph store for an AI agent over work data, scored by"
+        " a frozen eval that checks citations. This page does not claim that a company wants it,"
+        " and like the conclusion below, it names no winner."
     ),
     "K8": (
-        "The design specs behind this work are kept private. Where a limitation names a spec or"
-        " a note, it points to a document that is not published here."
+        "The design specs behind this work are private. When a limitation names a spec or a"
+        " note, that document is not published here."
     ),
     "K9": (
         "The data is The Public Jira Dataset (Zenodo record 15719919), licensed CC BY 4.0."
@@ -51,6 +43,12 @@ SPEC = {
         " them."
     ),
     "K11": "The findings report marks this drop as untested: no test was run on it.",
+    "K12": (
+        "The findings report's full list of limitations, word for word with their sources, is in ",
+        "results/findings/report.json",
+        " in the public code repository.",
+    ),
+    "K12_url": "https://github.com/ghalynho10/OrgOS/blob/main/results/findings/report.json",
     "L1": (
         "Type",
         "Questions",
@@ -64,7 +62,7 @@ SPEC = {
         "Type",
         "Store",
         "Correct with the note",
-        "Answers right without the note",
+        "Right answers without the note",
         "Runs with a retry",
         "Attempts timed out",
         "Attempts at the row cap",
@@ -105,13 +103,13 @@ def test_constants_equal_the_spec() -> None:
         text.K4_DIFFERENCES,
         text.K4_NOTE,
     )
-    assert SPEC["K5"] == text.K5_GROUPS
-    assert SPEC["K6"] == text.K6_LIMITATIONS
     assert SPEC["K7"] == text.K7_NOT_CLAIMED
     assert SPEC["K8"] == text.K8_PRIVATE_SPECS
     assert SPEC["K9"] == text.K9_CREDIT
     assert SPEC["K10"] == text.K10_ALREADY_PUBLISHED
     assert SPEC["K11"] == text.K11_UNTESTED
+    assert SPEC["K12"] == (text.K12_BEFORE, text.K12_LINK_TEXT, text.K12_AFTER)
+    assert SPEC["K12_url"] == text.K12_URL
     assert SPEC["L1"] == text.L1_RULE
     assert SPEC["L2"] == text.L2_COUNTS
     assert tuple(_spec(value) for value in SPEC["L3"]) == text.L3_ZERO
@@ -122,3 +120,8 @@ def test_constants_equal_the_spec() -> None:
     assert SPEC["L7"] == text.L7_CONTENTS
     assert SPEC["canonical"] == text.CANONICAL_URL
     assert text.K1_TITLE_WORD in SPEC["K1"]
+
+
+def test_retired_constants_are_gone() -> None:
+    assert not hasattr(text, "K5_GROUPS")
+    assert not hasattr(text, "K6_LIMITATIONS")

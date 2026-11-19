@@ -14,8 +14,8 @@ from html import escape
 from typing import Final
 
 from orgos.site import text
-from orgos.site.conclusion import Conclusion, Section, anchor
-from orgos.site.evidence import NOTE_LIMITATION, Count, Evidence, Limitation
+from orgos.site.conclusion import Conclusion, Section
+from orgos.site.evidence import Count, Evidence, Limitation
 
 # The conclusion's own minus sign, U+2212, never a hyphen.
 MINUS: Final = "\N{MINUS SIGN}"
@@ -58,11 +58,29 @@ def _caveat(caveat: str) -> str:
     return f'<p class="caveat">{escape(caveat)}</p>\n'
 
 
-def _limitation(line: Limitation, tag: str, css: str) -> str:
+def inline_code(value: str) -> str:
+    """Escape `value`, turning each pair of backticks into `<code>` (AC-45).
+
+    Backticks pair in order, first with second, third with fourth; an unpaired
+    last backtick stays a literal character.
+    """
+    parts = value.split("`")
+    out = []
+    for number, part in enumerate(parts):
+        if number % 2 == 0:
+            out.append(escape(part))
+        elif number < len(parts) - 1:
+            out.append(f"<code>{escape(part)}</code>")
+        else:
+            out.append(escape(f"`{part}"))
+    return "".join(out)
+
+
+def _limitation(line: Limitation) -> str:
     return (
-        f'<{tag} class="{css}"><span class="lim-id">{escape(line.id)}</span> '
-        f'<span class="lim-text">{escape(line.text)}</span> '
-        f'<span class="lim-source">{escape(line.source)}</span></{tag}>\n'
+        f'<p class="limitation"><span class="lim-id">{inline_code(line.id)}</span> '
+        f'<span class="lim-text">{inline_code(line.text)}</span> '
+        f'<span class="lim-source">{inline_code(line.source)}</span></p>\n'
     )
 
 
@@ -128,16 +146,24 @@ def _section_3(evidence: Evidence, caveat: str) -> str:
 def _section_4(evidence: Evidence, caveat: str) -> str:
     scopes = {"all": text.L5_SCOPES[0], "path_connection": text.L5_SCOPES[1]}
     rows = [(scopes[row.scope], _store(row.store), row.noted, row.plain) for row in evidence.notes]
-    note = next(line for line in evidence.limitations if line.id == NOTE_LIMITATION)
     return (
         _table("note", text.K4_NOTE, text.L5_NOTE, rows)
         + _caveat(caveat)
-        + _limitation(note, "p", "limitation")
+        + _limitation(evidence.note_limitation)
         + _caveat(text.K11_UNTESTED)
     )
 
 
-EVIDENCE: Final = (_section_1, _section_2, _section_3, _section_4)
+def _section_5(evidence: Evidence, caveat: str) -> str:
+    """K12: the link to the report's full list of limitations (AC-12, AC-44)."""
+    return (
+        f'<p class="note">{escape(text.K12_BEFORE)}'
+        f'<a href="{escape(text.K12_URL)}">{escape(text.K12_LINK_TEXT)}</a>'
+        f"{escape(text.K12_AFTER)}</p>\n"
+    )
+
+
+EVIDENCE: Final = (_section_1, _section_2, _section_3, _section_4, _section_5)
 
 
 def _section(section: Section, evidence: str) -> str:
@@ -147,26 +173,8 @@ def _section(section: Section, evidence: str) -> str:
     )
 
 
-def _limitations(evidence: Evidence) -> str:
-    groups = []
-    for number, heading in enumerate(text.K5_GROUPS, start=1):
-        lines = "".join(
-            _limitation(line, "li", "limitation")
-            for line in evidence.limitations
-            if line.group == number
-        )
-        groups.append(f'<h3>{escape(heading)}</h3>\n<ul class="limitations">\n{lines}</ul>\n')
-    heading = text.K6_LIMITATIONS
-    return (
-        f'<section>\n<h2 id="{anchor(heading)}">{escape(heading)}</h2>\n'
-        + "".join(groups)
-        + "</section>\n"
-    )
-
-
 def _contents(conclusion: Conclusion) -> str:
     entries = [(section.anchor, escape(section.heading)) for section in conclusion.sections]
-    entries.append((anchor(text.K6_LIMITATIONS), escape(text.K6_LIMITATIONS)))
     items = "".join(f'<li><a href="#{key}">{label}</a></li>\n' for key, label in entries)
     return (
         '<nav class="toc" aria-labelledby="toc-label">\n'
@@ -219,10 +227,9 @@ def page(conclusion: Conclusion, evidence: Evidence) -> str:
         + '<main class="column">\n'
         + f"<h1>{conclusion.title_html}</h1>\n"
         + byline
+        + f'<p class="note">{escape(text.K7_NOT_CLAIMED)}</p>\n'
         + f'<p class="dek">{escape(conclusion.dek)}</p>\n'
         + sections
-        + _limitations(evidence)
-        + f'<p class="note">{escape(text.K7_NOT_CLAIMED)}</p>\n'
         + f'<p class="note">{escape(text.K8_PRIVATE_SPECS)}</p>\n'
         + "</main>\n</div>\n"
         + '<footer class="band band-bottom"><div class="band-inner">\n'

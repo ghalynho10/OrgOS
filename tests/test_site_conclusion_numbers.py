@@ -55,7 +55,7 @@ def test_section_4_pairs_equal_the_reading_note_table() -> None:
     section = _section(4)
     rows = {(r[0], r[1]): r[2:] for r in tables(page())["table-note"]["rows"]}
     total = re.search(
-        r"from (\d+) to (\d+) of (\d+) \(SQL\) and (\d+) to (\d+) of (\d+) \(graph\)", section
+        r"from (\d+) to (\d+) of (\d+) \(SQL\) and from (\d+) to (\d+) of (\d+) \(graph\)", section
     )
     assert total is not None
     sql_noted, sql_plain, sql_total, graph_noted, graph_plain, graph_total = total.groups()

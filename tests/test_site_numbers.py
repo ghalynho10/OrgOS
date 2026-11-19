@@ -52,3 +52,20 @@ def test_a_count_is_sourced_only_from_its_own_two_fields() -> None:
     assert mixed not in {t for s in _sources() for t in NUMBER.findall(s)}
     scratch = page().replace("</main>", f"<p>{mixed}</p></main>")
     assert unsourced(scratch, _sources()) == (mixed,)
+
+
+def test_only_the_shown_limitation_line_is_a_source() -> None:
+    sourced = {t for s in _sources() for t in NUMBER.findall(s)}
+    others = [line for line in report()["limitations"] if line["id"] != "G2-6"]
+    only_there = sorted(
+        {
+            token
+            for line in others
+            for field in ("id", "text", "source")
+            for token in NUMBER.findall(line[field])
+        }
+        - sourced
+    )
+    assert only_there
+    scratch = page().replace("</main>", f"<p>{only_there[0]}</p></main>")
+    assert unsourced(scratch, _sources()) == (only_there[0],)

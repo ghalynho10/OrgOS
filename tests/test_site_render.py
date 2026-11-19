@@ -6,11 +6,22 @@ The expected cells are read from the report here, by the paths the spec's
 
 import itertools
 import re
+from pathlib import Path
 from typing import Any
 
 from orgos.site import text
+from orgos.site.build import build
+from orgos.site.render import inline_code
 from orgos.site.style import STYLESHEET
-from tests.site_pages import conclusion_text, page, report, report_copy, tables, tree
+from tests.site_pages import (
+    conclusion_text,
+    copy_inputs,
+    page,
+    report,
+    report_copy,
+    tables,
+    tree,
+)
 
 TYPES = ("aggregate", "path_connection", "mixed")
 STORES = ("sql", "graph")
@@ -67,8 +78,9 @@ def test_sections_word_for_word() -> None:
     for section, source in zip(found, _conclusion_sections(), strict=True):
         words = []
         for child in section.children:
-            if not isinstance(child, str) and child.attrs.get("aria-labelledby", "").startswith(
-                "table-"
+            if not isinstance(child, str) and (
+                child.attrs.get("aria-labelledby", "").startswith("table-")
+                or child.attrs.get("class") == "note"
             ):
                 break
             words += (child if isinstance(child, str) else child.text()).split()
@@ -78,23 +90,25 @@ def test_sections_word_for_word() -> None:
 # covers: AC-3
 def test_page_order() -> None:
     html = page()
-    made = report()
     title = "Graph or SQL, and when? Conclusion of Phase 1"
     dek = conclusion_text().strip().splitlines()[-1]
     marks = [
         html.index(f"<p>{text.K1_HEADER}</p>"),
         html.index(f"<h1>{title}</h1>"),
         html.index('<p class="byline">'),
+        html.index(text.K7_NOT_CLAIMED),
         html.index(f'<p class="dek">{dek[:40]}'),
     ]
+    sections = tree(html).all("section")
     for number, heading in enumerate(re.findall(r"(?m)^## (.*)$", conclusion_text())):
         marks.append(html.index(f">{heading}</h2>"))
         for key in (GENERATED[:1], GENERATED[1:3], GENERATED[3:4], GENERATED[4:], (), ())[number]:
             marks.append(html.index(f'id="{key}"'))
+        if number == 4:
+            marks.append(html.index(f'<a href="{text.K12_URL}">'))
+            last = [child for child in sections[4].children if not isinstance(child, str)][-1]
+            assert last.text().startswith(text.K12_BEFORE)
     marks += [
-        html.index(f">{text.K6_LIMITATIONS}</h2>"),
-        html.index(f'<span class="lim-id">{made["limitations"][-1]["id"]}</span>'),
-        html.index(text.K7_NOT_CLAIMED),
         html.index(text.K8_PRIVATE_SPECS),
         html.index('<footer class="band band-bottom">'),
         html.index(text.K9_CREDIT.replace("Lüders", "L")[:30]),
@@ -102,6 +116,8 @@ def test_page_order() -> None:
     ]
     assert marks == sorted(marks)
     assert html.index("</main>") < html.index("<footer")
+    assert len(sections) == 6
+    assert "Limitations</h2>" not in html
 
 
 # covers: AC-4
@@ -250,24 +266,64 @@ def test_g2_6_then_k11_under_the_reading_note_table_only() -> None:
     assert paragraphs[-2] == f"G2-6 {line['text']} {line['source']}"
     assert paragraphs[-1] == text.K11_UNTESTED
     assert html.count(text.K11_UNTESTED) == 1
-    assert html.count('<span class="lim-id">G2-6</span>') == 2
+    assert html.count('<span class="lim-id">G2-6</span>') == 1
 
 
 # covers: AC-12
-def test_limitations_every_line_in_order_under_five_groups() -> None:
-    made = report()
-    limitations = tree(page()).all("section")[6]
-    groups = [h.text() for h in limitations.all("h3")]
-    assert groups == list(text.K5_GROUPS)
-    items = limitations.all("li")
-    assert len(items) == len(made["limitations"])
-    for item, line in zip(items, made["limitations"], strict=True):
-        spans = [s.text() for s in item.all("span")]
-        assert spans == [line["id"], line["text"], line["source"]]
-    lists = limitations.all("ul")
-    for number, block in enumerate(lists, start=1):
-        ids = [li.all("span")[0].text() for li in block.all("li")]
-        assert ids == [line["id"] for line in made["limitations"] if line["group"] == number]
+def test_no_limitation_list() -> None:
+    html = page()
+    shown = [s.text() for s in tree(html).all("span") if s.attrs.get("class") == "lim-id"]
+    assert shown == ["G2-6"]
+    others = [line for line in report()["limitations"] if line["id"] != "G2-6"]
+    assert len(others) > 0
+    visible = tree(html).text()
+    assert not any(line["text"].replace("`", "") in visible for line in others)
+    assert "<h3" not in html
+    assert "Limitations</h2>" not in html
+    contents = [a.text() for a in tree(html).find("nav").all("a")]
+    assert contents == re.findall(r"(?m)^## (.*)$", conclusion_text())
+
+
+def _report_links(html: str) -> list[str]:
+    return [a.attrs.get("href", "") for a in tree(html).all("a") if a.text() == text.K12_LINK_TEXT]
+
+
+# covers: AC-44
+def test_report_link(tmp_path: Path) -> None:
+    html = page()
+    assert _report_links(html) == [
+        "https://github.com/ghalynho10/OrgOS/blob/main/results/findings/report.json"
+    ]
+    assert html.count(text.K12_URL) == 1
+    without = html.replace(f'<a href="{text.K12_URL}">', "<a>")
+    assert _report_links(without) != [text.K12_URL]
+    root = copy_inputs(tmp_path)
+    build(root, accept=False)
+    assert (root / "results/findings/report.json").is_file()
+    assert _report_links((root / "site/index.html").read_text(encoding="utf-8")) == [text.K12_URL]
+
+
+def _with_g2_6(line_text: str) -> str:
+    made = report_copy()
+    line = next(item for item in made["limitations"] if item["id"] == "G2-6")
+    line["text"] = line_text
+    return page(made=made)
+
+
+# covers: AC-45
+def test_inline_code() -> None:
+    assert inline_code("a `b` c") == "a <code>b</code> c"
+    assert inline_code("a `b") == "a `b"
+    assert inline_code("`x` and `y` then `z") == "<code>x</code> and <code>y</code> then `z"
+    assert inline_code("<a> & `<b>`") == "&lt;a&gt; &amp; <code>&lt;b&gt;</code>"
+    paired = tree(_with_g2_6("see `orgos eval report` here")).all("p")
+    line = next(p for p in paired if p.attrs.get("class") == "limitation")
+    codes = line.all("code")
+    assert [c.text() for c in codes] == ["orgos eval report"]
+    single = tree(_with_g2_6("one ` backtick")).all("p")
+    line = next(p for p in single if p.attrs.get("class") == "limitation")
+    assert line.all("code") == []
+    assert "one ` backtick" in line.text()
 
 
 # covers: AC-14
@@ -346,6 +402,12 @@ def test_no_script_and_no_other_host() -> None:
     assert "cookie" not in html.lower()
     urls = re.findall(r'(?:href|src|content)="(https?://[^"]+)"', html)
     assert sorted(urls) == sorted(
-        [text.CANONICAL_URL, text.CANONICAL_URL, text.K2_AUTHOR_URL, text.K2_CODE_URL]
+        [
+            text.CANONICAL_URL,
+            text.CANONICAL_URL,
+            text.K2_AUTHOR_URL,
+            text.K2_CODE_URL,
+            text.K12_URL,
+        ]
     )
     assert "url(" not in STYLESHEET and "@import" not in STYLESHEET

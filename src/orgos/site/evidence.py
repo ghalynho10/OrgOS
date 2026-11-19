@@ -20,8 +20,7 @@ STORES: Final = ("sql", "graph")
 SCHEMA_VERSION: Final = 1
 RULE_PREFIX: Final = "noted, full form, "
 NOTE_SCOPE_TYPE: Final = "path_connection"
-GROUPS: Final = 5
-# The limitation line shown under the reading note table (AC-33).
+# The one limitation line the page shows, under the reading note table (AC-12, AC-33).
 NOTE_LIMITATION: Final = "G2-6"
 
 
@@ -103,7 +102,6 @@ class Limitation:
     """One line of the report's `limitations` array."""
 
     id: str
-    group: int
     text: str
     source: str
 
@@ -118,7 +116,7 @@ class Evidence:
     zero_questions: tuple[str, ...]
     differences: tuple[DifferenceRow, ...]
     notes: tuple[NoteRow, ...]
-    limitations: tuple[Limitation, ...]
+    note_limitation: Limitation
 
     def texts(self) -> tuple[str, ...]:
         """Every value the page reads, as text, for the numbers check (AC-9).
@@ -145,8 +143,8 @@ class Evidence:
             values += [difference.question, difference.difference]
         for note in self.notes:
             values += _count_texts(note.noted, note.plain)
-        for limitation in self.limitations:
-            values += [limitation.id, limitation.group, limitation.text, limitation.source]
+        line = self.note_limitation
+        values += [line.id, line.text, line.source]
         return tuple(str(value) for value in values)
 
 
@@ -254,25 +252,17 @@ def _zero_questions(report: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(_str(questions, index) for index in range(2))
 
 
-def _limitations(report: Mapping[str, Any]) -> tuple[Limitation, ...]:
+def _note_limitation(report: Mapping[str, Any]) -> Limitation:
+    """The `G2-6` entry only; the rest of the list is reached through the K12 link (AC-12)."""
     lines = _field(report, "limitations")
     if not isinstance(lines, list):
         raise SiteError("the findings report field ['limitations'] is not a list")
-    made = tuple(
-        Limitation(
-            _str(lines, index, "id"),
-            _int(lines, index, "group"),
-            _str(lines, index, "text"),
-            _str(lines, index, "source"),
-        )
-        for index in range(len(lines))
-    )
-    outside = [line.id for line in made if not 1 <= line.group <= GROUPS]
-    if outside:
-        raise SiteError(f"limitations outside the five groups: {', '.join(outside)}")
-    if NOTE_LIMITATION not in {line.id for line in made}:
-        raise SiteError(f"the findings report has no limitation {NOTE_LIMITATION} (AC-33)")
-    return made
+    for index, line in enumerate(lines):
+        if isinstance(line, dict) and line.get("id") == NOTE_LIMITATION:
+            return Limitation(
+                NOTE_LIMITATION, _str(lines, index, "text"), _str(lines, index, "source")
+            )
+    raise SiteError(f"the findings report has no limitation {NOTE_LIMITATION} (AC-33)")
 
 
 def evidence(report: Mapping[str, Any]) -> Evidence:
@@ -354,5 +344,5 @@ def evidence(report: Mapping[str, Any]) -> Evidence:
         zero_questions=zero_questions,
         differences=differences,
         notes=tuple(notes),
-        limitations=_limitations(report),
+        note_limitation=_note_limitation(report),
     )

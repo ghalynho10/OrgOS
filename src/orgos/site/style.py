@@ -97,8 +97,7 @@ thead tr, tbody tr {{ background: {PAGE}; }}
 tbody tr:nth-child(even) {{ background: {STRIPE}; }}
 th:first-child, td:first-child {{ position: sticky; left: 0; background: inherit; }}
 .caveat {{ font-size: 14px; color: {MUTED}; margin: 10px 0 2em; }}
-.limitations {{ padding-left: 0; list-style: none; }}
-.limitations li, .limitation {{ margin: 0 0 1em; }}
+.limitation {{ margin: 0 0 1em; }}
 .lim-id {{ font-weight: 600; color: {HEADING}; }}
 .lim-source {{ display: block; font-size: 16px; color: {MUTED}; }}
 .note {{ color: {MUTED}; }}

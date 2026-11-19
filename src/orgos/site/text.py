@@ -1,9 +1,10 @@
 """Every word the page adds to the conclusion and the report (spec 0016, *Page text*).
 
-The constants K1 to K11 and the labels L1 to L7 are copied from the spec; a test
-pins each one to the spec's string (AC-13). Text in angle brackets in the spec is
-filled at build time, marked here by `{questions}`. K3 is not here: it is taken
-from the conclusion at build time.
+The constants K1 to K4 and K7 to K12 and the labels L1 to L7 are copied from the
+spec; a test pins each one to the spec's string (AC-13). K5 and K6 are retired
+(amended 2026-11-18). Text in angle brackets in the spec is filled at build time,
+marked here by `{questions}`. K3 is not here: it is taken from the conclusion at
+build time.
 """
 
 from __future__ import annotations
@@ -19,27 +20,19 @@ K2_AUTHOR_URL: Final = "https://github.com/ghalynho10"
 K2_CODE: Final = "Code and eval: github.com/ghalynho10/OrgOS"
 K2_CODE_URL: Final = "https://github.com/ghalynho10/OrgOS"
 K4_RULE: Final = "The frozen rule, by question type, with the smallest p each type could have given"
-K4_COUNTS: Final = "Correct runs and answers right, by question type and store"
-K4_ZERO: Final = "Answers right with and without the two zero answer questions, {questions}"
+K4_COUNTS: Final = "Correct runs and right answers, by question type and store"
+K4_ZERO: Final = "Right answers with and without the two zero answer questions, {questions}"
 K4_DIFFERENCES: Final = "Graph minus SQL, correct runs of 3, per question"
-K4_NOTE: Final = "Answers right with and without the reading note"
-K5_GROUPS: Final = (
-    "Group 1, from the scope",
-    "Group 2, method",
-    "Group 3, data and scoring",
-    "Group 4, agent setup",
-    "Group 5, agent version 2 and the plain runs",
-)
-K6_LIMITATIONS: Final = "Limitations"
+K4_NOTE: Final = "Right answers with and without the reading note"
 K7_NOT_CLAIMED: Final = (
     "OrgOS is a prototype of a system a company would build for itself. It tests one design"
-    " question, a SQL store against a graph store for an AI agent over work data, with a frozen"
-    " eval that checks citations. This page makes no claim that a company wants it and, like the"
-    " conclusion above, names no winner."
+    " question, a SQL store against a graph store for an AI agent over work data, scored by a"
+    " frozen eval that checks citations. This page does not claim that a company wants it, and"
+    " like the conclusion below, it names no winner."
 )
 K8_PRIVATE_SPECS: Final = (
-    "The design specs behind this work are kept private. Where a limitation names a spec or a"
-    " note, it points to a document that is not published here."
+    "The design specs behind this work are private. When a limitation names a spec or a note,"
+    " that document is not published here."
 )
 K9_CREDIT: Final = (
     "The data is The Public Jira Dataset (Zenodo record 15719919), licensed CC BY 4.0."
@@ -53,6 +46,13 @@ K10_ALREADY_PUBLISHED: Final = (
     " history, which are already public in the dataset. This page repeats none of them."
 )
 K11_UNTESTED: Final = "The findings report marks this drop as untested: no test was run on it."
+# K12 is a sentence around one link to the report's full list of limitations (AC-44).
+K12_BEFORE: Final = (
+    "The findings report's full list of limitations, word for word with their sources, is in "
+)
+K12_LINK_TEXT: Final = "results/findings/report.json"
+K12_AFTER: Final = " in the public code repository."
+K12_URL: Final = "https://github.com/ghalynho10/OrgOS/blob/main/results/findings/report.json"
 
 L1_RULE: Final = (
     "Type",
@@ -67,7 +67,7 @@ L2_COUNTS: Final = (
     "Type",
     "Store",
     "Correct with the note",
-    "Answers right without the note",
+    "Right answers without the note",
     "Runs with a retry",
     "Attempts timed out",
     "Attempts at the row cap",
@@ -99,13 +99,14 @@ ALL_TEXT: Final = (
     K4_ZERO,
     K4_DIFFERENCES,
     K4_NOTE,
-    *K5_GROUPS,
-    K6_LIMITATIONS,
     K7_NOT_CLAIMED,
     K8_PRIVATE_SPECS,
     K9_CREDIT,
     K10_ALREADY_PUBLISHED,
     K11_UNTESTED,
+    K12_BEFORE,
+    K12_LINK_TEXT,
+    K12_AFTER,
     *L1_RULE,
     *L2_COUNTS,
     *L3_ZERO,

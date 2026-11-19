@@ -61,8 +61,7 @@ thead tr, tbody tr { background: #FFFFFF; }
 tbody tr:nth-child(even) { background: #F5F5F5; }
 th:first-child, td:first-child { position: sticky; left: 0; background: inherit; }
 .caveat { font-size: 14px; color: #3A4848; margin: 10px 0 2em; }
-.limitations { padding-left: 0; list-style: none; }
-.limitations li, .limitation { margin: 0 0 1em; }
+.limitation { margin: 0 0 1em; }
 .lim-id { font-weight: 600; color: #090C0C; }
 .lim-source { display: block; font-size: 16px; color: #3A4848; }
 .note { color: #3A4848; }
