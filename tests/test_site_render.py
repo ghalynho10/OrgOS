@@ -9,8 +9,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from orgos.site import text
 from orgos.site.build import build
+from orgos.site.conclusion import anchor, caveat_sentences
 from orgos.site.render import inline_code
 from orgos.site.style import STYLESHEET
 from tests.site_pages import (
@@ -417,3 +420,50 @@ def test_no_script_and_no_other_host() -> None:
         ]
     )
     assert "url(" not in STYLESHEET and "@import" not in STYLESHEET
+
+
+# Page chrome (spec 0016 Value sourcing): the contents list and the heading anchors
+def test_every_contents_link_lands_on_its_heading_2() -> None:
+    root = tree(page())
+    links = [(a.attrs["href"], a.text()) for a in root.find("nav").all("a")]
+    targets = {h2.attrs["id"]: h2.text() for h2 in root.all("h2")}
+    headings = re.findall(r"(?m)^## (.*)$", conclusion_text())
+    assert [label for _, label in links] == headings
+    for href, label in links:
+        assert href.startswith("#")
+        assert targets[href[1:]] == label
+        assert href[1:] == re.sub(r"[^0-9a-z]+", "-", label.lower()).strip("-")
+    assert len(set(targets)) == len(targets)
+
+
+@pytest.mark.parametrize(
+    ("heading", "expected"),
+    [
+        ("6. Graph or SQL, and when?", "6-graph-or-sql-and-when"),
+        ("  Two   spaces --- and dashes  ", "two-spaces-and-dashes"),
+        ("Lüders & Co.", "l-ders-co"),
+        ("???", ""),
+    ],
+)
+def test_anchor_lower_cases_and_turns_each_run_of_other_characters_into_one_dash(
+    heading: str, expected: str
+) -> None:
+    assert anchor(heading) == expected
+
+
+# covers: AC-10, AC-34 (where a sentence ends)
+@pytest.mark.parametrize(
+    ("paragraph", "expected"),
+    [
+        ("One. Two. Three.", "One. Two."),
+        ("One is 0.5 here. Two ends the text.", "One is 0.5 here. Two ends the text."),
+        ("One (Q04.) two. Three. Four.", "One (Q04.) two. Three."),
+        ("Only one sentence.", None),
+        ("No full stop at all", None),
+    ],
+    ids=["three", "decimal", "stop_then_bracket", "one", "none"],
+)
+def test_caveat_sentences_end_at_a_full_stop_followed_by_a_space(
+    paragraph: str, expected: str | None
+) -> None:
+    assert caveat_sentences(paragraph) == expected

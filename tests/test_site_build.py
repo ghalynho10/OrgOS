@@ -1,6 +1,8 @@
 """`orgos site build`: its inputs, its outputs and every refusal (spec 0016)."""
 
+import copy
 import json
+import re
 import socket
 from pathlib import Path
 from typing import Any
@@ -11,7 +13,7 @@ from typer.testing import CliRunner
 from orgos.cli import EXIT_CODES, app, run
 from orgos.site import SiteError
 from orgos.site.build import build, check
-from tests.site_pages import conclusion_text, report_copy
+from tests.site_pages import conclusion_text, copy_inputs, page, report_copy
 
 CAVEAT = (
     "For none of the three question types could the test tell whether graph or SQL did better."
@@ -161,3 +163,111 @@ def test_check_fails_naming_a_changed_page(tmp_path: Path) -> None:
     page.write_text(page.read_text(encoding="utf-8").replace("<h1>", "<h1> "), encoding="utf-8")
     with pytest.raises(SiteError, match=r"site/index\.html differs from a regeneration"):
         check(root)
+
+
+# covers: AC-8
+def test_check_fails_naming_a_changed_stylesheet(tmp_path: Path) -> None:
+    root = copy_inputs(tmp_path, docs=False)
+    style = root / "site/style.css"
+    style.write_text(style.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    with pytest.raises(SiteError, match=r"site/style\.css differs from a regeneration") as failed:
+        check(root)
+    assert "site/index.html differs" not in str(failed.value)
+
+
+def _second_h2_dropped(text: str) -> str:
+    return text.replace("\n## 2. ", "\n", 1)
+
+
+# covers: AC-2, AC-3, AC-4 (the six sections are what the tables hang from)
+@pytest.mark.parametrize(
+    ("change", "named"),
+    [
+        (lambda t: t.replace("# ", "Intro\n\n# ", 1), "does not start with a heading 1"),
+        (_second_h2_dropped, "has 5 heading 2 sections, not 6"),
+        (lambda t: t + "\n## 7. Extra\n\nMore.\n", "has 7 heading 2 sections, not 6"),
+        (lambda t: t.replace("\n## 1. ", "\nA line.\n\n## 1. ", 1), "text between its title"),
+        (lambda t: t + "\n# Another title\n", "second heading 1"),
+    ],
+    ids=["no_h1_first", "five_sections", "seven_sections", "text_before_section_1", "second_h1"],
+)
+def test_build_refuses_a_conclusion_out_of_shape_and_writes_nothing(
+    tmp_path: Path, change: Any, named: str
+) -> None:
+    changed = change(conclusion_text())
+    assert changed != conclusion_text()
+    with pytest.raises(SiteError, match=re.escape(named)):
+        build(_root(tmp_path, conclusion=changed), accept=True)
+    assert not (tmp_path / "site").exists()
+
+
+def _primary(made: Any, kind: str) -> Any:
+    return next(t for t in made["tests"]["full form"] if t["name"] == f"noted, full form, {kind}")
+
+
+def _drop_g2_6(made: Any) -> None:
+    made["limitations"] = [line for line in made["limitations"] if line["id"] != "G2-6"]
+
+
+def _drop_sql_beside(made: Any) -> None:
+    beside = made["plain"]["noted_beside_plain"]["mixed"]
+    made["plain"]["noted_beside_plain"]["mixed"] = [e for e in beside if e["store"] != "sql"]
+
+
+def _correct_as_text(made: Any) -> None:
+    agent = made["tables"]["full form"]["graph"]["aggregate"]["agent"]
+    agent["correct"] = str(agent["correct"])
+
+
+# covers: AC-4 (each cell from its one named field, or a named refusal)
+@pytest.mark.parametrize(
+    ("change", "named"),
+    [
+        (
+            lambda r: r["tests"]["full form"].append(copy.deepcopy(_primary(r, "mixed"))),
+            "two primary rule entries for mixed",
+        ),
+        (lambda r: _primary(r, "aggregate").update(role="secondary"), "no primary rule entry"),
+        (_drop_g2_6, "no limitation G2-6 (AC-33)"),
+        (_drop_sql_beside, "noted_beside_plain['mixed'] has 0 entries for sql, not 1"),
+        (_correct_as_text, "is not a whole number"),
+        (lambda r: r.pop("zero_answer_questions"), "no field ['zero_answer_questions']"),
+    ],
+    ids=["two_primary", "no_primary", "no_g2_6", "store_missing", "count_as_text", "field_gone"],
+)
+def test_build_refuses_a_report_field_it_cannot_read_and_writes_nothing(
+    tmp_path: Path, change: Any, named: str
+) -> None:
+    made = report_copy()
+    change(made)
+    with pytest.raises(SiteError, match=re.escape(named)):
+        build(_root(tmp_path, made), accept=True)
+    assert not (tmp_path / "site").exists()
+
+
+# covers: AC-4 (the rule table reads the noted primary entries only)
+def test_the_rule_table_ignores_entries_that_are_not_noted_and_primary() -> None:
+    made = report_copy()
+    for entry in made["tests"]["full form"]:
+        if entry["role"] != "primary":
+            entry.update(n=99, m=98, graph_ahead=97, sql_ahead=96)
+    plain = next(t for t in made["tests"]["full form"] if t["name"] == "plain, full form, mixed")
+    plain["role"] = "primary"
+    assert page(made=made) == page()
+
+
+def test_build_names_a_missing_report_and_the_command_that_makes_it(tmp_path: Path) -> None:
+    root = _root(tmp_path)
+    (root / "results/findings/report.json").unlink()
+    with pytest.raises(
+        SiteError, match=r"results/findings/report\.json is missing; run `orgos eval report` first"
+    ):
+        build(root, accept=True)
+    assert not (root / "site").exists()
+
+
+def test_build_names_a_missing_conclusion(tmp_path: Path) -> None:
+    root = _root(tmp_path)
+    (root / "docs/findings/conclusion.md").unlink()
+    with pytest.raises(SiteError, match=r"docs/findings/conclusion\.md is missing"):
+        build(root, accept=True)
