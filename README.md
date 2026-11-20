@@ -33,6 +33,8 @@ This conclusion is about this project only. The counts were close, and where one
 - With a reading note defining each question's terms, both stores were fully correct in 52 of 60 runs. Without it, the answer was right in 47 of 60 runs (SQL) and 44 of 60 (graph), against 59 and 57 with it.
 - Limits: 20 questions; the graph was built from tables designed in SQL; one model on default settings; one Jira dataset.
 
+Read the full conclusion, with its evidence tables, on the [results page](https://ghalynho10.github.io/OrgOS/).
+
 ## How it fits together
 
 ```
