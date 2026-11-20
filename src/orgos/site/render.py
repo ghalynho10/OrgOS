@@ -185,17 +185,17 @@ def _contents(conclusion: Conclusion) -> str:
 
 def _head(conclusion: Conclusion) -> str:
     title = escape(conclusion.title)
-    dek = escape(conclusion.dek)
+    description = escape(text.K7_NOT_CLAIMED)
     url = escape(text.CANONICAL_URL)
     return (
         "<head>\n"
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f"<title>{title} | {escape(text.K1_TITLE_WORD)}</title>\n"
-        f'<meta name="description" content="{dek}">\n'
+        f'<meta name="description" content="{description}">\n'
         f'<link rel="canonical" href="{url}">\n'
         f'<meta property="og:title" content="{title}">\n'
-        f'<meta property="og:description" content="{dek}">\n'
+        f'<meta property="og:description" content="{description}">\n'
         f'<meta property="og:url" content="{url}">\n'
         '<link rel="stylesheet" href="style.css">\n'
         "</head>\n"
@@ -228,7 +228,6 @@ def page(conclusion: Conclusion, evidence: Evidence) -> str:
         + f"<h1>{conclusion.title_html}</h1>\n"
         + byline
         + f'<p class="note">{escape(text.K7_NOT_CLAIMED)}</p>\n'
-        + f'<p class="dek">{escape(conclusion.dek)}</p>\n'
         + sections
         + f'<p class="note">{escape(text.K8_PRIVATE_SPECS)}</p>\n'
         + "</main>\n</div>\n"

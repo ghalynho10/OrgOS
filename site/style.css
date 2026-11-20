@@ -4,11 +4,12 @@ body {
   margin: 0;
   background: #FFFFFF;
   color: #212A2A;
-  font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  font-family: Charter, "Iowan Old Style", Georgia, serif;
   font-size: 17px;
-  line-height: 1.7;
+  line-height: 1.6;
   overflow-wrap: break-word;
 }
+h1, h2, h3, th, .band, .toc { font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; }
 a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 :focus-visible { outline: 2px solid #090C0C; outline-offset: 2px; }
 .band { background: #072B33; color: #FFFFFF; padding: 0 16px; }
@@ -25,12 +26,17 @@ a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .toc { display: none; }
 h1, h2, h3 { color: #090C0C; font-weight: 600; line-height: 1.2; }
 h1 { font-size: 46px; margin: 1em 0 0.4em; }
-h2 { font-size: 30px; margin: 60px 0 20px; }
+h2 {
+  font-size: 36px;
+  margin: 60px 0 20px;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid #E3E4E4;
+}
 h3 { font-size: 21px; margin: 2em 0 0.5em; }
 p, ul, ol { margin: 0 0 1em; }
 .byline { color: #3A4848; }
-.dek { font-size: 20px; font-weight: 400; color: #212A2A; }
 .scroll { overflow-x: auto; margin: 2em 0 0; container-type: inline-size; }
+.scroll + * { margin-top: 2em; }
 table {
   border-collapse: separate;
   border-spacing: 0;

@@ -1,8 +1,9 @@
 """The page's stylesheet, written from the design tokens of spec 0016 (*Page design*).
 
 One 645px text column, flat striped tables that scroll inside their box with a
-sticky first column, a dark header and footer band, the system sans stack for
-words and the system mono stack for data, and no colour on data (AC-20, AC-47).
+sticky first column, a dark header and footer band, the system serif stack for
+body text, the system sans stack for headings, table heads, the bands and the
+contents list, the system mono stack for data, and no colour on data (AC-20, AC-47).
 The tokens are constants so a test can compute the contrast of every text and
 background pair (AC-38).
 """
@@ -23,6 +24,7 @@ COLUMN_PX: Final = 645
 TOC_FROM_PX: Final = 1100
 FONT: Final = '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif'
 MONO: Final = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace'
+SERIF: Final = 'Charter, "Iowan Old Style", Georgia, serif'
 
 # Every text colour against every background it is drawn on.
 TEXT_PAIRS: Final = (
@@ -42,11 +44,12 @@ body {{
   margin: 0;
   background: {PAGE};
   color: {TEXT};
-  font-family: {FONT};
+  font-family: {SERIF};
   font-size: 17px;
-  line-height: 1.7;
+  line-height: 1.6;
   overflow-wrap: break-word;
 }}
+h1, h2, h3, th, .band, .toc {{ font-family: {FONT}; }}
 a {{ color: inherit; text-decoration: underline; text-underline-offset: 2px; }}
 :focus-visible {{ outline: 2px solid {HEADING}; outline-offset: 2px; }}
 .band {{ background: {BAND}; color: {BAND_TEXT}; padding: 0 16px; }}
@@ -63,12 +66,17 @@ a {{ color: inherit; text-decoration: underline; text-underline-offset: 2px; }}
 .toc {{ display: none; }}
 h1, h2, h3 {{ color: {HEADING}; font-weight: 600; line-height: 1.2; }}
 h1 {{ font-size: 46px; margin: 1em 0 0.4em; }}
-h2 {{ font-size: 30px; margin: 60px 0 20px; }}
+h2 {{
+  font-size: 36px;
+  margin: 60px 0 20px;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid {HAIRLINE};
+}}
 h3 {{ font-size: 21px; margin: 2em 0 0.5em; }}
 p, ul, ol {{ margin: 0 0 1em; }}
 .byline {{ color: {MUTED}; }}
-.dek {{ font-size: 20px; font-weight: 400; color: {TEXT}; }}
 .scroll {{ overflow-x: auto; margin: 2em 0 0; container-type: inline-size; }}
+.scroll + * {{ margin-top: 2em; }}
 table {{
   border-collapse: separate;
   border-spacing: 0;

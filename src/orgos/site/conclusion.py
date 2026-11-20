@@ -1,10 +1,10 @@
-"""The conclusion's markdown, read into its title, six sections, dek and caveat (spec 0016).
+"""The conclusion's markdown, read into its title, six sections and caveat (spec 0016).
 
 Pure: it parses `site/conclusion.md` with `markdown-it-py` (CommonMark with the
 table rule on, raw HTML off) and renders each section unchanged, adding only
 markup: an anchor on each heading 2, `scope="col"` on each header cell, and a
-named, focusable scroll box around each table (AC-22, AC-37). The dek and the
-caveat sentences are taken from the text, never typed (AC-3, AC-10, AC-34).
+named, focusable scroll box around each table (AC-22, AC-37). The caveat
+sentences are taken from the text, never typed (AC-10, AC-34).
 """
 
 from __future__ import annotations
@@ -23,7 +23,6 @@ from orgos.site import SiteError
 SECTIONS: Final = 6
 CAVEAT_START: Final = "For none of the three question types"
 CAVEAT_SECTION: Final = 0
-DEK_SECTION: Final = 5
 SENTENCE_END: Final = re.compile(r"\.(?: |$)")
 NOT_ANCHOR: Final = re.compile(r"[^0-9a-z]+")
 
@@ -45,7 +44,6 @@ class Conclusion:
     title: str
     title_html: str
     sections: tuple[Section, ...]
-    dek: str
     caveat: str
 
 
@@ -148,9 +146,6 @@ def conclusion(text: str) -> Conclusion:
                 body_html=_render_body(md, body, heading),
             )
         )
-    dek = _first_paragraph(bodies[DEK_SECTION])
-    if dek is None:
-        raise SiteError("section 6 of the conclusion has no paragraph for the dek")
     paragraph = _first_paragraph(bodies[CAVEAT_SECTION], CAVEAT_START)
     caveat = caveat_sentences(paragraph) if paragraph is not None else None
     if caveat is None:
@@ -162,6 +157,5 @@ def conclusion(text: str) -> Conclusion:
         title=plain_text(title_inline),
         title_html=md.renderer.render(title_inline.children or [], md.options, {}),
         sections=tuple(sections),
-        dek=dek,
         caveat=caveat,
     )

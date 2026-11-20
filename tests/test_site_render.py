@@ -91,13 +91,12 @@ def test_sections_word_for_word() -> None:
 def test_page_order() -> None:
     html = page()
     title = "Graph or SQL, and when? Conclusion of Phase 1"
-    dek = conclusion_text().strip().splitlines()[-1]
+    assert 'class="dek"' not in html
     marks = [
         html.index(f"<p>{text.K1_HEADER}</p>"),
         html.index(f"<h1>{title}</h1>"),
         html.index('<p class="byline">'),
-        html.index(text.K7_NOT_CLAIMED),
-        html.index(f'<p class="dek">{dek[:40]}'),
+        html.index(f'<p class="note">{text.K7_NOT_CLAIMED}'),
     ]
     sections = tree(html).all("section")
     for number, heading in enumerate(re.findall(r"(?m)^## (.*)$", conclusion_text())):
@@ -393,14 +392,11 @@ def test_head() -> None:
     html = page()
     head = html[: html.index("</head>")]
     title = "Graph or SQL, and when? Conclusion of Phase 1"
-    dek = tree(html).all("p")
-    dek_text = next(p.text() for p in dek if p.attrs.get("class") == "dek")
-    assert dek_text.startswith("This conclusion is about this project only.")
     assert f"<title>{title} | OrgOS</title>" in head
     root = tree(head)
     metas = {m.attrs.get("name") or m.attrs.get("property"): m.attrs for m in root.all("meta")}
-    assert metas["description"]["content"] == dek_text
-    assert metas["og:description"]["content"] == dek_text
+    assert metas["description"]["content"] == text.K7_NOT_CLAIMED
+    assert metas["og:description"]["content"] == text.K7_NOT_CLAIMED
     assert metas["og:title"]["content"] == title
     assert '<link rel="canonical" href="https://ghalynho10.github.io/OrgOS/">' in head
 

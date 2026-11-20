@@ -23,7 +23,7 @@ def _contrast(foreground: str, background: str) -> float:
 # covers: AC-20
 def test_the_stylesheet_holds_the_layout_tokens() -> None:
     assert ".column { max-width: 645px;" in STYLESHEET
-    assert "font-size: 17px;\n  line-height: 1.7;" in STYLESHEET
+    assert f"font-family: {style.SERIF};\n  font-size: 17px;\n  line-height: 1.6;" in STYLESHEET
     assert "text-underline-offset: 2px" in STYLESHEET
     assert "border-bottom: 2px solid #090C0C;" in STYLESHEET
     assert "border-bottom: 1px solid #E3E4E4;" in STYLESHEET
@@ -32,7 +32,14 @@ def test_the_stylesheet_holds_the_layout_tokens() -> None:
     assert ".scroll { overflow-x: auto;" in STYLESHEET
     assert 'font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;' in STYLESHEET
     assert "h1 { font-size: 46px;" in STYLESHEET
-    assert "h2 { font-size: 30px; margin: 60px 0 20px; }" in STYLESHEET
+    assert (
+        "h2 {\n"
+        "  font-size: 36px;\n"
+        "  margin: 60px 0 20px;\n"
+        "  padding-bottom: 0.4em;\n"
+        "  border-bottom: 1px solid #E3E4E4;\n"
+        "}"
+    ) in STYLESHEET
     assert "h3 { font-size: 21px; margin: 2em 0 0.5em; }" in STYLESHEET
     assert ".band { background: #072B33; color: #FFFFFF;" in STYLESHEET
     assert "height: 60px" in STYLESHEET
@@ -53,12 +60,21 @@ def test_the_stylesheet_holds_the_layout_tokens() -> None:
         "th:first-child, td:first-child { position: sticky; left: 0; background: inherit; }\n"
         "th:first-child, td:first-child { border-right: 1px solid #E3E4E4; }"
     ) in STYLESHEET
-    assert ".dek { font-size: 20px; font-weight: 400; color: #212A2A; }" in STYLESHEET
+    assert ".dek" not in STYLESHEET
     assert "  padding-top: 12px;\n  color: #212A2A;\n}" in STYLESHEET
     assert (
         '.lim-id { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;'
         " font-size: 15px; color: #090C0C; }"
     ) in STYLESHEET
+
+
+# covers: AC-50
+def test_spacing_2em_after_every_table() -> None:
+    after_table = ".scroll + * { margin-top: 2em; }"
+    caveat = ".caveat { font-size: 14px; color: #3A4848; margin: 10px 0 2em; }"
+    assert after_table in STYLESHEET
+    assert caveat in STYLESHEET
+    assert STYLESHEET.index(after_table) < STYLESHEET.index(caveat)
 
 
 def _rules(css: str) -> list[tuple[str, str]]:
@@ -85,10 +101,13 @@ def test_font_weight_600_only_on_headings_and_table_heads() -> None:
 
 
 # covers: AC-47
-def test_mono_only_on_cells_and_the_limitation_id() -> None:
+def test_fonts_serif_body_sans_headings_mono_data() -> None:
     rules = _rules(STYLESHEET)
     assert {selector for selector, body in rules if style.MONO in body} == {"td", ".lim-id"}
-    assert style.FONT in dict(rules)["body"]
+    assert {selector for selector, body in rules if style.FONT in body} == {
+        "h1, h2, h3, th, .band, .toc"
+    }
+    assert {selector for selector, body in rules if style.SERIF in body} == {"body"}
 
 
 DENIED = re.compile(
