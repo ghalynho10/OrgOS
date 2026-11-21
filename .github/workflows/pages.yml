@@ -1,0 +1,58 @@
+# The public results page (spec 0016): check the committed page against the
+# report and the scan, then publish only index.html and style.css to GitHub
+# Pages. The check runs before anything is staged, so a page that differs
+# from a regeneration, or holds an email or a list name, is never deployed.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "results/findings/report.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a running deployment is left to finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.11.32"
+
+jobs:
+  build:
+    name: Check and stage the page
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run orgos site check
+      # Only the page and its stylesheet are published; site/conclusion.md stays in the repo.
+      - run: |
+          mkdir _site
+          cp site/index.html site/style.css _site/
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

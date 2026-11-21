@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graph or SQL, and when? Conclusion of Phase 1 | OrgOS</title>
+<meta name="description" content="OrgOS is a prototype of a system a company would build for itself. It tests one design question, a SQL store against a graph store for an AI agent over work data, scored by a frozen eval that checks citations. This page does not claim that a company wants it, and like the conclusion below, it names no winner.">
+<link rel="canonical" href="https://ghalynho10.github.io/OrgOS/">
+<meta property="og:title" content="Graph or SQL, and when? Conclusion of Phase 1">
+<meta property="og:description" content="OrgOS is a prototype of a system a company would build for itself. It tests one design question, a SQL store against a graph store for an AI agent over work data, scored by a frozen eval that checks citations. This page does not claim that a company wants it, and like the conclusion below, it names no winner.">
+<meta property="og:url" content="https://ghalynho10.github.io/OrgOS/">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="band band-top"><div class="band-inner"><p>OrgOS · Phase 1 result</p></div></header>
+<div class="layout">
+<nav class="toc" aria-labelledby="toc-label">
+<p id="toc-label" class="toc-label">On this page</p>
+<ul>
+<li><a href="#1-what-the-frozen-rule-said">1. What the frozen rule said</a></li>
+<li><a href="#2-what-i-expected-and-what-happened">2. What I expected, and what happened</a></li>
+<li><a href="#3-the-questions-where-the-stores-differed">3. The questions where the stores differed</a></li>
+<li><a href="#4-what-the-plain-runs-add">4. What the plain runs add</a></li>
+<li><a href="#5-how-far-this-reaches">5. How far this reaches</a></li>
+<li><a href="#6-graph-or-sql-and-when">6. Graph or SQL, and when?</a></li>
+</ul>
+</nav>
+<main class="column">
+<h1>Graph or SQL, and when? Conclusion of Phase 1</h1>
+<p class="byline"><a href="https://github.com/ghalynho10">Ghaly Nicolas Jules</a><br>
+<a href="https://github.com/ghalynho10/OrgOS">Code and eval: github.com/ghalynho10/OrgOS</a></p>
+<p class="note">OrgOS is a prototype of a system a company would build for itself. It tests one design question, a SQL store against a graph store for an AI agent over work data, scored by a frozen eval that checks citations. This page does not claim that a company wants it, and like the conclusion below, it names no winner.</p>
+<section>
+<h2 id="1-what-the-frozen-rule-said">1. What the frozen rule said</h2>
+<p>The rule, fixed before the full runs, tested each question type for a real gap between the stores. All three tests read &quot;did not detect a gap&quot;:</p>
+<div class="scroll" tabindex="0" role="region" aria-label="1. What the frozen rule said">
+<table aria-label="1. What the frozen rule said">
+<thead>
+<tr>
+<th scope="col">Type</th>
+<th scope="col">Questions</th>
+<th scope="col">Untied</th>
+<th scope="col">Graph ahead</th>
+<th scope="col">SQL ahead</th>
+<th scope="col">p</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aggregate</td>
+<td>7</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>path_connection</td>
+<td>7</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>7/8</td>
+</tr>
+<tr>
+<td>mixed</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>For none of the three question types could the test tell whether graph or SQL did better. It doesn't show they're the same either. Too few questions disagreed for the test to reach a conclusion.</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-rule">
+<table>
+<caption id="table-rule">The frozen rule, by question type, with the smallest p each type could have given</caption>
+<thead>
+<tr><th scope="col">Type</th><th scope="col">Questions</th><th scope="col">Untied</th><th scope="col">Graph ahead</th><th scope="col">SQL ahead</th><th scope="col">p</th><th scope="col">Smallest p the test could give</th></tr>
+</thead>
+<tbody>
+<tr><td>aggregate</td><td>7</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>path_connection</td><td>7</td><td>4</td><td>2</td><td>2</td><td>7/8</td><td>1/8</td></tr>
+<tr><td>mixed</td><td>6</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+</section>
+<section>
+<h2 id="2-what-i-expected-and-what-happened">2. What I expected, and what happened</h2>
+<p>Runs correct with the reading note (runs with the right answer without it):</p>
+<ul>
+<li>aggregate: SQL 18/21 (18/21), graph 20/21 (18/21)</li>
+<li>path_connection: SQL 16/21 (11/21), graph 14/21 (10/21)</li>
+<li>mixed: SQL 18/18 (18/18), graph 18/18 (16/18)</li>
+</ul>
+<p>Aggregates: I expected the stores to be fairly close, with SQL slightly ahead. The graph came out ahead by 1 question.</p>
+<p>Paths: I expected the graph to be much better than SQL. SQL came out ahead, mostly because of one question (Q09).</p>
+<p>Mixed: I expected a split. Both stores got 18 of 18.</p>
+<p>In both stores, most failures were citation failures: the answer was right but the evidence wasn't (SQL 7 of 8 failed runs, graph 5 of 8).</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-counts">
+<table>
+<caption id="table-counts">Correct runs and right answers, by question type and store</caption>
+<thead>
+<tr><th scope="col">Type</th><th scope="col">Store</th><th scope="col">Correct with the note</th><th scope="col">Right answers without the note</th><th scope="col">Runs with a retry</th><th scope="col">Attempts timed out</th><th scope="col">Attempts at the row cap</th><th scope="col">Limit hit: requests</th><th scope="col">Limit hit: tokens</th><th scope="col">Limit hit: tool calls</th></tr>
+</thead>
+<tbody>
+<tr><td>aggregate</td><td>SQL</td><td>18/21</td><td>18/21</td><td>3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>aggregate</td><td>Graph</td><td>20/21</td><td>18/21</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>path_connection</td><td>SQL</td><td>16/21</td><td>11/21</td><td>10</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>path_connection</td><td>Graph</td><td>14/21</td><td>10/21</td><td>8</td><td>3</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>mixed</td><td>SQL</td><td>18/18</td><td>18/18</td><td>7</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>mixed</td><td>Graph</td><td>18/18</td><td>16/18</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-zero">
+<table>
+<caption id="table-zero">Right answers with and without the two zero answer questions, Q03 and Q16</caption>
+<thead>
+<tr><th scope="col">Type</th><th scope="col">Store</th><th scope="col">With the note</th><th scope="col">Without the note</th><th scope="col">With the note, without Q03 and Q16</th><th scope="col">Without the note, without Q03 and Q16</th></tr>
+</thead>
+<tbody>
+<tr><td>aggregate</td><td>SQL</td><td>21/21</td><td>18/21</td><td>18/18</td><td>15/18</td></tr>
+<tr><td>aggregate</td><td>Graph</td><td>21/21</td><td>18/21</td><td>18/18</td><td>15/18</td></tr>
+<tr><td>path_connection</td><td>SQL</td><td>20/21</td><td>11/21</td><td>20/21</td><td>11/21</td></tr>
+<tr><td>path_connection</td><td>Graph</td><td>18/21</td><td>10/21</td><td>18/21</td><td>10/21</td></tr>
+<tr><td>mixed</td><td>SQL</td><td>18/18</td><td>18/18</td><td>15/15</td><td>15/15</td></tr>
+<tr><td>mixed</td><td>Graph</td><td>18/18</td><td>16/18</td><td>15/15</td><td>13/15</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+</section>
+<section>
+<h2 id="3-the-questions-where-the-stores-differed">3. The questions where the stores differed</h2>
+<p>Graph minus SQL, correct runs out of 3: Q04 +2, Q08 +1, Q09 −3, Q13 +1, Q14 −1. All other questions tied.</p>
+<p>On Q09, SQL is 3/3 against the graph's 0/3 with the note's either direction rule; without it, both are 0/3. Each graph run hit several errors and a query timeout before giving a wrong answer. The gold query for Q09 ran successfully.</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-differences">
+<table>
+<caption id="table-differences">Graph minus SQL, correct runs of 3, per question</caption>
+<thead>
+<tr><th scope="col">Question</th><th scope="col">Type</th><th scope="col">Graph minus SQL</th></tr>
+</thead>
+<tbody>
+<tr><td>Q01</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q02</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q03</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q04</td><td>aggregate</td><td>+2</td></tr>
+<tr><td>Q05</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q06</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q07</td><td>aggregate</td><td>0</td></tr>
+<tr><td>Q08</td><td>path_connection</td><td>+1</td></tr>
+<tr><td>Q09</td><td>path_connection</td><td>−3</td></tr>
+<tr><td>Q10</td><td>path_connection</td><td>0</td></tr>
+<tr><td>Q11</td><td>path_connection</td><td>0</td></tr>
+<tr><td>Q12</td><td>path_connection</td><td>0</td></tr>
+<tr><td>Q13</td><td>path_connection</td><td>+1</td></tr>
+<tr><td>Q14</td><td>path_connection</td><td>−1</td></tr>
+<tr><td>Q15</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q16</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q17</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q18</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q19</td><td>mixed</td><td>0</td></tr>
+<tr><td>Q20</td><td>mixed</td><td>0</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+</section>
+<section>
+<h2 id="4-what-the-plain-runs-add">4. What the plain runs add</h2>
+<p>Without the reading note, right answers fell from 59 to 47 of 60 (SQL) and from 57 to 44 of 60 (graph), mostly on path questions (SQL 20 to 11, graph 18 to 10, of 21).</p>
+<p>That tells me the stores are much more accurate with a note. Whether this can be a viable product without the note is a separate question.</p>
+<div class="scroll" tabindex="0" role="region" aria-labelledby="table-note">
+<table>
+<caption id="table-note">Right answers with and without the reading note</caption>
+<thead>
+<tr><th scope="col">Scope</th><th scope="col">Store</th><th scope="col">With the note</th><th scope="col">Without the note</th></tr>
+</thead>
+<tbody>
+<tr><td>All questions</td><td>SQL</td><td>59/60</td><td>47/60</td></tr>
+<tr><td>All questions</td><td>Graph</td><td>57/60</td><td>44/60</td></tr>
+<tr><td>path_connection</td><td>SQL</td><td>20/21</td><td>11/21</td></tr>
+<tr><td>path_connection</td><td>Graph</td><td>18/21</td><td>10/21</td></tr>
+</tbody>
+</table>
+</div>
+<p class="caveat">For none of the three question types could the test tell whether graph or SQL did better. It doesn&#x27;t show they&#x27;re the same either.</p>
+<p class="limitation"><span class="lim-id">G2-6</span> <span class="lim-text">every scored run got the reading note, and plain runs are a lower bound that still carried shape, unit and hop limit (spec 0013 Follow-up).</span> <span class="lim-source">spec 0013 Follow-up</span></p>
+<p class="caveat">The findings report marks this drop as untested: no test was run on it.</p>
+</section>
+<section>
+<h2 id="5-how-far-this-reaches">5. How far this reaches</h2>
+<h3>Limitations that matter most:</h3>
+<ol>
+<li>The graph was built from tables designed in SQL, so it may be shaped like a database rather than a natural graph, which could put the graph at a disadvantage.</li>
+<li>Every scored run got the reading note. Real users don't write one, which is why I did the plain runs. Those still told the agent the answer's shape, unit and hop limit, which the scoring needed. A real person would give even less.</li>
+<li>The model ran on default settings with low thinking effort. More effort might change the results.</li>
+</ol>
+<h3>What a real deployment would need:</h3>
+<ol>
+<li>This project loaded the data once; a real one would need constant updates.</li>
+<li>The same person appears under different names and emails in each system.</li>
+<li>Data sensitivity: a company could use its own model. Nothing in the project requires Claude, though the numbers would need re-measuring on that model.</li>
+<li>Not everyone may see every ticket, and the agent would have to respect that.</li>
+<li>Real company data isn't only in Jira: there's chat, docs, code and HR systems.</li>
+</ol>
+<p class="note">The findings report&#x27;s full list of limitations, word for word with their sources, is in <a href="https://github.com/ghalynho10/OrgOS/blob/main/results/findings/report.json">results/findings/report.json</a> in the public code repository.</p>
+</section>
+<section>
+<h2 id="6-graph-or-sql-and-when">6. Graph or SQL, and when?</h2>
+<p>This conclusion is about this project only. The counts were close, and where one store led, it was by a single question. In the counts, the note made a bigger difference than the store did. Because too few questions disagreed, the test between the stores is inconclusive and could not pick a winner.</p>
+</section>
+<p class="note">The design specs behind this work are private. When a limitation names a spec or a note, that document is not published here.</p>
+</main>
+</div>
+<footer class="band band-bottom"><div class="band-inner">
+<p>The data is The Public Jira Dataset (Zenodo record 15719919), licensed CC BY 4.0. Montgomery L, Lüders C, Maalej W. An Alternative Issue Tracking Dataset of Public Jira Repositories. In 2022 IEEE/ACM 19th International Conference on Mining Software Repositories (MSR) 2022 May 23 (pp. 73-77). IEEE.</p>
+<p>The public code repository also holds test fixtures and a data description built from that dataset. They contain real looking names and email addresses from the dataset&#x27;s change history, which are already public in the dataset. This page repeats none of them.</p>
+</div></footer>
+</body>
+</html>
