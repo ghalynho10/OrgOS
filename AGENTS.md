@@ -35,6 +35,8 @@ uv run orgos eval run --agent replay|module:factory [--estimate | --go --max-cos
 uv run orgos eval run --plain --agent module:factory [--estimate | --go --max-cost-usd X] [--only Qnn] [--store S] [--max-run K]   # the plain series of the version (spec 0013): refuses replay; --estimate needs the noted PLAN.json; its own plan and gate
 uv run orgos eval report [--rule]                     # the findings report (spec 0014) from the finished run files; rewrites results/findings/report.json; --rule prints the frozen rule and reach table only, reads no run file; no store, no model
 uv run orgos ask "<question>" --store sql|graph [--go]   # one plain question, not scored, writes no file; preflight, then the bound for one run; paid model calls only with --go
+uv run orgos site build [--accept] [--root DIR]      # the public results page (spec 0016): site/index.html and site/style.css from site/conclusion.md and the report; --accept copies a new or changed docs/findings/conclusion.md in first; no store, no .env
+uv run orgos site check [--root DIR]                 # the committed page equals a regeneration, every number has a source, and site/ holds no email or list name; prints counts only
 PGTZ=America/St_Johns uv run --env-file .env dbt <cmd> --project-dir dbt --profiles-dir dbt   # the build session zone (spec 0009 AC-14)
 uv run pytest -m "not integration"                   # fast tests, no Docker
 uv run pytest                                        # all; stop the compose stack first
@@ -50,7 +52,7 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 - Data passed between steps is immutable: frozen dataclasses or frozen pydantic models, tuples over lists. Module level names are constants only; no shared mutable state.
 - Plain functions over classes where a function works; compose rather than inherit. `X | None` is fine; never return a sentinel.
 - Strict typing: `mypy --strict` (pydantic plugin) on `src/orgos`. Overrides only per untyped third party module, never a blanket ignore.
-- Folders match the scaffold: `config`, `cli`, `mongostore`, `ingest`, `sqlstore`, `graphstore`, `agent`, `eval` under `src/orgos/`; new code goes in the subpackage for its stage or store.
+- Folders match the scaffold: `config`, `cli`, `mongostore`, `ingest`, `sqlstore`, `graphstore`, `agent`, `eval`, `site` under `src/orgos/`; new code goes in the subpackage for its stage or store.
 - Spikes live in `spikes/NNNN-<name>/`: throwaway scripts outside ruff and mypy, run with `uv run --env-file .env python spikes/<dir>/<script>.py`. Their committed `results/` and README are the deliverable, never the Mongo inputs.
 - The corpus is the 7 Jira collection projects in `spikes/0001-time-data-coverage/results/corpus.json` (spec 0004). Hours come from time entries rebuilt from the changelog, never from issue level `timespent`, and the SQL load, the graph load and the known answers drop the same flagged bot accounts (spec 0004, AC-8 and AC-10).
 - The eval set is frozen at the tag `eval-frozen` (spec 0005): `eval/FROZEN` holds the hashes of `eval/questions.toml`, `eval/amendments.toml` and `eval/answers.json`, `tests/test_eval_frozen.py` fails on any change to them in pre-commit and CI, and `orgos eval answers` refuses to write. `orgos.eval.compare` is the one comparison rule and is never changed after results.
@@ -63,6 +65,7 @@ Stored in `docs/specs/`. Format: always the directory shape, `docs/specs/NNNN-ti
 - `src/orgos/agent/layouts.toml` holds each scored question's evidence layout (spec 0015), written from the known answers and the engineer's rulings, never from a run file. The one entry gives both the block's last `Sources layout` line and the soft layout check, and it is hashed in the `question_blocks` part. `agent.py` is not in the version hash, so any decision logic goes in `answer.py`, which is.
 - The plain series (spec 0013) runs a version's questions without the reading note into `results/agent_runs/<version>/plain/`, with its own `PLAN.json` (written once, `runs` copied from the noted plan), write once run files and `summary.json`. It is scored on `answer_match` as a lower bound and kept out of every noted rate. `render_plain_run_block` is outside the version hash: `PLAIN_BLOCKS_SHA256` in `tests/test_agent_plain.py` and the plan's `plain_blocks_sha256` pin it, so a change to it after a plain run breaks that series.
 - The findings report (spec 0014) lives in `orgos.eval.report` and is pinned to the rule the docs tag `rule-frozen` froze: `tests/test_eval_report.py` takes its values from the spec, never from the code. It reads only the files of AC-15, opens no store, calls no model, writes only `results/findings/report.json` and prints no conclusion; the written conclusion stays the engineer's.
+- The public results page (spec 0016) is built by `orgos.site` into `site/` and published by `.github/workflows/pages.yml`. The committed page must equal a regeneration from `site/conclusion.md` and `results/findings/report.json`, so a change to the report or the conclusion needs `orgos site build` (with `--accept` for the conclusion) and the rebuilt `site/` in the same commit, or `tests/test_site_ci_guard.py` fails.
 - Config is read only through `orgos.config.Settings` and validated at startup; errors surface as one `ConfigError` message. No `os.environ` reads elsewhere.
 - Every module has a docstring saying why it exists; every public function has one.
 - Errors: each subpackage raises its own named exception; the CLI turns them into a clear message and a non zero exit. No bare `except`.
@@ -103,6 +106,7 @@ Read [docs/reflexes.md](docs/reflexes.md) before making changes: standing rules 
 
 - [dbt/AGENTS.md](dbt/AGENTS.md): the dbt project, the 12 `model_int` and 7 `model` table names, and its build gotchas
 - [src/orgos/graphstore/AGENTS.md](src/orgos/graphstore/AGENTS.md): the graph load, its labels and relationship types, and its gotchas
+- [src/orgos/site/AGENTS.md](src/orgos/site/AGENTS.md): the public results page, its build, its check and scan, and what pins its words and numbers
 <!-- Nested AGENTS.md files are listed here as they are created -->
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._
